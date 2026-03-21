@@ -166,7 +166,7 @@
     <div class="admin-content">
 
       <!-- SAVE NOTICE -->
-      <div class="save-notice" id="save-notice">✓ Changes saved to data.js snippet below. Copy it to your project.</div>
+      <div class="save-notice" id="save-notice">✓ Changes saved locally. Use "Save to Netlify" to publish to website.</div>
 
       <!-- PROFILE TAB -->
       <div class="admin-section active" id="tab-profile">
@@ -259,6 +259,14 @@
       <!-- SETTINGS TAB -->
       <div class="admin-section" id="tab-settings">
         <p class="section-title">Settings</p>
+        <div style="margin-bottom:2rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
+          <h3 style="margin-bottom:0.75rem;font-size:1rem;">Netlify Publish</h3>
+          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">Use your Netlify admin API key to publish changes live from this page.</p>
+          <div class="field-group"><label>Admin API Key</label><input type="password" id="netlify-api-key" placeholder="Set ADMIN_API_KEY value here"/></div>
+          <button class="save-btn" onclick="saveToNetlify()">[ SAVE TO NETLIFY ]</button>
+          <p id="netlify-msg" style="margin-top:0.75rem;font-size:0.85rem;color:var(--muted);"></p>
+        </div>
+
         <div class="danger-box">
           <h3>🔒 Change Admin Password</h3>
           <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">Password is stored in your browser's localStorage. For better security, consider using Netlify Identity or a similar service.</p>
@@ -269,8 +277,8 @@
         </div>
 
         <div style="margin-top:2rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
-          <h3 style="margin-bottom:0.75rem;font-size:1rem;">📋 Export data.js</h3>
-          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">Copy this and replace your <code>js/data.js</code> file to make changes live on GitHub Pages.</p>
+          <h3 style="margin-bottom:0.75rem;font-size:1rem;">📋 Export Backup</h3>
+          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">Fallback copy of your data in case you want a manual backup.</p>
           <textarea id="export-output" style="width:100%;min-height:300px;font-family:monospace;font-size:0.75rem;background:#0d0d1a;border:1px solid var(--border);border-radius:8px;padding:1rem;color:var(--text);resize:vertical;" readonly></textarea>
           <button class="save-btn" style="margin-top:0.75rem;" onclick="copyExport()">[ COPY TO CLIPBOARD ]</button>
         </div>
@@ -288,6 +296,7 @@
 const DEFAULT_PASSWORD = "gamedev2024";
 let currentEditIndex = -1;
 let currentEditType = "";
+const NETLIFY_FN_URL = "/.netlify/functions/portfolio-data";
 
 // ---- Auth ----
 function doLogin() {
@@ -297,6 +306,7 @@ function doLogin() {
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("admin-panel").style.display = "block";
     loadAdminData();
+    setVal("netlify-api-key", sessionStorage.getItem("netlify_admin_key") || "");
   } else {
     document.getElementById("login-err").style.display = "block";
   }
@@ -307,12 +317,28 @@ function logout() {
   document.getElementById("pwd").value = "";
 }
 
+async function fetchRemoteData() {
+  try {
+    const res = await fetch(NETLIFY_FN_URL);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    return null;
+  }
+}
+
 // ---- Load data into form fields ----
-function loadAdminData() {
-  // Try loading from localStorage override first
-  const saved = localStorage.getItem("portfolio_data");
-  if (saved) {
-    try { Object.assign(PORTFOLIO_DATA, JSON.parse(saved)); } catch(e){}
+async function loadAdminData() {
+  const remoteData = await fetchRemoteData();
+  if (remoteData && typeof remoteData === "object") {
+    Object.assign(PORTFOLIO_DATA, remoteData);
+    localStorage.setItem("portfolio_data", JSON.stringify(PORTFOLIO_DATA));
+  } else {
+    // Try loading from localStorage override first
+    const saved = localStorage.getItem("portfolio_data");
+    if (saved) {
+      try { Object.assign(PORTFOLIO_DATA, JSON.parse(saved)); } catch(e){}
+    }
   }
   const D = PORTFOLIO_DATA;
   // Profile
@@ -352,6 +378,40 @@ function saveAndPersist() {
   notice.style.display = "block";
   setTimeout(() => notice.style.display = "none", 3000);
   updateExport();
+}
+
+async function saveToNetlify() {
+  const msg = document.getElementById("netlify-msg");
+  const apiKey = getVal("netlify-api-key").trim();
+  if (!apiKey) {
+    msg.style.color = "#ff5555";
+    msg.textContent = "Enter your Netlify ADMIN_API_KEY first.";
+    return;
+  }
+
+  sessionStorage.setItem("netlify_admin_key", apiKey);
+  msg.style.color = "var(--muted)";
+  msg.textContent = "Publishing...";
+
+  try {
+    const res = await fetch(NETLIFY_FN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Key": apiKey
+      },
+      body: JSON.stringify(PORTFOLIO_DATA)
+    });
+    const result = await res.json();
+    if (!res.ok || !result.ok) {
+      throw new Error(result.error || "Failed to publish.");
+    }
+    msg.style.color = "var(--green)";
+    msg.textContent = "Published to Netlify successfully.";
+  } catch (error) {
+    msg.style.color = "#ff5555";
+    msg.textContent = error.message || "Publish failed.";
+  }
 }
 
 function saveProfile() {

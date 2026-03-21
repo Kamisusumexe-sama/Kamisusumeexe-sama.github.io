@@ -1,6 +1,6 @@
 // =============================================
-//  MAIN.JS — loads from _data/ JSON files
-//  saved automatically by Decap CMS
+//  MAIN.JS — loads from Netlify API first
+//  falls back to static _data files
 // =============================================
 
 async function fetchJSON(path) {
@@ -21,22 +21,40 @@ async function fetchJSONFolder(folderPath) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const [profile, links, projects, games, videos] = await Promise.all([
-    fetchJSON("/_data/profile.json"),
-    fetchJSON("/_data/links.json"),
-    fetchJSONFolder("/_data/projects/"),
-    fetchJSONFolder("/_data/games/"),
-    fetchJSONFolder("/_data/videos/"),
-  ]);
+  const apiData = await fetchJSON("/.netlify/functions/portfolio-data");
+  let profile = null;
+  let links = null;
+  let projects = [];
+  let games = [];
+  let videos = [];
 
-  if (!profile) { console.warn("Could not load portfolio data."); return; }
+  if (apiData) {
+    profile = apiData;
+    links = apiData.links || null;
+    projects = apiData.projects || [];
+    games = apiData.webGames || [];
+    videos = apiData.videos || [];
+  } else {
+    [profile, links, projects, games, videos] = await Promise.all([
+      fetchJSON("/_data/profile.json"),
+      fetchJSON("/_data/links.json"),
+      fetchJSONFolder("/_data/projects/"),
+      fetchJSONFolder("/_data/games/"),
+      fetchJSONFolder("/_data/videos/"),
+    ]);
+  }
+
+  if (!profile) {
+    console.warn("Could not load portfolio data.");
+    return;
+  }
 
   applyProfile(profile, links);
-  renderProjects(projects || []);
-  renderGames(games || []);
-  renderVideos(videos || []);
-  animateStats(profile.stats);
-  animateSkills(profile.skills);
+  renderProjects(projects);
+  renderGames(games);
+  renderVideos(videos);
+  animateStats(profile.stats || {});
+  animateSkills(profile.skills || []);
   initStarfield();
   initCursorTrail();
   document.getElementById("year").textContent = new Date().getFullYear();
