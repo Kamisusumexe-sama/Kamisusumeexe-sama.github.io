@@ -768,6 +768,107 @@ section { padding: 6rem 0; }
   }
 }
 
+
+/* =============================================
+   DOWNLOADS SECTION
+   ============================================= */
+.downloads { background: var(--bg); }
+
+.downloads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.download-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  opacity: 0; transform: translateY(20px);
+  position: relative; overflow: hidden;
+}
+.download-card::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transform: scaleX(0); transition: transform 0.3s;
+  transform-origin: left;
+}
+.download-card.revealed { opacity: 1; transform: none; transition: opacity 0.5s, transform 0.5s, box-shadow 0.3s, border-color 0.3s; }
+.download-card:hover { transform: translateY(-5px); border-color: var(--border-bright); box-shadow: 0 12px 35px rgba(0,0,0,0.4), 0 0 15px var(--glow-purple); }
+.download-card:hover::before { transform: scaleX(1); }
+
+.download-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+.download-type {
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  color: var(--accent2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.download-title {
+  font-family: var(--font-pixel);
+  font-size: 0.65rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+.download-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.6;
+  flex: 1;
+}
+.download-meta {
+  font-size: 0.72rem;
+  color: var(--muted);
+  opacity: 0.7;
+}
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--accent), #e060aa);
+  color: var(--bg);
+  font-family: var(--font-pixel);
+  font-size: 0.52rem;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 0 15px var(--glow-pink);
+  align-self: flex-start;
+}
+.download-btn:hover {
+  box-shadow: 0 0 25px var(--glow-pink);
+  transform: translateY(-2px);
+}
+.download-btn .btn-icon { font-size: 0.85rem; }
+
+/* Navbar download button — stands out */
+.nav-download {
+  background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  font-weight: 600 !important;
+  font-size: 0.82rem !important;
+}
+.nav-download::after { background: var(--accent) !important; }
+
+@media (max-width: 640px) {
+  .downloads-grid { grid-template-columns: 1fr; }
+}
+
 /* =============================================
    RESPONSIVE
    ============================================= */

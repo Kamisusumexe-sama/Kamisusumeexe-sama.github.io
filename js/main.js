@@ -75,9 +75,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- SECTIONS ----
   initRetroEffects(p.name || "");
-  renderProjects(data.projects || []);
-  renderGames(data.webGames   || []);
-  renderVideos(data.videos     || []);
+  renderProjects(data.projects   || []);
+  renderGames(data.webGames    || []);
+  renderVideos(data.videos      || []);
+  renderDownloads(data.downloads || [], data.downloadsDesc || "");
 
   // ---- EXTRAS ----
   initStarfield();
@@ -239,6 +240,50 @@ function renderVideos(videos) {
   });
   observeReveal(".video-card");
 }
+
+// ---- Downloads ----
+function renderDownloads(downloads, desc) {
+  const grid = document.getElementById("downloads-grid");
+  const descEl = document.getElementById("downloads-desc");
+  if (descEl && desc) descEl.textContent = desc;
+  if (!grid) return;
+
+  if (!downloads.length) {
+    grid.innerHTML = '<p style="color:var(--muted)">No files yet — add them in the admin panel!</p>';
+    return;
+  }
+
+  grid.innerHTML = "";
+  downloads.forEach(dl => {
+    const card = document.createElement("div");
+    card.className = "download-card";
+
+    // Work out if it's a base64 data URL or a real URL
+    const hasFile = dl.fileUrl && dl.fileUrl.length > 0;
+    const isBase64 = hasFile && dl.fileUrl.startsWith("data:");
+
+    const btnHtml = hasFile
+      ? `<a class="download-btn" href="${dl.fileUrl}" download="${dl.fileName || dl.title}"
+           ${isBase64 ? '' : 'target="_blank"'}>
+           <span class="btn-icon">⬇</span> Download
+         </a>`
+      : `<span class="download-btn" style="opacity:0.4;cursor:not-allowed;pointer-events:none;">
+           <span class="btn-icon">⏳</span> Coming soon
+         </span>`;
+
+    card.innerHTML = `
+      <div class="download-icon">${dl.icon || "📄"}</div>
+      <div class="download-type">${dl.type || "File"}</div>
+      <div class="download-title">${dl.title}</div>
+      <div class="download-desc">${dl.description || ""}</div>
+      ${dl.updated ? `<div class="download-meta">Updated ${dl.updated}</div>` : ""}
+      ${btnHtml}
+    `;
+    grid.appendChild(card);
+  });
+  observeReveal(".download-card");
+}
+
 
 // ---- Scroll reveal ----
 function observeReveal(selector) {

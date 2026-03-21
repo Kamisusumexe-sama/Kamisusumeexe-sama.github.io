@@ -186,6 +186,7 @@
       <button class="sidebar-btn" onclick="showTab('tab-videos',this)">🎬 <span class="label">Videos</span></button>
       <button class="sidebar-btn" onclick="showTab('tab-links',this)">🔗 <span class="label">Links</span></button>
       <button class="sidebar-btn" onclick="showTab('tab-images',this)">🖼 <span class="label">Images</span></button>
+      <button class="sidebar-btn" onclick="showTab('tab-downloads',this)">⬇ <span class="label">Downloads</span></button>
     </aside>
 
     <div class="content">
@@ -242,11 +243,9 @@
             <input type="file" id="proj-img-input" accept="image/*" style="display:none" onchange="handleImgUpload(this,'proj')"/>
             <input type="hidden" id="pe-image"/>
           </div>
-          <div class="field-row">
-            <div class="field" style="display:none"><label>Image path</label><input id="pe-image-unused" placeholder="assets/img/game.png"/></div>
-            <div class="field"><label>Featured?</label>
-              <select id="pe-featured"><option value="false">No</option><option value="true">Yes ★</option></select>
-            </div>
+          <div class="field">
+            <label>Featured?</label>
+            <select id="pe-featured"><option value="false">No</option><option value="true">Yes ★</option></select>
           </div>
           <div class="field-row">
             <div class="field"><label>Play URL</label><input id="pe-play" placeholder="https://vanessa.itch.io/game"/></div>
@@ -278,9 +277,9 @@
             <input type="file" id="game-img-input" accept="image/*" style="display:none" onchange="handleImgUpload(this,'game')"/>
             <input type="hidden" id="ge-image"/>
           </div>
-          <div class="field-row">
-            <div class="field" style="display:none"><label>Thumbnail</label><input id="ge-image-unused" placeholder="assets/img/thumb.png"/></div>
-            <div class="field"><label>Embed URL</label><input id="ge-url" placeholder="games/mygame/index.html"/></div>
+          <div class="field">
+            <label>Embed URL</label>
+            <input id="ge-url" placeholder="games/mygame/index.html OR https://itch.io/embed/..."/>
           </div>
           <div class="editor-actions">
             <button class="btn-save" onclick="saveItem('game')">[ SAVE ]</button>
@@ -310,6 +309,51 @@
           <div class="editor-actions">
             <button class="btn-save" onclick="saveItem('video')">[ SAVE ]</button>
             <button class="btn-cancel" onclick="closeEditor('video')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOWNLOADS -->
+      <div class="tab" id="tab-downloads">
+        <p class="tab-title">Downloads</p>
+        <div class="field">
+          <label>Section Description</label>
+          <input id="dl-desc" placeholder="Grab my CV, portfolio PDF or any other files below."/>
+        </div>
+        <div class="item-list" id="downloads-list"></div>
+        <button class="btn-add" onclick="openEditor('dl',-1)">+ Add File</button>
+        <div class="editor" id="dl-editor">
+          <h3 id="dl-editor-title">Add File</h3>
+          <div class="field-row">
+            <div class="field">
+              <label>Icon (emoji)</label>
+              <input id="dl-icon" placeholder="📄" style="font-size:1.5rem;"/>
+            </div>
+            <div class="field">
+              <label>File Type Label</label>
+              <input id="dl-type" placeholder="CV / Resume"/>
+            </div>
+          </div>
+          <div class="field"><label>Title</label><input id="dl-title" placeholder="Curriculum Vitae"/></div>
+          <div class="field"><label>Description</label><textarea id="dl-desc-item" placeholder="A short description of this file..."></textarea></div>
+          <div class="field"><label>Updated (year or date)</label><input id="dl-updated" placeholder="2024"/></div>
+          <div class="field">
+            <label>Upload File (PDF, DOC, ZIP — max 5MB)</label>
+            <div class="img-upload-box small" id="dl-file-box" onclick="document.getElementById('dl-file-input').click()"
+                 style="height:80px;">
+              <div id="dl-file-placeholder">
+                <span style="font-size:1.5rem;">📁</span>
+                <p id="dl-file-label">Click to upload file</p>
+              </div>
+            </div>
+            <input type="file" id="dl-file-input" accept=".pdf,.doc,.docx,.zip,.txt" style="display:none"
+                   onchange="handleFileUpload(this)"/>
+            <input type="hidden" id="dl-fileurl"/>
+            <input type="hidden" id="dl-filename"/>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-save" onclick="saveItem('dl')">[ SAVE ]</button>
+            <button class="btn-cancel" onclick="closeEditor('dl')">Cancel</button>
           </div>
         </div>
       </div>
@@ -489,6 +533,12 @@ function localSave() {
 
 // ---- LOAD ALL FIELDS ----
 function loadAllFields() {
+  // Ensure arrays exist
+  if (!contentData.projects)  contentData.projects  = [];
+  if (!contentData.webGames)  contentData.webGames  = [];
+  if (!contentData.videos)    contentData.videos    = [];
+  if (!contentData.gallery)   contentData.gallery   = [];
+
   const p = contentData.profile || {};
   set("p-name",    p.name);
   set("p-tagline", p.tagline);
@@ -499,15 +549,33 @@ function loadAllFields() {
   set("p-s2", p.stats?.yearsXP);
   set("p-s3", p.stats?.gameJamsWon);
   set("p-skills", (p.skills||[]).map(s=>`${s.name} | ${s.level}`).join("\n"));
+
   const l = contentData.links || {};
   set("l-email",    l.email);
   set("l-twitter",  l.twitter);
   set("l-itchio",   l.itchio);
   set("l-github",   l.github);
   set("l-linkedin", l.linkedin);
-  renderList("proj",  contentData.projects  || [], i => `${i.title} — ${(i.tags||[]).join(", ")}`);
-  renderList("game",  contentData.webGames  || [], i => `${i.title} — ${i.embedUrl||""}`);
-  renderList("video", contentData.videos    || [], i => `${i.title} — ${i.type||""}`);
+
+  renderList("proj",  contentData.projects, i => `${i.title} — ${(i.tags||[]).join(", ")}`);
+  renderList("game",  contentData.webGames, i => `${i.title} — ${i.embedUrl||""}`);
+  renderList("video", contentData.videos,   i => `${i.title} — ${i.type||""}`);
+
+  // Profile photo
+  if (p.photo) {
+    const preview = document.getElementById("profile-photo-preview");
+    const ph = document.getElementById("profile-photo-placeholder");
+    if (preview) { preview.src = p.photo; preview.style.display = "block"; }
+    if (ph) ph.style.display = "none";
+  }
+
+  // Downloads
+  if (!contentData.downloads) contentData.downloads = [];
+  set("dl-desc", contentData.downloadsDesc || "");
+  renderList("dl", contentData.downloads, i => `${i.type || "File"} — ${i.fileUrl ? "✓ uploaded" : "no file yet"}`);
+
+  // Gallery
+  renderGallery();
 }
 
 // ---- SAVE PROFILE ----
@@ -569,24 +637,74 @@ function openEditor(type, i) {
   const editorEl = document.getElementById(`${type}-editor`);
   editorEl.style.display = "block";
   document.getElementById(`${type}-editor-title`).textContent = i >= 0 ? "Edit" : "Add";
-  if (i < 0) {
-    editorEl.querySelectorAll("input, textarea").forEach(el => el.value = "");
-    if (type === "proj") document.getElementById("pe-featured").value = "false";
-    if (type === "video") document.getElementById("ve-type").value = "youtube";
-    return;
+
+  // Clear all fields first
+  editorEl.querySelectorAll("input:not([type=hidden]):not([type=file]), textarea").forEach(el => el.value = "");
+
+  // Reset image previews
+  if (type === "proj") {
+    document.getElementById("proj-img-preview").style.display = "none";
+    document.getElementById("proj-img-placeholder").style.display = "flex";
+    document.getElementById("pe-featured").value = "false";
+    document.getElementById("pe-image").value = "";
   }
+  if (type === "game") {
+    document.getElementById("game-img-preview").style.display = "none";
+    document.getElementById("game-img-placeholder").style.display = "flex";
+    document.getElementById("ge-image").value = "";
+  }
+  if (type === "video") {
+    document.getElementById("ve-type").value = "youtube";
+  }
+  if (type === "dl") {
+    set("dl-fileurl", "");
+    set("dl-filename", "");
+    document.getElementById("dl-file-label").textContent = "Click to upload file";
+  }
+
+  if (i < 0) return; // Adding new — fields are blank, done
+
+  // Editing existing — fill fields
   const arr = getArr(type);
   const item = arr[i];
+  if (!item) return;
+
   if (type === "proj") {
-    set("pe-title",  item.title);   set("pe-desc",  item.description);
+    set("pe-title",  item.title||"");
+    set("pe-desc",   item.description||"");
     set("pe-tags",   (item.tags||[]).join(", "));
-    set("pe-image",  item.image||""); set("pe-play", item.playUrl||""); set("pe-video", item.videoUrl||"");
+    set("pe-play",   item.playUrl||"");
+    set("pe-video",  item.videoUrl||"");
+    set("pe-image",  item.image||"");
     document.getElementById("pe-featured").value = String(!!item.featured);
+    if (item.image) {
+      document.getElementById("proj-img-preview").src = item.image;
+      document.getElementById("proj-img-preview").style.display = "block";
+      document.getElementById("proj-img-placeholder").style.display = "none";
+    }
   } else if (type === "game") {
-    set("ge-title", item.title); set("ge-desc",  item.description);
-    set("ge-image", item.image||""); set("ge-url", item.embedUrl||"");
+    set("ge-title", item.title||"");
+    set("ge-desc",  item.description||"");
+    set("ge-url",   item.embedUrl||"");
+    set("ge-image", item.image||"");
+    if (item.image) {
+      document.getElementById("game-img-preview").src = item.image;
+      document.getElementById("game-img-preview").style.display = "block";
+      document.getElementById("game-img-placeholder").style.display = "none";
+    }
+  } else if (type === "dl") {
+    set("dl-title",     item.title||"");
+    set("dl-desc-item", item.description||"");
+    set("dl-type",      item.type||"");
+    set("dl-icon",      item.icon||"📄");
+    set("dl-updated",   item.updated||"");
+    set("dl-fileurl",   item.fileUrl||"");
+    set("dl-filename",  item.fileName||"");
+    document.getElementById("dl-file-label").textContent =
+      item.fileName ? `✓ ${item.fileName}` : "Click to upload file";
   } else {
-    set("ve-title", item.title); set("ve-src", item.src||"");
+    set("ve-title", item.title||"");
+    set("ve-src",   item.src||"");
     document.getElementById("ve-type").value = item.type||"youtube";
   }
 }
@@ -608,6 +726,18 @@ async function saveItem(type) {
   } else if (type === "game") {
     item = { id: existingId||"game_"+Date.now(), title:val("ge-title"),
       description:val("ge-desc"), image:val("ge-image"), embedUrl:val("ge-url") };
+  } else if (type === "dl") {
+    item = { id: existingId||"dl_"+Date.now(),
+      title:    val("dl-title"),
+      description: val("dl-desc-item"),
+      type:     val("dl-type"),
+      icon:     val("dl-icon") || "📄",
+      updated:  val("dl-updated"),
+      fileUrl:  val("dl-fileurl"),
+      fileName: val("dl-filename"),
+    };
+    // Also save description text
+    contentData.downloadsDesc = val("dl-desc");
   } else {
     item = { id: existingId||"vid_"+Date.now(), title:val("ve-title"),
       type:document.getElementById("ve-type").value, src:val("ve-src") };
@@ -617,6 +747,7 @@ async function saveItem(type) {
     proj:  i => `${i.title} — ${(i.tags||[]).join(", ")}`,
     game:  i => `${i.title} — ${i.embedUrl||""}`,
     video: i => `${i.title} — ${i.type||""}`,
+    dl:    i => `${i.type||"File"} — ${i.fileUrl ? "✓ file uploaded" : "no file yet"}`,
   };
   renderList(type, arr, labelFns[type]);
   closeEditor(type);
@@ -631,6 +762,7 @@ async function deleteItem(type, i) {
     proj:  i => `${i.title} — ${(i.tags||[]).join(", ")}`,
     game:  i => `${i.title} — ${i.embedUrl||""}`,
     video: i => `${i.title} — ${i.type||""}`,
+    dl:    i => `${i.type||"File"} — ${i.fileUrl ? "✓ file uploaded" : "no file yet"}`,
   };
   renderList(type, getArr(type), labelFns[type]);
   await pushContent(`Deleted ${type}`);
@@ -638,7 +770,11 @@ async function deleteItem(type, i) {
 
 // ---- HELPERS ----
 function getArr(type) {
-  return type === "proj" ? contentData.projects : type === "game" ? contentData.webGames : contentData.videos;
+  if (type === "proj")  return contentData.projects;
+  if (type === "game")  return contentData.webGames;
+  if (type === "video") return contentData.videos;
+  if (type === "dl")    return contentData.downloads;
+  return [];
 }
 function val(id) { const el = document.getElementById(id); return el ? el.value : ""; }
 function set(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; }
@@ -805,40 +941,35 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// ---- Load profile photo preview when entering admin ----
-const _origLoadAllFields = loadAllFields;
-function loadAllFields() {
-  _origLoadAllFields();
-  // Load profile photo if exists
-  const photo = contentData?.profile?.photo;
-  if (photo) {
-    const preview = document.getElementById("profile-photo-preview");
-    const placeholder = document.getElementById("profile-photo-placeholder");
-    if (preview) { preview.src = photo; preview.style.display = "block"; }
-    if (placeholder) placeholder.style.display = "none";
+
+// ---- File upload (CV, PDF, etc.) ----
+async function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    toast("✕ File too large — max 5MB.", true);
+    return;
   }
-  // Load gallery
-  renderGallery();
+  try {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = e => resolve(e.target.result);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+    set("dl-fileurl",  dataUrl);
+    set("dl-filename", file.name);
+    document.getElementById("dl-file-label").textContent = `✓ ${file.name}`;
+    // Auto-fill filename field if title is empty
+    if (!val("dl-title")) set("dl-title", file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " "));
+    toast(`✓ "${file.name}" ready — click Save to add it.`);
+  } catch(e) {
+    toast("✕ " + e.message, true);
+  }
 }
 
-// ---- Load project/game image previews when opening editor ----
-const _origOpenEditor = openEditor;
-function openEditor(type, i) {
-  _origOpenEditor(type, i);
-  if (type === 'proj') {
-    const img = i >= 0 ? (contentData.projects[i]?.image || "") : "";
-    const preview = document.getElementById("proj-img-preview");
-    const placeholder = document.getElementById("proj-img-placeholder");
-    if (img) { preview.src = img; preview.style.display = "block"; placeholder.style.display = "none"; }
-    else { preview.style.display = "none"; placeholder.style.display = "flex"; }
-  } else if (type === 'game') {
-    const img = i >= 0 ? (contentData.webGames[i]?.image || "") : "";
-    const preview = document.getElementById("game-img-preview");
-    const placeholder = document.getElementById("game-img-placeholder");
-    if (img) { preview.src = img; preview.style.display = "block"; placeholder.style.display = "none"; }
-    else { preview.style.display = "none"; placeholder.style.display = "flex"; }
-  }
-}
+// NOTE: loadAllFields and openEditor are defined earlier.
+// Image previews are loaded inline within those functions already via the calls below.
 
 </script>
 </body>
