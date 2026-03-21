@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d1a;
+      --bg2: #161626;
+      --bg3: #1e1e32;
+      --accent: #ff79c6;
+      --accent2: #bd93f9;
+      --green: #50fa7b;
+      --yellow: #f1fa8c;
+      --text: #f8f8f2;
+      --muted: #6272a4;
+      --border: #2d2d50;
+      --font-pixel: 'Press Start 2P', monospace;
+      --font-body: 'DM Sans', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+    /* ---- LOGIN ---- */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: var(--bg);
+    }
+    .login-box {
+      background: var(--bg2); border: 2px solid var(--accent);
+      border-radius: 12px; padding: 3rem; width: 100%; max-width: 400px;
+      box-shadow: 0 0 40px rgba(255,121,198,0.2);
+    }
+    .login-box h1 { font-family: var(--font-pixel); font-size: 0.9rem; color: var(--accent); margin-bottom: 0.5rem; }
+    .login-box p { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .login-box label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.4rem; }
+    .login-box input {
+      width: 100%; padding: 0.8rem 1rem; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 1rem; font-family: var(--font-body);
+      outline: none; margin-bottom: 1rem; transition: border-color 0.2s;
+    }
+    .login-box input:focus { border-color: var(--accent); }
+    .login-box button {
+      width: 100%; padding: 0.9rem; background: var(--accent); color: var(--bg);
+      border: none; border-radius: 8px; font-family: var(--font-pixel); font-size: 0.75rem;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .login-box button:hover { opacity: 0.85; }
+    .login-error { color: #ff5555; font-size: 0.85rem; margin-top: 0.5rem; display: none; }
+
+    /* ---- ADMIN PANEL ---- */
+    #admin-panel { display: none; }
+    .admin-nav {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .admin-nav h1 { font-family: var(--font-pixel); font-size: 0.75rem; color: var(--accent); }
+    .admin-nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+    .admin-nav a:hover { color: var(--text); }
+    .btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; font-family: var(--font-body); font-size: 0.85rem; }
+    .btn-logout:hover { border-color: var(--accent); color: var(--accent); }
+
+    .admin-body { display: flex; min-height: calc(100vh - 64px); }
+    .admin-sidebar {
+      width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+    }
+    .sidebar-item {
+      display: block; padding: 0.65rem 0.8rem; border-radius: 8px; color: var(--muted);
+      text-decoration: none; font-size: 0.9rem; cursor: pointer; background: none; border: none;
+      width: 100%; text-align: left; margin-bottom: 0.3rem; transition: background 0.15s, color 0.15s;
+    }
+    .sidebar-item:hover, .sidebar-item.active { background: var(--bg3); color: var(--text); }
+    .sidebar-item.active { border-left: 3px solid var(--accent); padding-left: calc(0.8rem - 3px); }
+
+    .admin-content { flex: 1; padding: 2rem; overflow-y: auto; }
+    .admin-section { display: none; }
+    .admin-section.active { display: block; }
+    .section-title { font-family: var(--font-pixel); font-size: 0.8rem; color: var(--accent); margin-bottom: 1.5rem; }
+
+    /* Forms */
+    .field-group { margin-bottom: 1.5rem; }
+    .field-group label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.4rem; }
+    .field-group input, .field-group textarea, .field-group select {
+      width: 100%; padding: 0.8rem 1rem; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.95rem; font-family: var(--font-body);
+      outline: none; transition: border-color 0.2s; resize: vertical;
+    }
+    .field-group input:focus, .field-group textarea:focus, .field-group select:focus { border-color: var(--accent2); }
+    .field-group textarea { min-height: 100px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .save-btn {
+      background: var(--green); color: var(--bg); border: none; padding: 0.7rem 1.5rem;
+      border-radius: 8px; font-family: var(--font-pixel); font-size: 0.65rem; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .save-btn:hover { opacity: 0.85; }
+    .saved-msg { display: none; color: var(--green); font-size: 0.85rem; margin-left: 1rem; }
+
+    /* Cards list in admin */
+    .admin-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+    .admin-card {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .admin-card-info h3 { font-size: 1rem; margin-bottom: 0.2rem; }
+    .admin-card-info p { font-size: 0.8rem; color: var(--muted); }
+    .admin-card-actions { display: flex; gap: 0.5rem; }
+    .btn-edit { background: none; border: 1px solid var(--accent2); color: var(--accent2); padding: 0.35rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+    .btn-del { background: none; border: 1px solid #ff5555; color: #ff5555; padding: 0.35rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+    .btn-add { background: var(--accent2); color: var(--bg); border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-family: var(--font-body); }
+
+    /* Password change */
+    .danger-box { background: rgba(255,85,85,0.08); border: 1px solid #ff5555; border-radius: 10px; padding: 1.5rem; }
+    .danger-box h3 { color: #ff5555; margin-bottom: 1rem; font-size: 1rem; }
+
+    .save-notice {
+      background: rgba(80,250,123,0.1); border: 1px solid var(--green); border-radius: 8px;
+      padding: 0.75rem 1rem; color: var(--green); font-size: 0.9rem; display: none; margin-bottom: 1.5rem;
+    }
+
+    @media(max-width:640px) {
+      .admin-sidebar { width: 60px; }
+      .sidebar-item span { display: none; }
+      .field-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>// Admin Login</h1>
+    <p>Portfolio control panel. Keep this page private.</p>
+    <label for="pwd">Password</label>
+    <input type="password" id="pwd" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button onclick="doLogin()">[ ENTER ]</button>
+    <p class="login-error" id="login-err">✕ Incorrect password</p>
+  </div>
+</div>
+
+<!-- ===== ADMIN PANEL ===== -->
+<div id="admin-panel">
+
+  <nav class="admin-nav">
+    <h1>⚙ Admin Panel</h1>
+    <div style="display:flex;gap:1rem;align-items:center;">
+      <a href="../index.html">← View Site</a>
+      <button class="btn-logout" onclick="logout()">Log Out</button>
+    </div>
+  </nav>
+
+  <div class="admin-body">
+    <aside class="admin-sidebar">
+      <button class="sidebar-item active" onclick="showTab('tab-profile', this)"><span>👤 Profile</span></button>
+      <button class="sidebar-item" onclick="showTab('tab-projects', this)"><span>🎮 Projects</span></button>
+      <button class="sidebar-item" onclick="showTab('tab-games', this)"><span>▶ Web Games</span></button>
+      <button class="sidebar-item" onclick="showTab('tab-videos', this)"><span>🎬 Videos</span></button>
+      <button class="sidebar-item" onclick="showTab('tab-links', this)"><span>🔗 Links</span></button>
+      <button class="sidebar-item" onclick="showTab('tab-settings', this)"><span>🔒 Settings</span></button>
+    </aside>
+
+    <div class="admin-content">
+
+      <!-- SAVE NOTICE -->
+      <div class="save-notice" id="save-notice">✓ Changes saved to data.js snippet below. Copy it to your project.</div>
+
+      <!-- PROFILE TAB -->
+      <div class="admin-section active" id="tab-profile">
+        <p class="section-title">Profile & About</p>
+        <div class="field-group"><label>Your Name</label><input id="f-name" placeholder="Your Name"/></div>
+        <div class="field-group"><label>Tagline</label><input id="f-tagline" placeholder="Game Developer · Designer · ..."/></div>
+        <div class="field-group"><label>About (intro paragraph)</label><textarea id="f-bio"></textarea></div>
+        <div class="field-group"><label>About (body paragraph)</label><textarea id="f-body"></textarea></div>
+        <div class="field-row">
+          <div class="field-group"><label>Games Shipped</label><input id="f-stat1" type="number"/></div>
+          <div class="field-group"><label>Years XP</label><input id="f-stat2" type="number"/></div>
+          <div class="field-group"><label>Game Jams Won</label><input id="f-stat3" type="number"/></div>
+        </div>
+        <button class="save-btn" onclick="saveProfile()">[ SAVE PROFILE ]</button>
+      </div>
+
+      <!-- PROJECTS TAB -->
+      <div class="admin-section" id="tab-projects">
+        <p class="section-title">Projects</p>
+        <div class="admin-list" id="proj-list"></div>
+        <button class="btn-add" onclick="addProject()">+ Add Project</button>
+        <div id="proj-editor" style="display:none;margin-top:1.5rem;background:var(--bg3);padding:1.5rem;border-radius:12px;border:1px solid var(--border);">
+          <p style="font-weight:600;margin-bottom:1rem;">Edit Project</p>
+          <div class="field-group"><label>Title</label><input id="pe-title"/></div>
+          <div class="field-group"><label>Description</label><textarea id="pe-desc"></textarea></div>
+          <div class="field-group"><label>Tags (comma-separated)</label><input id="pe-tags" placeholder="Unity, C#, RPG"/></div>
+          <div class="field-group"><label>Image path (optional)</label><input id="pe-image" placeholder="assets/img/game.png"/></div>
+          <div class="field-group"><label>Play URL (itch.io or local path)</label><input id="pe-play" placeholder="https://yourname.itch.io/game"/></div>
+          <div class="field-group"><label>YouTube Embed URL (optional)</label><input id="pe-video" placeholder="https://www.youtube.com/embed/..."/></div>
+          <div class="field-group"><label>Featured?</label><select id="pe-featured"><option value="false">No</option><option value="true">Yes</option></select></div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+            <button class="save-btn" onclick="saveProjEdit()">[ SAVE ]</button>
+            <button class="btn-del" onclick="document.getElementById('proj-editor').style.display='none'">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GAMES TAB -->
+      <div class="admin-section" id="tab-games">
+        <p class="section-title">Playable Web Games</p>
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem;">Upload your HTML game folders to the <code>games/</code> directory, then add them here. You can also link directly to itch.io embed URLs.</p>
+        <div class="admin-list" id="games-list"></div>
+        <button class="btn-add" onclick="addGame()">+ Add Game</button>
+        <div id="game-editor" style="display:none;margin-top:1.5rem;background:var(--bg3);padding:1.5rem;border-radius:12px;border:1px solid var(--border);">
+          <p style="font-weight:600;margin-bottom:1rem;">Edit Game</p>
+          <div class="field-group"><label>Title</label><input id="ge-title"/></div>
+          <div class="field-group"><label>Short Description</label><input id="ge-desc"/></div>
+          <div class="field-group"><label>Thumbnail Image (optional)</label><input id="ge-image" placeholder="assets/img/thumb.png"/></div>
+          <div class="field-group"><label>Embed URL (local path or itch.io)</label><input id="ge-url" placeholder="games/mygame/index.html"/></div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+            <button class="save-btn" onclick="saveGameEdit()">[ SAVE ]</button>
+            <button class="btn-del" onclick="document.getElementById('game-editor').style.display='none'">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDEOS TAB -->
+      <div class="admin-section" id="tab-videos">
+        <p class="section-title">Videos & Showreel</p>
+        <div class="admin-list" id="videos-list"></div>
+        <button class="btn-add" onclick="addVideo()">+ Add Video</button>
+        <div id="video-editor" style="display:none;margin-top:1.5rem;background:var(--bg3);padding:1.5rem;border-radius:12px;border:1px solid var(--border);">
+          <div class="field-group"><label>Title</label><input id="ve-title"/></div>
+          <div class="field-group"><label>Type</label>
+            <select id="ve-type">
+              <option value="youtube">YouTube Embed</option>
+              <option value="vimeo">Vimeo Embed</option>
+              <option value="local">Local MP4 File</option>
+            </select>
+          </div>
+          <div class="field-group"><label>Source URL / File Path</label><input id="ve-src" placeholder="https://www.youtube.com/embed/..."/></div>
+          <div style="display:flex;gap:0.75rem;">
+            <button class="save-btn" onclick="saveVideoEdit()">[ SAVE ]</button>
+            <button class="btn-del" onclick="document.getElementById('video-editor').style.display='none'">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINKS TAB -->
+      <div class="admin-section" id="tab-links">
+        <p class="section-title">Social Links</p>
+        <div class="field-group"><label>Email</label><input id="l-email" placeholder="mailto:you@email.com"/></div>
+        <div class="field-group"><label>Twitter / X</label><input id="l-twitter" placeholder="https://twitter.com/handle"/></div>
+        <div class="field-group"><label>itch.io</label><input id="l-itchio" placeholder="https://yourname.itch.io"/></div>
+        <div class="field-group"><label>GitHub</label><input id="l-github" placeholder="https://github.com/yourname"/></div>
+        <div class="field-group"><label>LinkedIn</label><input id="l-linkedin" placeholder="https://linkedin.com/in/yourname"/></div>
+        <button class="save-btn" onclick="saveLinks()">[ SAVE LINKS ]</button>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div class="admin-section" id="tab-settings">
+        <p class="section-title">Settings</p>
+        <div class="danger-box">
+          <h3>🔒 Change Admin Password</h3>
+          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">Password is stored in your browser's localStorage. For better security, consider using Netlify Identity or a similar service.</p>
+          <div class="field-group"><label>New Password</label><input type="password" id="new-pwd"/></div>
+          <div class="field-group"><label>Confirm Password</label><input type="password" id="conf-pwd"/></div>
+          <button class="save-btn" onclick="changePassword()">[ UPDATE PASSWORD ]</button>
+          <p id="pwd-msg" style="margin-top:0.75rem;font-size:0.85rem;"></p>
+        </div>
+
+        <div style="margin-top:2rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
+          <h3 style="margin-bottom:0.75rem;font-size:1rem;">📋 Export data.js</h3>
+          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">Copy this and replace your <code>js/data.js</code> file to make changes live on GitHub Pages.</p>
+          <textarea id="export-output" style="width:100%;min-height:300px;font-family:monospace;font-size:0.75rem;background:#0d0d1a;border:1px solid var(--border);border-radius:8px;padding:1rem;color:var(--text);resize:vertical;" readonly></textarea>
+          <button class="save-btn" style="margin-top:0.75rem;" onclick="copyExport()">[ COPY TO CLIPBOARD ]</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+//  ADMIN JS
+// =============================================
+
+const DEFAULT_PASSWORD = "gamedev2024";
+let currentEditIndex = -1;
+let currentEditType = "";
+
+// ---- Auth ----
+function doLogin() {
+  const pwd = document.getElementById("pwd").value;
+  const stored = localStorage.getItem("admin_pwd") || DEFAULT_PASSWORD;
+  if (pwd === stored) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("admin-panel").style.display = "block";
+    loadAdminData();
+  } else {
+    document.getElementById("login-err").style.display = "block";
+  }
+}
+function logout() {
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("admin-panel").style.display = "none";
+  document.getElementById("pwd").value = "";
+}
+
+// ---- Load data into form fields ----
+function loadAdminData() {
+  // Try loading from localStorage override first
+  const saved = localStorage.getItem("portfolio_data");
+  if (saved) {
+    try { Object.assign(PORTFOLIO_DATA, JSON.parse(saved)); } catch(e){}
+  }
+  const D = PORTFOLIO_DATA;
+  // Profile
+  setVal("f-name", D.name);
+  setVal("f-tagline", D.tagline);
+  setVal("f-bio", D.aboutBio);
+  setVal("f-body", D.aboutBody);
+  setVal("f-stat1", D.stats.gamesShipped);
+  setVal("f-stat2", D.stats.yearsXP);
+  setVal("f-stat3", D.stats.gameJamsWon);
+  // Links
+  setVal("l-email", D.links.email);
+  setVal("l-twitter", D.links.twitter);
+  setVal("l-itchio", D.links.itchio);
+  setVal("l-github", D.links.github);
+  setVal("l-linkedin", D.links.linkedin);
+  // Lists
+  renderProjList();
+  renderGamesList();
+  renderVideosList();
+  updateExport();
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val ?? "";
+}
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : "";
+}
+
+// ---- Save functions ----
+function saveAndPersist() {
+  localStorage.setItem("portfolio_data", JSON.stringify(PORTFOLIO_DATA));
+  const notice = document.getElementById("save-notice");
+  notice.style.display = "block";
+  setTimeout(() => notice.style.display = "none", 3000);
+  updateExport();
+}
+
+function saveProfile() {
+  PORTFOLIO_DATA.name = getVal("f-name");
+  PORTFOLIO_DATA.tagline = getVal("f-tagline");
+  PORTFOLIO_DATA.aboutBio = getVal("f-bio");
+  PORTFOLIO_DATA.aboutBody = getVal("f-body");
+  PORTFOLIO_DATA.stats.gamesShipped = parseInt(getVal("f-stat1")) || 0;
+  PORTFOLIO_DATA.stats.yearsXP = parseInt(getVal("f-stat2")) || 0;
+  PORTFOLIO_DATA.stats.gameJamsWon = parseInt(getVal("f-stat3")) || 0;
+  saveAndPersist();
+}
+
+function saveLinks() {
+  PORTFOLIO_DATA.links.email = getVal("l-email");
+  PORTFOLIO_DATA.links.twitter = getVal("l-twitter");
+  PORTFOLIO_DATA.links.itchio = getVal("l-itchio");
+  PORTFOLIO_DATA.links.github = getVal("l-github");
+  PORTFOLIO_DATA.links.linkedin = getVal("l-linkedin");
+  saveAndPersist();
+}
+
+// ---- Projects ----
+function renderProjList() {
+  const list = document.getElementById("proj-list");
+  list.innerHTML = "";
+  PORTFOLIO_DATA.projects.forEach((p, i) => {
+    const el = document.createElement("div");
+    el.className = "admin-card";
+    el.innerHTML = `
+      <div class="admin-card-info"><h3>${p.title}</h3><p>${p.tags.join(", ")}</p></div>
+      <div class="admin-card-actions">
+        <button class="btn-edit" onclick="editProject(${i})">Edit</button>
+        <button class="btn-del" onclick="deleteProject(${i})">Delete</button>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+function addProject() { editProject(-1); }
+function editProject(i) {
+  currentEditIndex = i;
+  currentEditType = "project";
+  const p = i >= 0 ? PORTFOLIO_DATA.projects[i] : {title:"",description:"",tags:[],image:"",playUrl:"",videoUrl:"",featured:false};
+  setVal("pe-title", p.title); setVal("pe-desc", p.description);
+  setVal("pe-tags", p.tags.join(", ")); setVal("pe-image", p.image);
+  setVal("pe-play", p.playUrl); setVal("pe-video", p.videoUrl);
+  document.getElementById("pe-featured").value = String(p.featured);
+  document.getElementById("proj-editor").style.display = "block";
+}
+function saveProjEdit() {
+  const p = {
+    id: currentEditIndex >= 0 ? PORTFOLIO_DATA.projects[currentEditIndex].id : "proj_"+Date.now(),
+    title: getVal("pe-title"), description: getVal("pe-desc"),
+    tags: getVal("pe-tags").split(",").map(t=>t.trim()).filter(Boolean),
+    image: getVal("pe-image"), playUrl: getVal("pe-play"), videoUrl: getVal("pe-video"),
+    featured: getVal("pe-featured") === "true"
+  };
+  if (currentEditIndex >= 0) PORTFOLIO_DATA.projects[currentEditIndex] = p;
+  else PORTFOLIO_DATA.projects.push(p);
+  document.getElementById("proj-editor").style.display = "none";
+  renderProjList(); saveAndPersist();
+}
+function deleteProject(i) {
+  if (!confirm("Delete this project?")) return;
+  PORTFOLIO_DATA.projects.splice(i, 1);
+  renderProjList(); saveAndPersist();
+}
+
+// ---- Games ----
+function renderGamesList() {
+  const list = document.getElementById("games-list");
+  list.innerHTML = "";
+  PORTFOLIO_DATA.webGames.forEach((g, i) => {
+    const el = document.createElement("div");
+    el.className = "admin-card";
+    el.innerHTML = `
+      <div class="admin-card-info"><h3>${g.title}</h3><p>${g.embedUrl}</p></div>
+      <div class="admin-card-actions">
+        <button class="btn-edit" onclick="editGame(${i})">Edit</button>
+        <button class="btn-del" onclick="deleteGame(${i})">Delete</button>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+function addGame() { editGame(-1); }
+function editGame(i) {
+  currentEditIndex = i;
+  const g = i >= 0 ? PORTFOLIO_DATA.webGames[i] : {title:"",description:"",image:"",embedUrl:""};
+  setVal("ge-title",g.title); setVal("ge-desc",g.description);
+  setVal("ge-image",g.image); setVal("ge-url",g.embedUrl);
+  document.getElementById("game-editor").style.display = "block";
+}
+function saveGameEdit() {
+  const g = { id: currentEditIndex >= 0 ? PORTFOLIO_DATA.webGames[currentEditIndex].id : "game_"+Date.now(),
+    title:getVal("ge-title"), description:getVal("ge-desc"), image:getVal("ge-image"), embedUrl:getVal("ge-url") };
+  if (currentEditIndex >= 0) PORTFOLIO_DATA.webGames[currentEditIndex] = g;
+  else PORTFOLIO_DATA.webGames.push(g);
+  document.getElementById("game-editor").style.display = "none";
+  renderGamesList(); saveAndPersist();
+}
+function deleteGame(i) {
+  if (!confirm("Delete this game?")) return;
+  PORTFOLIO_DATA.webGames.splice(i, 1);
+  renderGamesList(); saveAndPersist();
+}
+
+// ---- Videos ----
+function renderVideosList() {
+  const list = document.getElementById("videos-list");
+  list.innerHTML = "";
+  PORTFOLIO_DATA.videos.forEach((v, i) => {
+    const el = document.createElement("div");
+    el.className = "admin-card";
+    el.innerHTML = `
+      <div class="admin-card-info"><h3>${v.title}</h3><p>${v.type}</p></div>
+      <div class="admin-card-actions">
+        <button class="btn-edit" onclick="editVideo(${i})">Edit</button>
+        <button class="btn-del" onclick="deleteVideo(${i})">Delete</button>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+function addVideo() { editVideo(-1); }
+function editVideo(i) {
+  currentEditIndex = i;
+  const v = i >= 0 ? PORTFOLIO_DATA.videos[i] : {title:"",type:"youtube",src:"",thumb:""};
+  setVal("ve-title",v.title); document.getElementById("ve-type").value = v.type; setVal("ve-src",v.src);
+  document.getElementById("video-editor").style.display = "block";
+}
+function saveVideoEdit() {
+  const v = { id: currentEditIndex >= 0 ? PORTFOLIO_DATA.videos[currentEditIndex].id : "vid_"+Date.now(),
+    title:getVal("ve-title"), type:getVal("ve-type"), src:getVal("ve-src"), thumb:"" };
+  if (currentEditIndex >= 0) PORTFOLIO_DATA.videos[currentEditIndex] = v;
+  else PORTFOLIO_DATA.videos.push(v);
+  document.getElementById("video-editor").style.display = "none";
+  renderVideosList(); saveAndPersist();
+}
+function deleteVideo(i) {
+  if (!confirm("Delete this video?")) return;
+  PORTFOLIO_DATA.videos.splice(i, 1);
+  renderVideosList(); saveAndPersist();
+}
+
+// ---- Password ----
+function changePassword() {
+  const np = getVal("new-pwd"), cp = getVal("conf-pwd"), msg = document.getElementById("pwd-msg");
+  if (np.length < 6) { msg.style.color="#ff5555"; msg.textContent="Password must be at least 6 characters."; return; }
+  if (np !== cp) { msg.style.color="#ff5555"; msg.textContent="Passwords don't match."; return; }
+  localStorage.setItem("admin_pwd", np);
+  msg.style.color="var(--green)"; msg.textContent="✓ Password updated!";
+}
+
+// ---- Export ----
+function updateExport() {
+  const code = `const PORTFOLIO_DATA = ${JSON.stringify(PORTFOLIO_DATA, null, 2)};`;
+  const el = document.getElementById("export-output");
+  if (el) el.value = code;
+}
+function copyExport() {
+  const el = document.getElementById("export-output");
+  el.select(); document.execCommand("copy");
+  alert("Copied! Paste this into your js/data.js file.");
+}
+
+// ---- Tabs ----
+function showTab(id, btn) {
+  document.querySelectorAll(".admin-section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".sidebar-item").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+}
+</script>
+
+<!-- Load PORTFOLIO_DATA so admin can edit it -->
+<script src="../js/data.js"></script>
+</body>
+</html>
