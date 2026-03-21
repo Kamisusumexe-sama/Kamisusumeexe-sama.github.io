@@ -3,24 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>YourName — Game Developer</title>
+  <title id="page-title">Portfolio — Game Developer</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<!-- SCANLINE OVERLAY -->
 <div class="scanlines"></div>
-
-<!-- CURSOR TRAIL (js adds dots) -->
 <div id="cursor-trail"></div>
 
 <!-- ===== NAV ===== -->
 <nav class="navbar">
   <div class="nav-logo">
     <span class="pixel-bracket">[</span>
-    <span class="logo-name">YourName</span>
+    <span class="logo-name" id="nav-name"></span>
     <span class="pixel-bracket">]</span>
   </div>
   <ul class="nav-links">
@@ -29,39 +26,31 @@
     <li><a href="#games">Play</a></li>
     <li><a href="#showreel">Reel</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="pages/admin.html" class="nav-admin">⚙</a></li>
+    <li><a href="admin/index.html" class="nav-admin">⚙</a></li>
   </ul>
   <button class="nav-toggle" onclick="toggleMenu()">☰</button>
 </nav>
 
 <!-- ===== HERO ===== -->
 <section class="hero" id="home">
-  <div class="hero-bg">
-    <canvas id="starfield"></canvas>
+  <div class="hero-bg"><canvas id="starfield"></canvas></div>
+  <!-- Mascot — pixel art character, sits behind text -->
+  <div class="hero-mascot" aria-hidden="true">
+    <img src="assets/img/mascot.gif" alt="" class="mascot-img"/>
+    <div class="mascot-vignette"></div>
   </div>
+
   <div class="hero-content">
-    <p class="hero-eyebrow">// level 01 — loading player data</p>
+    <p class="hero-eyebrow"><span class="type-in">// level 01 — loading player data</span></p>
     <h1 class="hero-title">
-      <span class="glitch" data-text="Hi, I'm">Hi, I'm</span><br/>
-      <span class="hero-name">Your Name</span>
+      <span class="rgb-glitch" data-text="Hi, I'm" id="hi-im">Hi, I'm</span><br/>
+      <span class="hero-name scramble" id="hero-name"></span>
     </h1>
-    <p class="hero-subtitle">Game Developer · Designer · World Builder</p>
-    <div class="hero-tags">
-      <span class="tag">Unity</span>
-      <span class="tag">Godot</span>
-      <span class="tag">C#</span>
-      <span class="tag">Pixel Art</span>
-      <span class="tag">Game Design</span>
-    </div>
+    <p class="hero-subtitle flicker" id="hero-tagline"></p>
+    <div class="hero-tags" id="hero-tags"></div>
     <div class="hero-ctas">
       <a href="#projects" class="btn btn-primary">View My Work</a>
       <a href="#games" class="btn btn-ghost">Play My Games ▶</a>
-    </div>
-    <p class="easter-hint">psst... try the konami code 👀</p>
-  </div>
-  <div class="hero-character">
-    <div class="character-sprite">
-      <div class="sprite-body"></div>
     </div>
   </div>
 </section>
@@ -77,42 +66,19 @@
     <div class="about-grid">
       <div class="about-photo">
         <div class="photo-frame">
-          <div class="photo-placeholder">
-            <span>YOUR<br/>PHOTO</span>
-          </div>
+          <div class="photo-placeholder"><span>YOUR<br/>PHOTO</span></div>
           <div class="photo-border-anim"></div>
         </div>
         <div class="stat-cards">
-          <div class="stat-card"><span class="stat-num" data-target="12">0</span><span class="stat-label">Games Shipped</span></div>
-          <div class="stat-card"><span class="stat-num" data-target="5">0</span><span class="stat-label">Years XP</span></div>
-          <div class="stat-card"><span class="stat-num" data-target="3">0</span><span class="stat-label">Game Jams Won</span></div>
+          <div class="stat-card"><span class="stat-num" id="stat-games">0</span><span class="stat-label">Games Shipped</span></div>
+          <div class="stat-card"><span class="stat-num" id="stat-years">0</span><span class="stat-label">Years XP</span></div>
+          <div class="stat-card"><span class="stat-num" id="stat-jams">0</span><span class="stat-label">Game Jams Won</span></div>
         </div>
       </div>
       <div class="about-text">
-        <p class="about-intro" id="about-bio">Hey there! I'm a game developer who loves crafting immersive worlds and memorable characters. From pixel art platformers to 3D narrative adventures — I build games that feel alive.</p>
-        <p class="about-body" id="about-body">I specialize in Unity and Godot, with a strong eye for game feel, UI/UX, and storytelling. I believe games are the most powerful art form — and I'm here to prove it.</p>
-        <div class="skills-list">
-          <div class="skill-row">
-            <span>Unity / C#</span>
-            <div class="skill-bar"><div class="skill-fill" data-width="90"></div></div>
-          </div>
-          <div class="skill-row">
-            <span>Godot / GDScript</span>
-            <div class="skill-bar"><div class="skill-fill" data-width="80"></div></div>
-          </div>
-          <div class="skill-row">
-            <span>Pixel Art / Aseprite</span>
-            <div class="skill-bar"><div class="skill-fill" data-width="85"></div></div>
-          </div>
-          <div class="skill-row">
-            <span>Game Design</span>
-            <div class="skill-bar"><div class="skill-fill" data-width="92"></div></div>
-          </div>
-          <div class="skill-row">
-            <span>HTML5 / Web Games</span>
-            <div class="skill-bar"><div class="skill-fill" data-width="75"></div></div>
-          </div>
-        </div>
+        <p class="about-intro" id="about-bio"></p>
+        <p class="about-body" id="about-body"></p>
+        <div class="skills-list" id="skills-list"></div>
       </div>
     </div>
   </div>
@@ -126,9 +92,7 @@
       <h2 class="section-title">Projects</h2>
       <div class="section-line"></div>
     </div>
-    <div class="projects-grid" id="projects-grid">
-      <!-- Cards rendered by JS from data -->
-    </div>
+    <div class="projects-grid" id="projects-grid"></div>
   </div>
 </section>
 
@@ -141,11 +105,7 @@
       <div class="section-line"></div>
     </div>
     <p class="section-desc">These run right in your browser — no download needed.</p>
-    <div class="games-grid" id="games-grid">
-      <!-- Rendered by JS -->
-    </div>
-
-    <!-- INLINE GAME EMBED -->
+    <div class="games-grid" id="games-grid"></div>
     <div class="game-embed-area" id="game-embed-area" style="display:none;">
       <div class="game-embed-header">
         <span id="embed-title">Game Title</span>
@@ -156,7 +116,7 @@
   </div>
 </section>
 
-<!-- ===== SHOWREEL / VIDEOS ===== -->
+<!-- ===== SHOWREEL ===== -->
 <section class="showreel" id="showreel">
   <div class="container">
     <div class="section-header">
@@ -164,9 +124,7 @@
       <h2 class="section-title">Showreel</h2>
       <div class="section-line"></div>
     </div>
-    <div class="video-grid" id="video-grid">
-      <!-- Rendered by JS -->
-    </div>
+    <div class="video-grid" id="video-grid"></div>
   </div>
 </section>
 
@@ -180,8 +138,8 @@
     </div>
     <div class="contact-grid">
       <div class="contact-text">
-        <p id="contact-text">Looking for a game developer for your next project? Interested in collaborating on a jam? Just want to talk games? My inbox is always open!</p>
-        <div class="social-links" id="social-links-area">
+        <p id="contact-text"></p>
+        <div class="social-links">
           <a href="#" class="social-btn" id="link-email">✉ Email</a>
           <a href="#" class="social-btn" id="link-twitter">🐦 Twitter</a>
           <a href="#" class="social-btn" id="link-itchio">🎮 itch.io</a>
@@ -199,22 +157,9 @@
 <!-- ===== FOOTER ===== -->
 <footer class="footer">
   <p><span class="pixel-bracket">[</span> Made with ♥ & lots of coffee <span class="pixel-bracket">]</span></p>
-  <p class="footer-copy">© <span id="year"></span> YourName. All rights reserved.</p>
+  <p class="footer-copy">© <span id="year"></span> <span id="footer-name"></span>. All rights reserved.</p>
 </footer>
 
-<!-- ===== EASTER EGG GAME OVERLAY ===== -->
-<div class="easter-overlay" id="easterOverlay">
-  <div class="easter-modal">
-    <button class="easter-close" onclick="closeEaster()">✕</button>
-    <h2 class="easter-title">🎮 You found the secret!</h2>
-    <p>Catch the falling stars! Use ← → to move.</p>
-    <canvas id="easterCanvas" width="320" height="260"></canvas>
-    <p id="easterScore">Score: 0</p>
-    <button class="btn btn-primary" onclick="startEasterGame()">START</button>
-  </div>
-</div>
-
 <script src="js/main.js"></script>
-<script src="js/easter.js"></script>
 </body>
 </html>

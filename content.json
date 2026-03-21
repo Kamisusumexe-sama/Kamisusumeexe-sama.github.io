@@ -1,0 +1,55 @@
+{
+  "profile": {
+    "name": "Vanessa Asafo-Adjei",
+    "tagline": "Game Developer · Designer · World Builder",
+    "aboutBio": "I'm Vanessa — a Ghanaian game developer, narrative designer, and creative at heart who loves building games that tell stories.\nI recently wrapped up my National Service at LetiArts, one of Africa's leading game studios, where I shipped several titles, led a full game project, and taught game development to kids. I'm now a Unity Developer at Organised Khaos, where I continue to build and grow.\n",
+    "aboutBody": "Some highlights from my work: I built the Relax Mode for LetiArts' mobile game Sweave, and led Dial of Truth as Technical Lead — a cozy investigative desktop game celebrating modern African culture — handling everything from Unity/C# development and system design to narrative writing and team coordination. I also built HideAway, a web game that quietly racked up over 23,000 play sessions on MTN's Ayoba platform.\nWhat makes me a little different is that I genuinely love all sides of the process. I care deeply about writing — crafting characters, building worlds, and finding the story underneath the game. I get excited about design, the way mechanics and visuals come together to create a feeling. And I love art, from pixel art and 2D illustrations to the assets that bring a game's world to life. For me, code is just another creative tool.\nI work across C#, C++, Unity, narrative design, and 2D digital art — and I'm always most in my element when storytelling, design, and technology collide.\n",
+    "contactText": "",
+    "stats": {
+      "gamesShipped": 4,
+      "yearsXP": 2,
+      "gameJamsWon": 0
+    },
+    "skills": []
+  },
+  "links": {
+    "email": "",
+    "twitter": "",
+    "itchio": "",
+    "github": "",
+    "linkedin": "https://www.linkedin.com/in/vanessa-asafo-adjei/"
+  },
+  "projects": [
+    {
+      "id": "proj1",
+      "title": "Starfall Chronicles",
+      "description": "A narrative pixel-art RPG about a star that fell to earth. Built in Godot in 3 months.",
+      "tags": [
+        "Godot",
+        "Pixel Art",
+        "RPG"
+      ],
+      "image": "",
+      "playUrl": "https://vanessa.itch.io/starfall",
+      "videoUrl": "",
+      "featured": true
+    }
+  ],
+  "webGames": [
+    {
+      "id": "game1",
+      "title": "Starfall Chronicles",
+      "description": "Explore a fallen star's journey",
+      "image": "",
+      "embedUrl": "games/starfall/index.html"
+    }
+  ],
+  "videos": [
+    {
+      "id": "vid1",
+      "title": "2024 Showreel",
+      "type": "youtube",
+      "src": "https://www.youtube.com/embed/dQw4w9WgXcQ"
+    }
+  ]
+}

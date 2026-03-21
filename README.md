@@ -1,32 +1,41 @@
-# Portfolio
-My Portifolio
+# 🎮 Vanessa Asafo-Adjei — Portfolio
 
-## Netlify Admin Saving Setup
+One file controls all content. Admin saves directly to GitHub. No servers needed.
 
-This project now supports saving admin changes directly to your live Netlify site.
+---
 
-### 1) Install dependency
+## 🚀 Deploy to GitHub Pages
 
-Run:
+1. Create a repo: `Kamisusumeexe-sama.github.io`
+2. Upload ALL these files
+3. **Settings → Pages → Source: main branch → Save**
+4. Live at `https://Kamisusumeexe-sama.github.io` in ~1 min
 
-`npm install`
+---
 
-### 2) Add Netlify environment variable
+## ✏️ Admin Panel
 
-In Netlify dashboard for this site, add:
+Go to `yoursite/admin` and log in with a GitHub Personal Access Token:
 
-- `ADMIN_API_KEY` = a long secret string you create
+1. [github.com/settings/tokens/new](https://github.com/settings/tokens/new)
+2. Name it `portfolio-admin`, no expiration, tick `repo` scope
+3. Generate → copy → paste into admin login
 
-### 3) Deploy
+Every save commits directly to GitHub. Site updates in ~1 minute. ✨
 
-Deploy with Netlify so the function at `/.netlify/functions/portfolio-data` is active.
+---
 
-### 4) Use Admin page
+## 📁 Structure
 
-- Go to `pages/admin.html`
-- Make your edits
-- Open **Settings**
-- Paste the same API key into **Admin API Key**
-- Click **[ SAVE TO NETLIFY ]**
+```
+├── index.html       ← Main page
+├── content.json     ← ALL your content (one file!)
+├── admin/           ← Admin panel
+├── css/style.css    ← Colors & styles
+├── js/main.js       ← Loads content.json
+├── js/easter.js     ← Hidden mini game
+├── games/           ← HTML game folders go here
+└── assets/img/      ← Images
+```
 
-The homepage now fetches from Netlify first, so published admin changes appear on the website.
+## 🥚 Easter Egg: type `↑↑↓↓←→←→BA` on the site!

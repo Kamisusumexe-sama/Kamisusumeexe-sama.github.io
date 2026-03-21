@@ -1,7 +1,7 @@
-const PORTFOLIO_DATA = {
+{
   "name": "Vanessa Asafo-Adjei",
   "tagline": "Game Developer · Designer · World Builder",
-  "heroBio": "Hi, I'm Your Name",
+  "heroBio": "Hi, I'm Vanessa",
   "aboutBio": "Hey there! I'm a game developer who loves crafting immersive worlds and memorable characters. From pixel art platformers to 3D narrative adventures — I build games that feel alive.",
   "aboutBody": "I specialize in Unity and Godot, with a strong eye for game feel, UI/UX, and storytelling. I believe games are the most powerful art form — and I'm here to prove it.",
   "contactText": "Looking for a game developer for your next project? Interested in collaborating on a jam? Just want to talk games? My inbox is always open!",
@@ -115,4 +115,4 @@ const PORTFOLIO_DATA = {
       "thumb": ""
     }
   ]
-};
+}

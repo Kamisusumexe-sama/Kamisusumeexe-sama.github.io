@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Vanessa Asafo-Adjei</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0b0b18;--bg2:#12121f;--bg3:#1a1a2e;
+      --accent:#ff79c6;--accent2:#bd93f9;--green:#50fa7b;--yellow:#f1fa8c;
+      --text:#f8f8f2;--muted:#6272a4;--border:rgba(189,147,249,0.15);
+      --font-pixel:'Press Start 2P',monospace;--font-body:'DM Sans',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;}
+
+    /* ---- LOGIN ---- */
+    #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:1.5rem;padding:2rem;}
+    .login-box{background:var(--bg2);border:2px solid var(--accent);border-radius:14px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 0 40px rgba(255,121,198,0.2);}
+    .login-box h1{font-family:var(--font-pixel);font-size:0.8rem;color:var(--accent);margin-bottom:1.25rem;}
+    .mode-tabs{display:flex;gap:0.5rem;margin-bottom:1.5rem;}
+    .mode-tab{flex:1;padding:0.6rem;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;font-size:0.82rem;font-family:var(--font-body);transition:all 0.2s;}
+    .mode-tab.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+    .login-box label{display:block;font-size:0.8rem;color:var(--muted);margin-bottom:0.35rem;}
+    .login-box input{width:100%;padding:0.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.92rem;font-family:var(--font-body);outline:none;margin-bottom:1rem;transition:border-color 0.2s;}
+    .login-box input:focus{border-color:var(--accent);}
+    .login-box p.hint{color:var(--muted);font-size:0.78rem;margin-bottom:1.25rem;line-height:1.7;}
+    .error-msg{color:#ff5555;font-size:0.8rem;margin-top:0.6rem;display:none;}
+    .token-hint{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.25rem;max-width:420px;width:100%;display:none;}
+    .token-hint h3{font-size:0.85rem;margin-bottom:0.75rem;color:var(--accent2);}
+    .token-hint ol{padding-left:1.25rem;color:var(--muted);font-size:0.82rem;line-height:2.2;}
+    .token-hint a{color:var(--accent2);}
+    code{background:var(--bg);padding:0.1rem 0.4rem;border-radius:4px;font-size:0.78rem;color:var(--yellow);}
+
+    /* ---- ADMIN PANEL ---- */
+    #admin-panel{display:none;}
+    .admin-nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;}
+    .admin-nav h1{font-family:var(--font-pixel);font-size:0.7rem;color:var(--accent);}
+    .nav-right{display:flex;align-items:center;gap:1rem;}
+    .nav-right a{color:var(--muted);text-decoration:none;font-size:0.88rem;}
+    .nav-right a:hover{color:var(--text);}
+    .local-badge{background:var(--yellow);color:var(--bg);padding:0.2rem 0.6rem;border-radius:4px;font-size:0.65rem;font-family:var(--font-pixel);}
+    .saving-badge{color:var(--yellow);font-size:0.72rem;font-family:var(--font-pixel);display:none;}
+    .btn-logout{background:none;border:1px solid var(--border);color:var(--muted);padding:0.35rem 0.9rem;border-radius:6px;cursor:pointer;font-size:0.82rem;}
+    .btn-logout:hover{border-color:var(--accent);color:var(--accent);}
+
+    .admin-body{display:flex;min-height:calc(100vh - 60px);}
+    .sidebar{width:210px;background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0.75rem;flex-shrink:0;}
+    .sidebar-btn{display:flex;align-items:center;gap:0.6rem;width:100%;padding:0.6rem 0.8rem;border-radius:8px;background:none;border:none;color:var(--muted);font-size:0.88rem;cursor:pointer;text-align:left;margin-bottom:0.25rem;transition:all 0.15s;}
+    .sidebar-btn:hover,.sidebar-btn.active{background:var(--bg3);color:var(--text);}
+    .sidebar-btn.active{border-left:3px solid var(--accent);padding-left:calc(0.8rem - 3px);}
+
+    .content{flex:1;padding:2rem;overflow-y:auto;}
+    .tab{display:none;}.tab.active{display:block;}
+    .tab-title{font-family:var(--font-pixel);font-size:0.72rem;color:var(--accent);margin-bottom:1.5rem;}
+
+    .field{margin-bottom:1.25rem;}
+    .field label{display:block;font-size:0.8rem;color:var(--muted);margin-bottom:0.35rem;}
+    .field input,.field textarea,.field select{width:100%;padding:0.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem;font-family:var(--font-body);outline:none;transition:border-color 0.2s;resize:vertical;}
+    .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent2);}
+    .field textarea{min-height:90px;}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+
+    .btn-save{background:var(--green);color:var(--bg);border:none;padding:0.65rem 1.4rem;border-radius:8px;font-family:var(--font-pixel);font-size:0.58rem;cursor:pointer;transition:opacity 0.2s;}
+    .btn-save:hover{opacity:0.85;}
+    .btn-add{background:var(--accent2);color:var(--bg);border:none;padding:0.55rem 1.1rem;border-radius:8px;font-size:0.88rem;cursor:pointer;margin-bottom:0.5rem;}
+    .btn-edit{background:none;border:1px solid var(--accent2);color:var(--accent2);padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.78rem;}
+    .btn-del{background:none;border:1px solid #ff5555;color:#ff5555;padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.78rem;}
+    .btn-cancel{background:none;border:1px solid var(--border);color:var(--muted);padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.78rem;}
+
+    .item-list{display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem;}
+    .item-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+    .item-card h3{font-size:0.92rem;margin-bottom:0.2rem;}
+    .item-card p{font-size:0.78rem;color:var(--muted);}
+    .item-actions{display:flex;gap:0.4rem;flex-shrink:0;}
+
+    .editor{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-top:1.25rem;display:none;}
+    .editor h3{font-size:0.92rem;margin-bottom:1.25rem;color:var(--accent2);}
+    .editor-actions{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1rem;}
+
+    .toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg2);border:1px solid var(--green);border-radius:10px;padding:0.9rem 1.4rem;color:var(--green);font-size:0.88rem;z-index:9999;display:none;animation:slideUp 0.3s ease;}
+    .toast.error{border-color:#ff5555;color:#ff5555;}
+    @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+
+    /* ---- IMAGE UPLOAD ---- */
+    .img-upload-box {
+      width: 100%; height: 200px; border: 2px dashed var(--border-bright);
+      border-radius: 10px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; background: var(--bg3); transition: all 0.2s;
+      overflow: hidden; position: relative;
+    }
+    .img-upload-box.small { height: 130px; }
+    .img-upload-box:hover { border-color: var(--accent2); background: rgba(189,147,249,0.05); }
+    .img-upload-box > div { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.85rem; text-align: center; pointer-events: none; }
+    .img-dropzone {
+      border: 2px dashed var(--border-bright); border-radius: 12px;
+      padding: 2.5rem; text-align: center; background: var(--bg3);
+      margin-bottom: 1.5rem; cursor: pointer; transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: var(--muted);
+    }
+    .img-dropzone.drag-over { border-color: var(--accent); background: rgba(255,121,198,0.05); }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+    .gallery-item { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); aspect-ratio: 1; background: var(--bg3); }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gallery-item-actions { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; opacity: 0; transition: opacity 0.2s; }
+    .gallery-item:hover .gallery-item-actions { opacity: 1; }
+    .gallery-item-name { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: var(--muted); font-size: 0.7rem; padding: 0.3rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-copy { background: var(--accent2); color: var(--bg); border: none; padding: 0.3rem 0.7rem; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
+    .btn-del-img { background: none; border: 1px solid #ff5555; color: #ff5555; padding: 0.3rem 0.7rem; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
+
+    @media(max-width:640px){
+      .sidebar{width:52px;}
+      .sidebar-btn .label{display:none;}
+      .field-row,.field-row3{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>// Admin Panel</h1>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-pwd-btn" onclick="switchMode('password')">🔒 Password</button>
+      <button class="mode-tab" id="tab-token-btn" onclick="switchMode('token')">🔑 GitHub Token</button>
+    </div>
+
+    <!-- PASSWORD MODE -->
+    <div id="mode-password">
+      <p class="hint">Quick login for testing on Live Server. Changes stay local — won't update the live site.</p>
+      <label>Password</label>
+      <input type="password" id="local-pwd" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLocalLogin()"/>
+      <button class="btn-save" style="width:100%" onclick="doLocalLogin()">[ LOGIN ]</button>
+      <p style="color:var(--muted);font-size:0.75rem;margin-top:0.75rem;">Default password: <code>gamedev2024</code></p>
+    </div>
+
+    <!-- TOKEN MODE -->
+    <div id="mode-token" style="display:none;">
+      <p class="hint">Saves changes directly to GitHub and updates your live site.</p>
+      <label>GitHub Username</label>
+      <input type="text" id="gh-user" value="Kamisusumeexe-sama"/>
+      <label>Repository Name</label>
+      <input type="text" id="gh-repo" value="vanessaasafoadjei.com"/>
+      <label>Personal Access Token</label>
+      <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" onkeydown="if(event.key==='Enter')doGitHubLogin()"/>
+      <button class="btn-save" style="width:100%" onclick="doGitHubLogin()">[ LOGIN WITH GITHUB ]</button>
+    </div>
+
+    <p class="error-msg" id="login-err"></p>
+  </div>
+
+  <div class="token-hint" id="token-hint">
+    <h3>🔑 How to get a GitHub Token</h3>
+    <ol>
+      <li>Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a></li>
+      <li>Name: <code>portfolio-admin</code>, Expiration: <code>No expiration</code></li>
+      <li>Tick the <code>repo</code> checkbox</li>
+      <li>Click <code>Generate token</code> → copy it → paste above</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ===== ADMIN PANEL ===== -->
+<div id="admin-panel">
+  <nav class="admin-nav">
+    <h1>⚙ Admin</h1>
+    <div class="nav-right">
+      <span class="saving-badge" id="saving-badge">saving...</span>
+      <a href="../index.html" target="_blank">← View Site</a>
+      <button class="btn-logout" onclick="doLogout()">Log Out</button>
+    </div>
+  </nav>
+
+  <div class="admin-body">
+    <aside class="sidebar">
+      <button class="sidebar-btn active" onclick="showTab('tab-profile',this)">👤 <span class="label">Profile</span></button>
+      <button class="sidebar-btn" onclick="showTab('tab-projects',this)">🎮 <span class="label">Projects</span></button>
+      <button class="sidebar-btn" onclick="showTab('tab-games',this)">▶ <span class="label">Games</span></button>
+      <button class="sidebar-btn" onclick="showTab('tab-videos',this)">🎬 <span class="label">Videos</span></button>
+      <button class="sidebar-btn" onclick="showTab('tab-links',this)">🔗 <span class="label">Links</span></button>
+      <button class="sidebar-btn" onclick="showTab('tab-images',this)">🖼 <span class="label">Images</span></button>
+    </aside>
+
+    <div class="content">
+
+      <!-- PROFILE -->
+      <div class="tab active" id="tab-profile">
+        <p class="tab-title">Profile & About</p>
+        <div class="field"><label>Your Name</label><input id="p-name"/></div>
+        <div class="field"><label>Tagline</label><input id="p-tagline"/></div>
+        <div class="field"><label>About — intro paragraph</label><textarea id="p-bio"></textarea></div>
+        <div class="field"><label>About — body paragraph</label><textarea id="p-body"></textarea></div>
+        <div class="field"><label>Contact section text</label><textarea id="p-contact" style="min-height:70px;"></textarea></div>
+        <div class="field-row3">
+          <div class="field"><label>Games Shipped</label><input id="p-s1" type="number"/></div>
+          <div class="field"><label>Years XP</label><input id="p-s2" type="number"/></div>
+          <div class="field"><label>Game Jams Won</label><input id="p-s3" type="number"/></div>
+        </div>
+        <div class="field">
+          <label>Skills — one per line as: Name | Level (0-100)</label>
+          <textarea id="p-skills" style="min-height:130px;" placeholder="Unity / C# | 90&#10;Godot / GDScript | 80&#10;Pixel Art | 85"></textarea>
+        </div>
+        <div class="field">
+          <label>Profile Photo</label>
+          <div class="img-upload-box" id="profile-photo-box" onclick="document.getElementById('profile-photo-input').click()">
+            <img id="profile-photo-preview" src="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:6px;"/>
+            <div id="profile-photo-placeholder">
+              <span style="font-size:2rem;">📷</span>
+              <p>Click to upload profile photo</p>
+              <p style="font-size:0.75rem;color:var(--muted);">JPG, PNG, GIF — max 2MB</p>
+            </div>
+          </div>
+          <input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)"/>
+          <p style="color:var(--muted);font-size:0.78rem;margin-top:0.5rem;">💡 This replaces the "YOUR PHOTO" placeholder on the site.</p>
+        </div>
+        <button class="btn-save" onclick="saveProfile()">[ SAVE PROFILE ]</button>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="tab" id="tab-projects">
+        <p class="tab-title">Projects</p>
+        <div class="item-list" id="proj-list"></div>
+        <button class="btn-add" onclick="openEditor('proj',-1)">+ Add Project</button>
+        <div class="editor" id="proj-editor">
+          <h3 id="proj-editor-title">Project</h3>
+          <div class="field"><label>Title</label><input id="pe-title"/></div>
+          <div class="field"><label>Description</label><textarea id="pe-desc"></textarea></div>
+          <div class="field"><label>Tags (comma separated)</label><input id="pe-tags" placeholder="Unity, C#, RPG"/></div>
+          <div class="field">
+            <label>Project Cover Image</label>
+            <div class="img-upload-box small" id="proj-img-box" onclick="document.getElementById('proj-img-input').click()">
+              <img id="proj-img-preview" src="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:6px;"/>
+              <div id="proj-img-placeholder"><span style="font-size:1.5rem;">🖼</span><p>Click to upload</p></div>
+            </div>
+            <input type="file" id="proj-img-input" accept="image/*" style="display:none" onchange="handleImgUpload(this,'proj')"/>
+            <input type="hidden" id="pe-image"/>
+          </div>
+          <div class="field-row">
+            <div class="field" style="display:none"><label>Image path</label><input id="pe-image-unused" placeholder="assets/img/game.png"/></div>
+            <div class="field"><label>Featured?</label>
+              <select id="pe-featured"><option value="false">No</option><option value="true">Yes ★</option></select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Play URL</label><input id="pe-play" placeholder="https://vanessa.itch.io/game"/></div>
+            <div class="field"><label>YouTube Embed URL</label><input id="pe-video" placeholder="https://www.youtube.com/embed/..."/></div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-save" onclick="saveItem('proj')">[ SAVE ]</button>
+            <button class="btn-cancel" onclick="closeEditor('proj')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GAMES -->
+      <div class="tab" id="tab-games">
+        <p class="tab-title">Playable Web Games</p>
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem;">Upload HTML game folders to <code>games/</code> in your repo, then add them here.</p>
+        <div class="item-list" id="games-list"></div>
+        <button class="btn-add" onclick="openEditor('game',-1)">+ Add Game</button>
+        <div class="editor" id="game-editor">
+          <h3 id="game-editor-title">Game</h3>
+          <div class="field"><label>Title</label><input id="ge-title"/></div>
+          <div class="field"><label>Short Description</label><input id="ge-desc"/></div>
+          <div class="field">
+            <label>Game Thumbnail</label>
+            <div class="img-upload-box small" id="game-img-box" onclick="document.getElementById('game-img-input').click()">
+              <img id="game-img-preview" src="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:6px;"/>
+              <div id="game-img-placeholder"><span style="font-size:1.5rem;">🎮</span><p>Click to upload</p></div>
+            </div>
+            <input type="file" id="game-img-input" accept="image/*" style="display:none" onchange="handleImgUpload(this,'game')"/>
+            <input type="hidden" id="ge-image"/>
+          </div>
+          <div class="field-row">
+            <div class="field" style="display:none"><label>Thumbnail</label><input id="ge-image-unused" placeholder="assets/img/thumb.png"/></div>
+            <div class="field"><label>Embed URL</label><input id="ge-url" placeholder="games/mygame/index.html"/></div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-save" onclick="saveItem('game')">[ SAVE ]</button>
+            <button class="btn-cancel" onclick="closeEditor('game')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDEOS -->
+      <div class="tab" id="tab-videos">
+        <p class="tab-title">Videos & Showreel</p>
+        <div class="item-list" id="videos-list"></div>
+        <button class="btn-add" onclick="openEditor('video',-1)">+ Add Video</button>
+        <div class="editor" id="video-editor">
+          <h3 id="video-editor-title">Video</h3>
+          <div class="field"><label>Title</label><input id="ve-title"/></div>
+          <div class="field-row">
+            <div class="field"><label>Type</label>
+              <select id="ve-type">
+                <option value="youtube">YouTube</option>
+                <option value="vimeo">Vimeo</option>
+                <option value="local">Local MP4</option>
+              </select>
+            </div>
+            <div class="field"><label>URL or file path</label><input id="ve-src" placeholder="https://www.youtube.com/embed/..."/></div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-save" onclick="saveItem('video')">[ SAVE ]</button>
+            <button class="btn-cancel" onclick="closeEditor('video')">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMAGES GALLERY -->
+      <div class="tab" id="tab-images">
+        <p class="tab-title">Image Gallery</p>
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;">Upload images here to use across your portfolio. Images are stored as data URLs in content.json — they work instantly without any extra file uploads to GitHub.</p>
+        <div class="img-dropzone" id="gallery-dropzone">
+          <span style="font-size:2.5rem;">📁</span>
+          <p>Drop images here or <span style="color:var(--accent2);cursor:pointer;" onclick="document.getElementById('gallery-input').click()">click to browse</span></p>
+          <p style="font-size:0.78rem;color:var(--muted);">JPG, PNG, GIF, WebP — multiple files OK</p>
+          <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="handleGalleryUpload(this)"/>
+        </div>
+        <div class="gallery-grid" id="gallery-grid"></div>
+      </div>
+
+      <!-- LINKS -->
+      <div class="tab" id="tab-links">
+        <p class="tab-title">Social Links</p>
+        <div class="field"><label>Email</label><input id="l-email" placeholder="mailto:you@email.com"/></div>
+        <div class="field"><label>Twitter / X</label><input id="l-twitter" placeholder="https://twitter.com/handle"/></div>
+        <div class="field"><label>itch.io</label><input id="l-itchio" placeholder="https://vanessa.itch.io"/></div>
+        <div class="field"><label>GitHub</label><input id="l-github" placeholder="https://github.com/Kamisusumeexe-sama"/></div>
+        <div class="field"><label>LinkedIn</label><input id="l-linkedin" placeholder="https://linkedin.com/in/..."/></div>
+        <button class="btn-save" onclick="saveLinks()">[ SAVE LINKS ]</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+//  ADMIN JS
+// ============================================
+
+let GH_USER = null, GH_REPO = null, GH_TOKEN = null;
+let contentData = null;
+let editIndex = -1;
+
+// ---- MODE SWITCH ----
+function switchMode(mode) {
+  document.getElementById("mode-password").style.display = mode === "password" ? "block" : "none";
+  document.getElementById("mode-token").style.display    = mode === "token"    ? "block" : "none";
+  document.getElementById("token-hint").style.display    = mode === "token"    ? "block" : "none";
+  document.getElementById("tab-pwd-btn").classList.toggle("active",   mode === "password");
+  document.getElementById("tab-token-btn").classList.toggle("active", mode === "token");
+  document.getElementById("login-err").style.display = "none";
+}
+
+// ---- LOCAL PASSWORD LOGIN ----
+async function doLocalLogin() {
+  const pwd    = val("local-pwd");
+  const stored = localStorage.getItem("admin_pwd") || "gamedev2024";
+  if (!pwd) { showErr("Please enter a password."); return; }
+  if (pwd !== stored) { showErr("✕ Wrong password. Default is: gamedev2024"); return; }
+  GH_TOKEN = null;
+  await enterAdmin(true);
+}
+
+// ---- GITHUB TOKEN LOGIN ----
+async function doGitHubLogin() {
+  GH_USER  = val("gh-user").trim();
+  GH_REPO  = val("gh-repo").trim();
+  GH_TOKEN = val("gh-token").trim();
+  if (!GH_USER || !GH_REPO || !GH_TOKEN) { showErr("Please fill in all fields."); return; }
+  showErr("Connecting...");
+  const result = await ghGet("content.json");
+  if (!result) { showErr("✕ Could not connect. Check your token has 'repo' scope."); return; }
+  localStorage.setItem("gh_user",  GH_USER);
+  localStorage.setItem("gh_repo",  GH_REPO);
+  localStorage.setItem("gh_token", GH_TOKEN);
+  contentData = JSON.parse(atob(result.content.replace(/\n/g, "")));
+  await enterAdmin(false);
+}
+
+// ---- ENTER ADMIN ----
+async function enterAdmin(isLocal) {
+  if (isLocal) {
+    try {
+      const res = await fetch("../content.json");
+      if (!res.ok) throw new Error("not found");
+      contentData = await res.json();
+    } catch {
+      // fallback empty structure
+      contentData = {
+        profile: { name:"", tagline:"", aboutBio:"", aboutBody:"", contactText:"",
+          stats:{ gamesShipped:0, yearsXP:0, gameJamsWon:0 }, skills:[] },
+        links: {}, projects: [], webGames: [], videos: []
+      };
+    }
+    // Show LOCAL badge
+    const badge = document.createElement("span");
+    badge.className = "local-badge";
+    badge.textContent = "LOCAL";
+    document.querySelector(".nav-right").prepend(badge);
+  }
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("admin-panel").style.display  = "block";
+  loadAllFields();
+}
+
+// ---- LOGOUT ----
+function doLogout() {
+  localStorage.removeItem("gh_token");
+  contentData = null; GH_TOKEN = null;
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("admin-panel").style.display  = "none";
+  // Remove local badge if present
+  document.querySelector(".local-badge")?.remove();
+}
+
+// ---- ERROR ----
+function showErr(msg) {
+  const el = document.getElementById("login-err");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+// ---- GITHUB API ----
+async function ghGet(path) {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`, {
+      headers: { Authorization: `token ${GH_TOKEN}`, Accept: "application/vnd.github.v3+json" }
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch { return null; }
+}
+
+async function ghSave(path, content, message) {
+  try {
+    const current = await ghGet(path);
+    const sha = current ? current.sha : undefined;
+    const body = { message, content: btoa(unescape(encodeURIComponent(content))), ...(sha ? { sha } : {}) };
+    const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`, {
+      method: "PUT",
+      headers: { Authorization: `token ${GH_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
+// ---- PUSH CONTENT ----
+async function pushContent(message = "Updated portfolio content") {
+  if (!GH_TOKEN) {
+    // LOCAL MODE — write to content.json via a download
+    // This triggers a file download of the updated content.json
+    // which the user replaces in their folder — Live Server then auto-refreshes
+    localSave();
+    return;
+  }
+  // GITHUB MODE
+  document.getElementById("saving-badge").style.display = "inline";
+  const ok = await ghSave("content.json", JSON.stringify(contentData, null, 2), message);
+  document.getElementById("saving-badge").style.display = "none";
+  if (ok) toast("✓ Saved to GitHub! Site updates in ~1 minute.");
+  else    toast("✕ Save failed — check token permissions.", true);
+}
+
+// ---- LOCAL SAVE ----
+// Downloads updated content.json — drag it into your portfolio folder
+// Live Server detects the change and refreshes automatically
+function localSave() {
+  const json = JSON.stringify(contentData, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = "content.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("✓ content.json downloaded! Replace the file in your portfolio folder — Live Server will refresh automatically.");
+}
+
+// ---- LOAD ALL FIELDS ----
+function loadAllFields() {
+  const p = contentData.profile || {};
+  set("p-name",    p.name);
+  set("p-tagline", p.tagline);
+  set("p-bio",     p.aboutBio);
+  set("p-body",    p.aboutBody);
+  set("p-contact", p.contactText);
+  set("p-s1", p.stats?.gamesShipped);
+  set("p-s2", p.stats?.yearsXP);
+  set("p-s3", p.stats?.gameJamsWon);
+  set("p-skills", (p.skills||[]).map(s=>`${s.name} | ${s.level}`).join("\n"));
+  const l = contentData.links || {};
+  set("l-email",    l.email);
+  set("l-twitter",  l.twitter);
+  set("l-itchio",   l.itchio);
+  set("l-github",   l.github);
+  set("l-linkedin", l.linkedin);
+  renderList("proj",  contentData.projects  || [], i => `${i.title} — ${(i.tags||[]).join(", ")}`);
+  renderList("game",  contentData.webGames  || [], i => `${i.title} — ${i.embedUrl||""}`);
+  renderList("video", contentData.videos    || [], i => `${i.title} — ${i.type||""}`);
+}
+
+// ---- SAVE PROFILE ----
+async function saveProfile() {
+  contentData.profile = {
+    ...contentData.profile,
+    name:        val("p-name"),
+    tagline:     val("p-tagline"),
+    aboutBio:    val("p-bio"),
+    aboutBody:   val("p-body"),
+    contactText: val("p-contact"),
+    stats: {
+      gamesShipped: parseInt(val("p-s1"))||0,
+      yearsXP:      parseInt(val("p-s2"))||0,
+      gameJamsWon:  parseInt(val("p-s3"))||0,
+    },
+    skills: val("p-skills").split("\n").filter(Boolean).map(line => {
+      const [name, level] = line.split("|").map(s=>s.trim());
+      return { name: name||"", level: parseInt(level)||0 };
+    })
+  };
+  await pushContent("Updated profile");
+}
+
+// ---- SAVE LINKS ----
+async function saveLinks() {
+  contentData.links = {
+    email:    val("l-email"),
+    twitter:  val("l-twitter"),
+    itchio:   val("l-itchio"),
+    github:   val("l-github"),
+    linkedin: val("l-linkedin"),
+  };
+  await pushContent("Updated links");
+}
+
+// ---- RENDER LIST ----
+function renderList(type, items, labelFn) {
+  const listId = type === "proj" ? "proj-list" : type === "game" ? "games-list" : "videos-list";
+  const el = document.getElementById(listId);
+  el.innerHTML = "";
+  if (!items.length) { el.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;">None yet — click Add to get started.</p>`; return; }
+  items.forEach((item, i) => {
+    const card = document.createElement("div");
+    card.className = "item-card";
+    card.innerHTML = `
+      <div><h3>${item.title||"Untitled"}</h3><p>${labelFn(item)}</p></div>
+      <div class="item-actions">
+        <button class="btn-edit" onclick="openEditor('${type}',${i})">Edit</button>
+        <button class="btn-del"  onclick="deleteItem('${type}',${i})">Delete</button>
+      </div>`;
+    el.appendChild(card);
+  });
+}
+
+// ---- OPEN EDITOR ----
+function openEditor(type, i) {
+  editIndex = i;
+  const editorEl = document.getElementById(`${type}-editor`);
+  editorEl.style.display = "block";
+  document.getElementById(`${type}-editor-title`).textContent = i >= 0 ? "Edit" : "Add";
+  if (i < 0) {
+    editorEl.querySelectorAll("input, textarea").forEach(el => el.value = "");
+    if (type === "proj") document.getElementById("pe-featured").value = "false";
+    if (type === "video") document.getElementById("ve-type").value = "youtube";
+    return;
+  }
+  const arr = getArr(type);
+  const item = arr[i];
+  if (type === "proj") {
+    set("pe-title",  item.title);   set("pe-desc",  item.description);
+    set("pe-tags",   (item.tags||[]).join(", "));
+    set("pe-image",  item.image||""); set("pe-play", item.playUrl||""); set("pe-video", item.videoUrl||"");
+    document.getElementById("pe-featured").value = String(!!item.featured);
+  } else if (type === "game") {
+    set("ge-title", item.title); set("ge-desc",  item.description);
+    set("ge-image", item.image||""); set("ge-url", item.embedUrl||"");
+  } else {
+    set("ve-title", item.title); set("ve-src", item.src||"");
+    document.getElementById("ve-type").value = item.type||"youtube";
+  }
+}
+
+function closeEditor(type) {
+  document.getElementById(`${type}-editor`).style.display = "none";
+}
+
+// ---- SAVE ITEM ----
+async function saveItem(type) {
+  const arr = getArr(type);
+  let item;
+  const existingId = editIndex >= 0 ? arr[editIndex].id : null;
+  if (type === "proj") {
+    item = { id: existingId||"proj_"+Date.now(), title:val("pe-title"), description:val("pe-desc"),
+      tags: val("pe-tags").split(",").map(t=>t.trim()).filter(Boolean),
+      image:val("pe-image"), playUrl:val("pe-play"), videoUrl:val("pe-video"),
+      featured: val("pe-featured") === "true" };
+  } else if (type === "game") {
+    item = { id: existingId||"game_"+Date.now(), title:val("ge-title"),
+      description:val("ge-desc"), image:val("ge-image"), embedUrl:val("ge-url") };
+  } else {
+    item = { id: existingId||"vid_"+Date.now(), title:val("ve-title"),
+      type:document.getElementById("ve-type").value, src:val("ve-src") };
+  }
+  if (editIndex >= 0) arr[editIndex] = item; else arr.push(item);
+  const labelFns = {
+    proj:  i => `${i.title} — ${(i.tags||[]).join(", ")}`,
+    game:  i => `${i.title} — ${i.embedUrl||""}`,
+    video: i => `${i.title} — ${i.type||""}`,
+  };
+  renderList(type, arr, labelFns[type]);
+  closeEditor(type);
+  await pushContent(`Updated ${type}`);
+}
+
+// ---- DELETE ITEM ----
+async function deleteItem(type, i) {
+  if (!confirm("Delete this item?")) return;
+  getArr(type).splice(i, 1);
+  const labelFns = {
+    proj:  i => `${i.title} — ${(i.tags||[]).join(", ")}`,
+    game:  i => `${i.title} — ${i.embedUrl||""}`,
+    video: i => `${i.title} — ${i.type||""}`,
+  };
+  renderList(type, getArr(type), labelFns[type]);
+  await pushContent(`Deleted ${type}`);
+}
+
+// ---- HELPERS ----
+function getArr(type) {
+  return type === "proj" ? contentData.projects : type === "game" ? contentData.webGames : contentData.videos;
+}
+function val(id) { const el = document.getElementById(id); return el ? el.value : ""; }
+function set(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; }
+
+function toast(msg, isError = false) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast" + (isError ? " error" : "");
+  el.style.display = "block";
+  setTimeout(() => el.style.display = "none", 4000);
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".sidebar-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+}
+
+// Auto-fill saved GitHub creds on load
+window.addEventListener("DOMContentLoaded", () => {
+  const u = localStorage.getItem("gh_user");
+  const r = localStorage.getItem("gh_repo");
+  const t = localStorage.getItem("gh_token");
+  if (u) { set("gh-user", u); set("gh-repo", r); set("gh-token", t); }
+});
+
+// =============================================
+//  IMAGE HANDLING
+// =============================================
+
+// Converts file to base64 data URL
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    if (file.size > 2 * 1024 * 1024) {
+      reject(new Error("Image too large — max 2MB. Try compressing it first."));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+// ---- Profile photo upload ----
+async function handlePhotoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const dataUrl = await fileToBase64(file);
+    // Show preview
+    const preview = document.getElementById("profile-photo-preview");
+    const placeholder = document.getElementById("profile-photo-placeholder");
+    preview.src = dataUrl;
+    preview.style.display = "block";
+    placeholder.style.display = "none";
+    // Store in contentData
+    if (!contentData.profile) contentData.profile = {};
+    contentData.profile.photo = dataUrl;
+    toast("✓ Photo ready — click Save Profile to apply it.");
+  } catch(e) {
+    toast("✕ " + e.message, true);
+  }
+}
+
+// ---- Project / Game image upload ----
+async function handleImgUpload(input, type) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const dataUrl = await fileToBase64(file);
+    if (type === 'proj') {
+      document.getElementById("proj-img-preview").src = dataUrl;
+      document.getElementById("proj-img-preview").style.display = "block";
+      document.getElementById("proj-img-placeholder").style.display = "none";
+      document.getElementById("pe-image").value = dataUrl;
+    } else {
+      document.getElementById("game-img-preview").src = dataUrl;
+      document.getElementById("game-img-preview").style.display = "block";
+      document.getElementById("game-img-placeholder").style.display = "none";
+      document.getElementById("ge-image").value = dataUrl;
+    }
+    // Also add to gallery
+    addToGallery(dataUrl, file.name);
+    toast("✓ Image loaded!");
+  } catch(e) {
+    toast("✕ " + e.message, true);
+  }
+}
+
+// ---- Gallery upload ----
+async function handleGalleryUpload(input) {
+  const files = Array.from(input.files);
+  for (const file of files) {
+    try {
+      const dataUrl = await fileToBase64(file);
+      addToGallery(dataUrl, file.name);
+      if (!contentData.gallery) contentData.gallery = [];
+      contentData.gallery.push({ name: file.name, src: dataUrl });
+    } catch(e) {
+      toast("✕ " + file.name + ": " + e.message, true);
+    }
+  }
+  toast("✓ " + files.length + " image(s) added to gallery!");
+}
+
+// ---- Render gallery ----
+function renderGallery() {
+  const grid = document.getElementById("gallery-grid");
+  if (!grid) return;
+  const items = contentData.gallery || [];
+  if (!items.length) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No images yet — upload some above!</p>';
+    return;
+  }
+  grid.innerHTML = "";
+  items.forEach((img, i) => {
+    const el = document.createElement("div");
+    el.className = "gallery-item";
+    el.innerHTML = `
+      <img src="${img.src}" alt="${img.name}"/>
+      <div class="gallery-item-name">${img.name}</div>
+      <div class="gallery-item-actions">
+        <button class="btn-copy" onclick="copyImgSrc(${i})">Copy URL</button>
+        <button class="btn-del-img" onclick="deleteGalleryImg(${i})">Delete</button>
+      </div>`;
+    grid.appendChild(el);
+  });
+}
+
+function addToGallery(dataUrl, name) {
+  if (!contentData.gallery) contentData.gallery = [];
+  // Avoid duplicates
+  if (!contentData.gallery.find(g => g.name === name)) {
+    contentData.gallery.push({ name, src: dataUrl });
+  }
+  renderGallery();
+}
+
+function copyImgSrc(i) {
+  const src = (contentData.gallery || [])[i]?.src || "";
+  navigator.clipboard.writeText(src).then(() => toast("✓ Image URL copied!"));
+}
+
+function deleteGalleryImg(i) {
+  if (!confirm("Remove this image from the gallery?")) return;
+  (contentData.gallery || []).splice(i, 1);
+  renderGallery();
+  toast("✓ Removed from gallery.");
+}
+
+// ---- Drag and drop on dropzone ----
+window.addEventListener("DOMContentLoaded", () => {
+  const zone = document.getElementById("gallery-dropzone");
+  if (!zone) return;
+  zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("drag-over"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+  zone.addEventListener("drop", e => {
+    e.preventDefault();
+    zone.classList.remove("drag-over");
+    const fakeInput = { files: e.dataTransfer.files };
+    handleGalleryUpload(fakeInput);
+  });
+});
+
+// ---- Load profile photo preview when entering admin ----
+const _origLoadAllFields = loadAllFields;
+function loadAllFields() {
+  _origLoadAllFields();
+  // Load profile photo if exists
+  const photo = contentData?.profile?.photo;
+  if (photo) {
+    const preview = document.getElementById("profile-photo-preview");
+    const placeholder = document.getElementById("profile-photo-placeholder");
+    if (preview) { preview.src = photo; preview.style.display = "block"; }
+    if (placeholder) placeholder.style.display = "none";
+  }
+  // Load gallery
+  renderGallery();
+}
+
+// ---- Load project/game image previews when opening editor ----
+const _origOpenEditor = openEditor;
+function openEditor(type, i) {
+  _origOpenEditor(type, i);
+  if (type === 'proj') {
+    const img = i >= 0 ? (contentData.projects[i]?.image || "") : "";
+    const preview = document.getElementById("proj-img-preview");
+    const placeholder = document.getElementById("proj-img-placeholder");
+    if (img) { preview.src = img; preview.style.display = "block"; placeholder.style.display = "none"; }
+    else { preview.style.display = "none"; placeholder.style.display = "flex"; }
+  } else if (type === 'game') {
+    const img = i >= 0 ? (contentData.webGames[i]?.image || "") : "";
+    const preview = document.getElementById("game-img-preview");
+    const placeholder = document.getElementById("game-img-placeholder");
+    if (img) { preview.src = img; preview.style.display = "block"; placeholder.style.display = "none"; }
+    else { preview.style.display = "none"; placeholder.style.display = "flex"; }
+  }
+}
+
+</script>
+</body>
+</html>
