@@ -116,6 +116,37 @@
       .sidebar-btn .label{display:none;}
       .field-row,.field-row3{grid-template-columns:1fr;}
     }
+
+    /* ---- SHOWREEL PREVIEW ---- */
+    .sr-preview-box {
+      width:100%; height:220px; background:var(--bg3);
+      border:1px solid var(--border); border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden; position:relative;
+    }
+    .sr-preview-inner { display:flex; flex-direction:column; align-items:center; gap:0.4rem; text-align:center; padding:1rem; }
+
+    /* ---- BOOK NOOK ADMIN ---- */
+    .nook-section-head {
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap:1rem; margin-bottom:0.75rem;
+    }
+    .list-item {
+      background:var(--bg3); border:1px solid var(--border);
+      border-radius:8px; padding:0.75rem 1rem;
+      display:flex; align-items:center; justify-content:space-between; gap:1rem;
+      font-size:0.88rem;
+    }
+    .list-item small { color:var(--muted); }
+    .list-actions { display:flex; gap:0.4rem; flex-shrink:0; }
+    .list-actions button {
+      background:none; border:1px solid var(--border); color:var(--accent2);
+      padding:0.25rem 0.65rem; border-radius:5px; cursor:pointer; font-size:0.78rem;
+      transition:all 0.15s;
+    }
+    .list-actions button:hover { border-color:var(--accent2); background:rgba(189,147,249,0.08); }
+    .list-actions button[style*="ff5555"] { color:#ff5555 !important; border-color:rgba(255,85,85,0.3); }
+    .list-actions button[style*="ff5555"]:hover { background:rgba(255,85,85,0.08); border-color:#ff5555; }
   </style>
 </head>
 <body>
@@ -187,6 +218,8 @@
       <button class="sidebar-btn" onclick="showTab('tab-links',this)">🔗 <span class="label">Links</span></button>
       <button class="sidebar-btn" onclick="showTab('tab-images',this)">🖼 <span class="label">Images</span></button>
       <button class="sidebar-btn" onclick="showTab('tab-downloads',this)">⬇ <span class="label">Downloads</span></button>
+      <button class="sidebar-btn" onclick="showTab('tab-showreel',this)">📺 <span class="label">Showreel</span></button>
+      <button class="sidebar-btn" onclick="showTab('tab-booknook',this)">📚 <span class="label">Book Nook</span></button>
     </aside>
 
     <div class="content">
@@ -382,6 +415,132 @@
         <button class="btn-save" onclick="saveLinks()">[ SAVE LINKS ]</button>
       </div>
 
+      <!-- ===== SHOWREEL ===== -->
+      <div class="tab" id="tab-showreel">
+        <p class="tab-title">📺 Showreel</p>
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;">This video plays as a full-screen background directly below your hero header. Paste a YouTube or Vimeo URL — it autoplays muted and loops.</p>
+
+        <div class="sr-preview-box" id="sr-preview-box">
+          <div class="sr-preview-inner" id="sr-preview-inner">
+            <span style="font-size:2.5rem;">🎬</span>
+            <p style="color:var(--muted);font-size:0.85rem;margin-top:0.5rem;">No video set — paste a URL below to preview</p>
+          </div>
+          <iframe id="sr-preview-iframe" src="" style="display:none;width:100%;height:100%;border:none;border-radius:8px;pointer-events:none;" allowfullscreen></iframe>
+        </div>
+
+        <div class="field" style="margin-top:1.5rem;">
+          <label>Showreel Title <span style="color:var(--muted);font-weight:400;">(shown over the video)</span></label>
+          <input id="sr-title-input" placeholder="Watch the Reel"/>
+        </div>
+        <div class="field">
+          <label>YouTube or Vimeo URL</label>
+          <input id="sr-url-input" placeholder="https://www.youtube.com/watch?v=..." oninput="previewShowreel(this.value)"/>
+          <p style="color:var(--muted);font-size:0.75rem;margin-top:0.4rem;">Accepts: youtube.com/watch, youtu.be/, youtube.com/embed/, vimeo.com/</p>
+        </div>
+        <div class="field">
+          <label>Subtitle <span style="color:var(--muted);font-weight:400;">(small text below the title)</span></label>
+          <input id="sr-sub-input" placeholder="A glimpse of what I build."/>
+        </div>
+
+        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-top:0.5rem;">
+          <button class="btn-save" onclick="saveShowreel()">[ SAVE SHOWREEL ]</button>
+          <button class="btn-cancel" onclick="clearShowreel()">Clear Video</button>
+        </div>
+      </div>
+
+      <!-- ===== BOOK NOOK ===== -->
+      <div class="tab" id="tab-booknook">
+        <p class="tab-title">📚 Book Nook</p>
+
+        <div class="field">
+          <label>Section Description <span style="color:var(--muted);font-weight:400;">(intro text above the book)</span></label>
+          <input id="nook-desc-input" placeholder="Snippets from the worlds I'm building — pull up a chair."/>
+        </div>
+
+        <!-- Snippets -->
+        <div class="nook-section-head">
+          <div>
+            <h3 style="font-size:0.95rem;margin-bottom:0.2rem;">Writing Snippets</h3>
+            <p style="font-size:0.8rem;color:var(--muted);">Each snippet becomes a page in the book. They start on the Unread shelf and move to Read once opened by a visitor.</p>
+          </div>
+          <button class="btn-add" style="flex-shrink:0;" onclick="openSnippetEditor(-1)">+ Add Snippet</button>
+        </div>
+
+        <div class="item-list" id="snippets-list"></div>
+
+        <div class="editor" id="snippet-editor">
+          <h3 id="snippet-editor-title">New Snippet</h3>
+          <div class="field"><label>Title</label><input id="sn-title" placeholder="The Last Signal"/></div>
+          <div class="field-row">
+            <div class="field">
+              <label>Genre</label>
+              <select id="sn-genre" style="width:100%;padding:0.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);outline:none;">
+                <option value="FICTION">Fiction</option>
+                <option value="SCI-FI">Sci-Fi</option>
+                <option value="FANTASY">Fantasy</option>
+                <option value="HORROR">Horror</option>
+                <option value="ROMANCE">Romance</option>
+                <option value="MYSTERY">Mystery</option>
+                <option value="THRILLER">Thriller</option>
+                <option value="DRAMA">Drama</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Year</label><input id="sn-year" placeholder="2024"/></div>
+          </div>
+          <div class="field">
+            <label>Teaser <span style="color:var(--muted);font-weight:400;">(short blurb on the shelf, optional — auto-pulled from text if blank)</span></label>
+            <input id="sn-teaser" placeholder="A short hook to pull the reader in…"/>
+          </div>
+          <div class="field">
+            <label>Full Text <span style="color:var(--muted);font-weight:400;">(blank line = new paragraph; text is split across both book pages automatically)</span></label>
+            <textarea id="sn-text" style="min-height:260px;line-height:1.75;" placeholder="Your story text goes here.&#10;&#10;Each blank line becomes a new paragraph.&#10;&#10;The text is split across the left and right pages automatically."></textarea>
+          </div>
+          <div class="field">
+            <label>Word Count <span style="color:var(--muted);font-weight:400;">(leave blank to auto-count from text)</span></label>
+            <input id="sn-wordcount" type="number" placeholder="auto"/>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-save" onclick="saveSnippet()">[ SAVE SNIPPET ]</button>
+            <button class="btn-cancel" onclick="closeSnippetEditor()">Cancel</button>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border);margin:2rem 0 1.5rem;"></div>
+
+        <!-- Platform links -->
+        <div class="nook-section-head">
+          <div>
+            <h3 style="font-size:0.95rem;margin-bottom:0.2rem;">Platform Links</h3>
+            <p style="font-size:0.8rem;color:var(--muted);">Links shown below the book — Wattpad, Royal Road, AO3, etc.</p>
+          </div>
+          <button class="btn-add" style="flex-shrink:0;" onclick="openPlatformEditor(-1)">+ Add Link</button>
+        </div>
+
+        <div class="item-list" id="platforms-list"></div>
+
+        <div class="editor" id="platform-editor">
+          <h3 id="platform-editor-title">New Platform Link</h3>
+          <div class="field-row">
+            <div class="field"><label>Icon (emoji)</label><input id="pl-icon" placeholder="📖" style="font-size:1.4rem;"/></div>
+            <div class="field"><label>Platform Name</label><input id="pl-name" placeholder="Wattpad"/></div>
+          </div>
+          <div class="field"><label>URL</label><input id="pl-url" placeholder="https://www.wattpad.com/user/..."/></div>
+          <div class="field">
+            <label>Description <span style="color:var(--muted);font-weight:400;">(short tagline)</span></label>
+            <input id="pl-desc" placeholder="Read my longer works here."/>
+          </div>
+          <div class="editor-actions">
+            <button class="btn-save" onclick="savePlatform()">[ SAVE LINK ]</button>
+            <button class="btn-cancel" onclick="closePlatformEditor()">Cancel</button>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border);margin:2rem 0 1.5rem;"></div>
+        <button class="btn-save" onclick="saveBookNook()">[ SAVE ALL BOOK NOOK ]</button>
+        <p style="color:var(--muted);font-size:0.78rem;margin-top:0.6rem;">Saves the description, all snippets and platform links to your site in one go.</p>
+      </div>
+
     </div>
   </div>
 </div>
@@ -538,6 +697,8 @@ function loadAllFields() {
   if (!contentData.webGames)  contentData.webGames  = [];
   if (!contentData.videos)    contentData.videos    = [];
   if (!contentData.gallery)   contentData.gallery   = [];
+  if (!contentData.writingSnippets)  contentData.writingSnippets  = [];
+  if (!contentData.writingPlatforms) contentData.writingPlatforms = [];
 
   const p = contentData.profile || {};
   set("p-name",    p.name);
@@ -614,8 +775,10 @@ async function saveLinks() {
 
 // ---- RENDER LIST ----
 function renderList(type, items, labelFn) {
-  const listId = type === "proj" ? "proj-list" : type === "game" ? "games-list" : "videos-list";
+  const listIdMap = { proj: "proj-list", game: "games-list", video: "videos-list", dl: "dl-list" };
+  const listId = listIdMap[type] || (type + "-list");
   const el = document.getElementById(listId);
+  if (!el) return;
   el.innerHTML = "";
   if (!items.length) { el.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;">None yet — click Add to get started.</p>`; return; }
   items.forEach((item, i) => {
@@ -792,6 +955,12 @@ function showTab(id, btn) {
   document.querySelectorAll(".sidebar-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   btn.classList.add("active");
+  if (id === "tab-showreel") loadShowreelFields();
+  if (id === "tab-booknook") {
+    renderSnippetsList();
+    renderPlatformsList();
+    set("nook-desc-input", contentData.writingDesc || "");
+  }
 }
 
 // Auto-fill saved GitHub creds on load
@@ -970,6 +1139,225 @@ async function handleFileUpload(input) {
 
 // NOTE: loadAllFields and openEditor are defined earlier.
 // Image previews are loaded inline within those functions already via the calls below.
+
+
+
+// ============================================================
+//  SHOWREEL ADMIN
+// ============================================================
+function loadShowreelFields() {
+  const vid = (contentData.videos || []).find(v => v.isShowreel) || contentData.videos?.[0] || {};
+  set("sr-title-input", vid.title || "");
+  set("sr-url-input",   vid.src   || "");
+  set("sr-sub-input",   contentData.showreelSub || "");
+}
+
+function saveShowreel() {
+  if (!contentData.videos) contentData.videos = [];
+  const title = val("sr-title-input") || "Showreel";
+  const src   = val("sr-url-input").trim();
+  const sub   = val("sr-sub-input").trim();
+
+  contentData.showreelSub = sub;
+
+  // Find or create showreel entry
+  let idx = contentData.videos.findIndex(v => v.isShowreel);
+  const entry = {
+    id: idx >= 0 ? contentData.videos[idx].id : "showreel_main",
+    title, src, type: "youtube", isShowreel: true
+  };
+  if (idx >= 0) contentData.videos[idx] = entry;
+  else contentData.videos.unshift(entry);
+
+  pushContent("Update showreel");
+}
+
+function previewShowreel(raw) {
+  const box    = document.getElementById("sr-preview-box");
+  const iframe = document.getElementById("sr-preview-iframe");
+  const inner  = document.getElementById("sr-preview-inner");
+  if (!raw || !raw.trim()) {
+    iframe.style.display = "none";
+    iframe.src = "";
+    inner.style.display = "flex";
+    return;
+  }
+  // Build embed URL (muted, no controls, loop) — reuse main.js logic
+  let embed = "";
+  const ytMatch = raw.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  if (ytMatch) {
+    const id = ytMatch[1];
+    embed = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&controls=0&playlist=${id}`;
+  } else if (raw.includes("vimeo")) {
+    const vm = raw.match(/\d{6,}/);
+    if (vm) embed = `https://player.vimeo.com/video/${vm[0]}?autoplay=1&muted=1&loop=1&background=1`;
+  }
+  if (embed) {
+    iframe.src = embed;
+    iframe.style.display = "block";
+    inner.style.display  = "none";
+  } else {
+    iframe.style.display = "none";
+    inner.innerHTML = `<span style="font-size:2rem;">⚠️</span><p style="color:#ff5555;font-size:0.82rem;margin-top:0.4rem;">Couldn't parse URL — try a full youtube.com/watch or vimeo.com link</p>`;
+    inner.style.display = "flex";
+  }
+}
+
+function clearShowreel() {
+  if (!confirm("Remove the showreel video?")) return;
+  set("sr-url-input", "");
+  set("sr-title-input", "");
+  set("sr-sub-input", "");
+  previewShowreel("");
+  if (contentData.videos) {
+    contentData.videos = contentData.videos.filter(v => !v.isShowreel);
+  }
+  contentData.showreelSub = "";
+  pushContent("Cleared showreel");
+}
+
+// ============================================================
+//  BOOK NOOK ADMIN — Snippets
+// ============================================================
+let _editSnippetIdx = -1;
+
+function renderSnippetsList() {
+  const list = document.getElementById("snippets-list");
+  if (!list) return;
+  const items = contentData.writingSnippets || [];
+  if (!items.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:0.8rem;padding:0.5rem 0;">No snippets yet.</p>';
+    return;
+  }
+  list.innerHTML = "";
+  items.forEach((s, i) => {
+    const row = document.createElement("div");
+    row.className = "list-item";
+    row.innerHTML = `
+      <span>${s.title} <small style="color:var(--muted)">[${s.genre||"?"}]</small></span>
+      <div class="list-actions">
+        <button onclick="openSnippetEditor(${i})">Edit</button>
+        <button onclick="deleteSnippet(${i})" style="color:#ff5555;">Delete</button>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+
+function openSnippetEditor(idx) {
+  _editSnippetIdx = idx;
+  const s = idx >= 0 ? (contentData.writingSnippets || [])[idx] : {};
+  set("sn-title",     s.title     || "");
+  set("sn-genre",     s.genre     || "");
+  set("sn-year",      s.year      || "");
+  set("sn-teaser",    s.teaser    || "");
+  set("sn-text",      s.text      || "");
+  set("sn-wordcount", s.wordCount || "");
+  document.getElementById("snippet-editor-title").textContent = idx >= 0 ? "Edit Snippet" : "New Snippet";
+  document.getElementById("snippet-editor").style.display = "block";
+  document.getElementById("snippet-editor").scrollIntoView({ behavior: "smooth" });
+}
+
+function closeSnippetEditor() {
+  document.getElementById("snippet-editor").style.display = "none";
+  _editSnippetIdx = -1;
+}
+
+function saveSnippet() {
+  if (!contentData.writingSnippets) contentData.writingSnippets = [];
+  const text = val("sn-text").trim();
+  const wc = parseInt(val("sn-wordcount")) || text.split(/\s+/).length;
+  const entry = {
+    title: val("sn-title").trim() || "Untitled",
+    genre: val("sn-genre").trim().toUpperCase() || "FICTION",
+    year:  val("sn-year").trim(),
+    teaser: val("sn-teaser").trim(),
+    text, wordCount: wc
+  };
+  if (_editSnippetIdx >= 0) contentData.writingSnippets[_editSnippetIdx] = entry;
+  else contentData.writingSnippets.push(entry);
+  closeSnippetEditor();
+  renderSnippetsList();
+  toast("Snippet saved — click [ SAVE ALL BOOK NOOK ] to push.");
+}
+
+function deleteSnippet(i) {
+  if (!confirm("Delete this snippet?")) return;
+  contentData.writingSnippets.splice(i, 1);
+  renderSnippetsList();
+}
+
+// ============================================================
+//  BOOK NOOK ADMIN — Platform Links
+// ============================================================
+let _editPlatformIdx = -1;
+
+function renderPlatformsList() {
+  const list = document.getElementById("platforms-list");
+  if (!list) return;
+  const items = contentData.writingPlatforms || [];
+  if (!items.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:0.8rem;padding:0.5rem 0;">No platform links yet.</p>';
+    return;
+  }
+  list.innerHTML = "";
+  items.forEach((p, i) => {
+    const row = document.createElement("div");
+    row.className = "list-item";
+    row.innerHTML = `
+      <span>${p.icon || ""} ${p.name}</span>
+      <div class="list-actions">
+        <button onclick="openPlatformEditor(${i})">Edit</button>
+        <button onclick="deletePlatform(${i})" style="color:#ff5555;">Delete</button>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+
+function openPlatformEditor(idx) {
+  _editPlatformIdx = idx;
+  const p = idx >= 0 ? (contentData.writingPlatforms || [])[idx] : {};
+  set("pl-name", p.name || "");
+  set("pl-url",  p.url  || "");
+  set("pl-icon", p.icon || "");
+  set("pl-desc", p.desc || "");
+  document.getElementById("platform-editor-title").textContent = idx >= 0 ? "Edit Link" : "New Link";
+  document.getElementById("platform-editor").style.display = "block";
+  document.getElementById("platform-editor").scrollIntoView({ behavior: "smooth" });
+}
+
+function closePlatformEditor() {
+  document.getElementById("platform-editor").style.display = "none";
+  _editPlatformIdx = -1;
+}
+
+function savePlatform() {
+  if (!contentData.writingPlatforms) contentData.writingPlatforms = [];
+  const entry = {
+    name: val("pl-name").trim(),
+    url:  val("pl-url").trim(),
+    icon: val("pl-icon").trim() || "📖",
+    desc: val("pl-desc").trim()
+  };
+  if (_editPlatformIdx >= 0) contentData.writingPlatforms[_editPlatformIdx] = entry;
+  else contentData.writingPlatforms.push(entry);
+  closePlatformEditor();
+  renderPlatformsList();
+  toast("Link saved — click [ SAVE ALL BOOK NOOK ] to push.");
+}
+
+function deletePlatform(i) {
+  if (!confirm("Delete this link?")) return;
+  contentData.writingPlatforms.splice(i, 1);
+  renderPlatformsList();
+}
+
+function saveBookNook() {
+  if (!contentData.writingSnippets) contentData.writingSnippets = [];
+  if (!contentData.writingPlatforms) contentData.writingPlatforms = [];
+  contentData.writingDesc = val("nook-desc-input").trim();
+  pushContent("Update Book Nook content");
+}
+
 
 </script>
 </body>

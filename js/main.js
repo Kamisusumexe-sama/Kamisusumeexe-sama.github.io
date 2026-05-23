@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   animateStat("stat-jams",  p.stats?.gameJamsWon   || 0);
 
   // ---- SKILLS ----
+  window._profileSkills = p.skills || [];
   renderSkills(p.skills || []);
 
   // ---- FOOTER ----
@@ -77,8 +78,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   initRetroEffects(p.name || "");
   renderProjects(data.projects   || []);
   renderGames(data.webGames    || []);
-  renderVideos(data.videos      || []);
+  renderVideos(data.videos || [], data.showreelSub || '');
   renderDownloads(data.downloads || [], data.downloadsDesc || "");
+  renderReadingNook(data.writingSnippets || [], data.writingDesc || "", data.writingPlatforms || []);
+  renderArtGallery(data.artGallery || [], data.artDesc || "");
 
   // ---- EXTRAS ----
   initStarfield();
@@ -216,29 +219,106 @@ function closeEmbed() {
   document.getElementById("game-embed-area").style.display = "none";
 }
 
-// ---- Videos ----
-function renderVideos(videos) {
-  const grid = document.getElementById("video-grid");
-  if (!grid) return;
-  if (!videos.length) {
-    grid.innerHTML = '<p style="color:var(--muted)">No videos yet!</p>';
+// ---- Showreel (video background hero) ----
+let _srPlaying = false;
+
+function renderVideos(videos, showreelSub) {
+  // Find the primary showreel entry (first video or one marked showreel)
+  const main = videos.find(v => v.isShowreel) || videos[0];
+  const placeholder = document.getElementById("showreel-placeholder");
+  const content = document.querySelector(".showreel-content");
+  const wrap = document.getElementById("showreel-iframe-wrap");
+
+  if (!main || !main.src) {
+    if (placeholder) placeholder.classList.add("visible");
+    if (content) content.style.display = "none";
     return;
   }
-  grid.innerHTML = "";
-  videos.forEach(v => {
-    const el = document.createElement("div");
-    el.className = "video-card";
-    el.innerHTML = v.type === "local"
-      ? `<h3 class="video-title">${v.title}</h3><video controls src="${v.src}"></video>`
-      : `<h3 class="video-title">${v.title}</h3>
-         <div class="iframe-wrap">
-           <iframe src="${v.src}" frameborder="0" allowfullscreen
-             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-           </iframe>
-         </div>`;
-    grid.appendChild(el);
-  });
-  observeReveal(".video-card");
+  if (placeholder) placeholder.classList.remove("visible");
+  if (content) content.style.display = "";
+
+  // Build muted autoplay embed URL
+  const src = buildShowreelSrc(main.src);
+  if (wrap && src) {
+    const iframe = document.createElement("iframe");
+    iframe.src = src;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    iframe.setAttribute("tabindex", "-1");
+    wrap.appendChild(iframe);
+    setTimeout(() => iframe.classList.add("sr-loaded"), 600);
+  }
+
+  // Update text
+  const titleEl = document.getElementById("sr-title");
+  if (titleEl && main.title) titleEl.textContent = main.title;
+  const subEl = document.getElementById("sr-sub");
+  if (subEl && showreelSub) subEl.textContent = showreelSub;
+
+  // Spawn floating particles
+  spawnShowreelParticles();
+
+  // Pills from profile skills
+  const pillRow = document.getElementById("sr-pill-row");
+  if (pillRow) {
+    const pills = (window._profileSkills || []).slice(0, 5);
+    pillRow.innerHTML = pills.map((s, i) =>
+      `<span class="sr-pill" style="animation-delay:${1.1 + i * 0.1}s">${s.name || s}</span>`
+    ).join("");
+  }
+}
+
+function buildShowreelSrc(raw) {
+  if (!raw) return "";
+  // Already a full embed URL
+  if (raw.includes("embed")) return raw + (raw.includes("?") ? "&" : "?") + "autoplay=1&mute=1&loop=1&controls=0&playlist=" + extractYTId(raw);
+  // YouTube ID only
+  const ytId = extractYTId(raw);
+  if (ytId) return `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&loop=1&controls=0&playlist=${ytId}`;
+  // Vimeo
+  if (raw.includes("vimeo")) {
+    const vid = raw.match(/\d{6,}/)?.[0];
+    if (vid) return `https://player.vimeo.com/video/${vid}?autoplay=1&muted=1&loop=1&background=1`;
+  }
+  return raw;
+}
+function extractYTId(url) {
+  const m = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : (url.length === 11 ? url : null);
+}
+
+function srTogglePlay() {
+  _srPlaying = !_srPlaying;
+  const btn = document.getElementById("sr-play-btn");
+  const icon = document.getElementById("sr-play-icon");
+  const label = document.getElementById("sr-play-label");
+  const wrap = document.getElementById("showreel-iframe-wrap");
+  if (btn) btn.classList.toggle("playing", _srPlaying);
+  if (icon) icon.innerHTML = _srPlaying ? "&#9646;&#9646;" : "&#9654;";
+  if (label) label.textContent = _srPlaying ? "Pause" : "Play Showreel";
+  // Toggle iframe visibility
+  const iframe = wrap?.querySelector("iframe");
+  if (iframe) iframe.style.opacity = _srPlaying ? "0" : "1";
+}
+
+function spawnShowreelParticles() {
+  const container = document.getElementById("sr-particles");
+  if (!container) return;
+  const colors = ["#ff79c6","#bd93f9","#8be9fd","#50fa7b","#f1fa8c"];
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement("div");
+    p.className = "sr-particle";
+    const size = 2 + Math.random() * 4;
+    p.style.cssText = [
+      `width:${size}px`,`height:${size}px`,
+      `left:${Math.random()*100}%`,
+      `bottom:${-10 + Math.random()*20}%`,
+      `background:${colors[Math.floor(Math.random()*colors.length)]}`,
+      `animation-duration:${6 + Math.random()*10}s`,
+      `animation-delay:${Math.random()*8}s`
+    ].join(";");
+    container.appendChild(p);
+  }
 }
 
 // ---- Downloads ----
@@ -1007,4 +1087,256 @@ function openVideo(src, title) {
       </div>
     </div>`;
   document.body.appendChild(el);
+}
+
+// =============================================
+//  READING NOOK
+// =============================================
+// ---- Book Nook state ----
+let _nookSnippets = [];
+let _nookIdx = 0;
+let _readSet = new Set(); // track which indices have been read
+
+function renderReadingNook(snippets, desc, platforms) {
+  _nookSnippets = snippets;
+
+  const descEl = document.getElementById("reading-desc");
+  if (descEl && desc) descEl.textContent = desc;
+
+  // Build both shelves
+  _buildShelves();
+
+  // External platform links
+  const linksGrid = document.getElementById("nook-links-grid");
+  if (linksGrid) {
+    if (platforms.length) {
+      linksGrid.innerHTML = "";
+      platforms.forEach((p, i) => {
+        const a = document.createElement("a");
+        a.href = p.url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.className = "nook-link-card";
+        a.dataset.delay = i;
+        a.innerHTML = `
+          <span class="nook-link-icon">${p.icon || "📖"}</span>
+          <div>
+            <div class="nook-link-name">${p.name}</div>
+            <div class="nook-link-desc">${p.desc || "Read more of my writing here."}</div>
+          </div>`;
+        linksGrid.appendChild(a);
+      });
+      observeReveal(".nook-link-card");
+    } else {
+      linksGrid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Add your writing platform links via the admin panel.</p>';
+    }
+  }
+
+  spawnNookLetters();
+
+  if (snippets.length) bookLoadSnippet(0);
+}
+
+function _buildShelves() {
+  const unreadEl = document.getElementById("shelf-unread");
+  const readEl   = document.getElementById("shelf-read");
+  if (!unreadEl || !readEl) return;
+
+  unreadEl.innerHTML = "";
+  readEl.innerHTML   = "";
+
+  if (!_nookSnippets.length) {
+    unreadEl.innerHTML = '<p style="font-size:0.72rem;color:var(--muted);padding:0.5rem;">No snippets yet.</p>';
+    return;
+  }
+
+  _nookSnippets.forEach((s, i) => {
+    const isRead = _readSet.has(i);
+    const isActive = i === _nookIdx;
+    const item = document.createElement("div");
+    item.className = "shelf-item" + (isActive ? " active" : "");
+    item.innerHTML = `
+      <div class="shelf-item-genre">${s.genre || "FICTION"}</div>
+      <div class="shelf-item-title">${s.title}</div>
+      <span class="shelf-item-badge ${isRead ? "badge-read" : "badge-unread"}">${isRead ? "read" : "unread"}</span>`;
+    item.addEventListener("click", () => bookLoadSnippet(i));
+    if (isRead) {
+      readEl.appendChild(item);
+    } else {
+      unreadEl.appendChild(item);
+    }
+  });
+
+  if (!readEl.children.length) {
+    readEl.innerHTML = '<p style="font-size:0.7rem;color:var(--muted);padding:0.5rem;font-style:italic;">Nothing read yet…</p>';
+  }
+}
+
+function bookLoadSnippet(idx, direction) {
+  const prev = _nookIdx;
+  _nookIdx = idx;
+  _readSet.add(idx);
+
+  const s = _nookSnippets[idx];
+  if (!s) return;
+
+  const leftPage  = document.getElementById("book-page-left");
+  const rightPage = document.getElementById("book-page-right");
+  const dir = direction || (idx >= prev ? "next" : "prev");
+
+  // Flip animation
+  const outClassL = dir === "next" ? "flip-out-left"  : "flip-out-right";
+  const inClassL  = dir === "next" ? "flip-in-left"   : "flip-in-right";
+  const outClassR = dir === "next" ? "flip-out-right" : "flip-out-left";
+  const inClassR  = dir === "next" ? "flip-in-right"  : "flip-in-left";
+
+  // Animate out
+  [leftPage, rightPage].forEach(p => p && p.classList.add(outClassL));
+
+  setTimeout(() => {
+    // Update content
+    _fillBookPage(s, idx);
+
+    // Animate in
+    if (leftPage) { leftPage.classList.remove(outClassL); leftPage.classList.add(inClassL); }
+    if (rightPage) { rightPage.classList.remove(outClassR); rightPage.classList.add(inClassR); }
+
+    setTimeout(() => {
+      if (leftPage) leftPage.classList.remove(inClassL);
+      if (rightPage) rightPage.classList.remove(inClassR);
+    }, 370);
+  }, 350);
+
+  // Update shelves & controls
+  _buildShelves();
+
+  const prog = document.getElementById("book-progress");
+  if (prog) prog.textContent = `${idx + 1} / ${_nookSnippets.length}`;
+
+  const prevBtn = document.getElementById("book-prev");
+  const nextBtn = document.getElementById("book-next");
+  if (prevBtn) prevBtn.disabled = idx === 0;
+  if (nextBtn) nextBtn.disabled = idx === _nookSnippets.length - 1;
+}
+
+function _fillBookPage(s, idx) {
+  // Meta
+  const genreEl = document.getElementById("book-genre");
+  const yearEl  = document.getElementById("book-year");
+  const titleEl = document.getElementById("book-story-title");
+  const spineEl = document.getElementById("spine-title");
+  if (genreEl) genreEl.textContent = s.genre || "FICTION";
+  if (yearEl)  yearEl.textContent  = s.year  || "";
+  if (titleEl) titleEl.textContent = s.title;
+  if (spineEl) spineEl.textContent = s.title;
+
+  // Page numbers
+  const numL = document.getElementById("page-num-left");
+  const numR = document.getElementById("page-num-right");
+  if (numL) numL.textContent = `— ${idx * 2 + 1} —`;
+  if (numR) numR.textContent = `— ${idx * 2 + 2} —`;
+
+  // Split text into two halves
+  const paras = (s.text || "").split(/\n\n+/).filter(Boolean);
+  const half = Math.ceil(paras.length / 2);
+  const leftParas  = paras.slice(0, half);
+  const rightParas = paras.slice(half);
+
+  const leftBody  = document.getElementById("book-body-left");
+  const rightBody = document.getElementById("book-body-right");
+
+  function fillBody(el, paragraphs) {
+    if (!el) return;
+    el.innerHTML = "";
+    if (!paragraphs.length) { el.innerHTML = '<p style="color:#9b7a4a;font-style:italic;text-align:center;padding-top:2rem;">✦</p>'; return; }
+    paragraphs.forEach((para, i) => {
+      const p = document.createElement("p");
+      p.className = "book-para-in";
+      p.style.animationDelay = `${i * 0.05}s`;
+      p.textContent = para.trim();
+      el.appendChild(p);
+    });
+    el.scrollTop = 0;
+  }
+
+  fillBody(leftBody, leftParas);
+  fillBody(rightBody, rightParas);
+}
+
+function bookNav(dir) {
+  const next = Math.max(0, Math.min(_nookSnippets.length - 1, _nookIdx + dir));
+  if (next === _nookIdx) return;
+  bookLoadSnippet(next, dir === 1 ? "next" : "prev");
+}
+
+// Legacy aliases (admin panel may call these)
+function nookNav(dir) { bookNav(dir); }
+function nookLoadSnippet(idx) { bookLoadSnippet(idx); }
+
+function spawnNookLetters() {
+  const bg = document.getElementById("nook-letters-bg");
+  if (!bg) return;
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*<>/\\".split("");
+  for (let i = 0; i < 35; i++) {
+    const el = document.createElement("span");
+    el.className = "nook-letter";
+    el.textContent = chars[Math.floor(Math.random() * chars.length)];
+    el.style.cssText = [
+      `left:${Math.random()*100}%`,
+      `bottom:${Math.random()*100}%`,
+      `animation-duration:${10 + Math.random()*20}s`,
+      `animation-delay:${Math.random()*15}s`,
+      `font-size:${0.7 + Math.random()*1.5}rem`
+    ].join(";");
+    bg.appendChild(el);
+  }
+}
+
+// Legacy CRT functions kept as stubs (no longer rendered but called safely)
+function readerNav() {}
+function toggleCRT() {}
+
+// =============================================
+//  ART GALLERY
+// =============================================
+function renderArtGallery(items, desc) {
+  const descEl = document.getElementById('art-desc');
+  if (descEl && desc) descEl.textContent = desc;
+
+  const grid = document.getElementById('gallery-grid');
+  if (!grid) return;
+
+  if (!items.length) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No art yet — upload pieces via the admin panel!</p>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'gallery-item reveal';
+    el.innerHTML = `
+      ${item.image
+        ? `<img src="${item.image}" alt="${item.title}" loading="lazy"/>`
+        : `<div class="gallery-item-placeholder"><span>🎨</span><span>${item.title}</span></div>`}
+      <div class="gallery-overlay">
+        <div class="gallery-overlay-title">${item.title}</div>
+        <div class="gallery-overlay-tag">${item.medium || 'DIGITAL ART'}</div>
+      </div>`;
+    if (item.image) {
+      el.addEventListener('click', () => openLightbox(item.image, item.title));
+    }
+    grid.appendChild(el);
+  });
+  observeReveal('.gallery-item');
+}
+
+function openLightbox(src, title) {
+  const lb = document.createElement('div');
+  lb.className = 'gallery-lightbox';
+  lb.innerHTML = `
+    <button class="gallery-lightbox-close" onclick="this.parentElement.remove()">✕</button>
+    <img src="${src}" alt="${title}"/>`;
+  lb.addEventListener('click', e => { if (e.target === lb) lb.remove(); });
+  document.body.appendChild(lb);
 }

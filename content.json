@@ -120,5 +120,25 @@
       "fileName": "Vanessa Asafo-Adjei - Resume.pdf"
     }
   ],
-  "downloadsDesc": ""
+  "downloadsDesc": "",
+  "writingSnippets": [
+    {
+      "title": "ON A DRIFTWOOD AT SEA",
+      "genre": "OTHER",
+      "year": "2026",
+      "teaser": "A short Poem",
+      "text": "Wrecked at sea\nClinging on\nThe Sea frothes hungry\nMy neck stretches high\nBut the rescuers say\n“To stand up and walk”\nThe concerned monk\nSays “ embrace the waters”\nThe man who saw a wretched model\nSays the water will not drown\nBut all I see are sharks\nAnd driftwood I must climb.",
+      "wordCount": 54
+    },
+    {
+      "title": "THE DEFINITION OF CALM",
+      "genre": "OTHER",
+      "year": "2026",
+      "teaser": "A short Poem",
+      "text": "Boredom is good for the mind\nA talk, a walk, chatting too;\nThere’s nothing truly to unwind\nBecause truly, nothing’s left to do.",
+      "wordCount": 23
+    }
+  ],
+  "writingPlatforms": [],
+  "writingDesc": "Poems"
 }

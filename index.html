@@ -25,6 +25,8 @@
     <li><a href="#projects">Projects</a></li>
     <li><a href="#games">Play</a></li>
     <li><a href="#showreel">Reel</a></li>
+    <li><a href="#reading-nook">&#128214; Writing</a></li>
+    <li><a href="#art-gallery">&#127912; Art</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#downloads" class="nav-download">⬇ Downloads</a></li>
     <li><a href="admin/index.html" class="nav-admin">⚙</a></li>
@@ -53,6 +55,29 @@
       <a href="#projects" class="btn btn-primary">View My Work</a>
       <a href="#games" class="btn btn-ghost">Play My Games ▶</a>
     </div>
+  </div>
+</section>
+
+<!-- ===== SHOWREEL (moved here — seamless hero blend) ===== -->
+<section class="showreel-hero" id="showreel">
+  <div class="showreel-bg" id="showreel-bg">
+    <div class="showreel-iframe-wrap" id="showreel-iframe-wrap"></div>
+    <div class="showreel-overlay"></div>
+    <div class="sr-particles" id="sr-particles"></div>
+  </div>
+  <div class="showreel-content">
+    <p class="sr-eyebrow" id="sr-eyebrow">// 05 — showreel</p>
+    <h2 class="sr-title" id="sr-title">Watch the Reel</h2>
+    <p class="sr-sub" id="sr-sub">A glimpse of what I build.</p>
+    <button class="sr-play-btn" id="sr-play-btn" onclick="srTogglePlay()">
+      <span class="sr-play-icon" id="sr-play-icon">&#9654;</span>
+      <span id="sr-play-label">Play Showreel</span>
+    </button>
+    <div class="sr-pill-row" id="sr-pill-row"></div>
+  </div>
+  <div class="showreel-placeholder" id="showreel-placeholder">
+    <span class="sr-placeholder-icon">&#127909;</span>
+    <p>Showreel coming soon — add your YouTube or Vimeo URL via the admin panel.</p>
   </div>
 </section>
 
@@ -117,15 +142,103 @@
   </div>
 </section>
 
-<!-- ===== SHOWREEL ===== -->
-<section class="showreel" id="showreel">
+<!-- ===== BOOK NOOK ===== -->
+<section class="book-nook" id="reading-nook">
+  <div class="nook-letters-bg" id="nook-letters-bg" aria-hidden="true"></div>
+
   <div class="container">
     <div class="section-header">
-      <span class="section-num">05</span>
-      <h2 class="section-title">Showreel</h2>
+      <span class="section-num">06</span>
+      <h2 class="section-title">Book Nook</h2>
       <div class="section-line"></div>
     </div>
-    <div class="video-grid" id="video-grid"></div>
+    <p class="section-desc" id="reading-desc">Snippets from the worlds I'm building — pull up a chair.</p>
+
+    <!-- Book flip layout -->
+    <div class="book-stage" id="book-stage">
+
+      <!-- LEFT PANEL: Unread queue -->
+      <div class="book-shelf book-shelf-left" id="book-shelf-left">
+        <div class="shelf-label">
+          <span class="shelf-icon">📚</span>
+          <span>Unread</span>
+        </div>
+        <div class="shelf-list" id="shelf-unread"></div>
+      </div>
+
+      <!-- CENTER: The Book -->
+      <div class="book-wrap" id="book-wrap">
+        <div class="book" id="the-book">
+          <!-- Left page -->
+          <div class="book-page book-page-left" id="book-page-left">
+            <div class="page-content page-content-left">
+              <div class="page-ornament top-ornament">❧</div>
+              <div class="page-meta-row" id="page-meta-left">
+                <span class="page-genre" id="book-genre">FICTION</span>
+                <span class="page-sep">·</span>
+                <span class="page-year" id="book-year">2024</span>
+              </div>
+              <h3 class="page-title" id="book-story-title">Select a story</h3>
+              <div class="page-ornament mid-rule">✦ ✦ ✦</div>
+              <div class="page-body" id="book-body-left">
+                <p class="nook-empty-hint">Choose a snippet from either shelf to open it here.</p>
+              </div>
+              <div class="page-number" id="page-num-left">i</div>
+            </div>
+          </div>
+
+          <!-- Spine -->
+          <div class="book-spine">
+            <span class="spine-title" id="spine-title">— Select a Story —</span>
+          </div>
+
+          <!-- Right page -->
+          <div class="book-page book-page-right" id="book-page-right">
+            <div class="page-content page-content-right">
+              <div class="page-body" id="book-body-right"></div>
+              <div class="page-ornament bottom-ornament">❧</div>
+              <div class="page-number" id="page-num-right">ii</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page flip nav -->
+        <div class="book-controls">
+          <button class="book-btn" id="book-prev" onclick="bookNav(-1)">‹ Prev</button>
+          <span class="book-progress" id="book-progress"></span>
+          <button class="book-btn" id="book-next" onclick="bookNav(1)">Next ›</button>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL: Read -->
+      <div class="book-shelf book-shelf-right" id="book-shelf-right">
+        <div class="shelf-label">
+          <span class="shelf-icon">✅</span>
+          <span>Read</span>
+        </div>
+        <div class="shelf-list" id="shelf-read"></div>
+      </div>
+
+    </div><!-- /book-stage -->
+
+    <!-- External links -->
+    <div class="nook-links-section">
+      <h4 class="nook-links-heading">Read more of my work</h4>
+      <div class="nook-links-grid" id="nook-links-grid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ART GALLERY ===== -->
+<section class="art-gallery" id="art-gallery">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">Art Gallery</h2>
+      <div class="section-line"></div>
+    </div>
+    <p class="section-desc" id="art-desc">Original art — illustrations, concepts, and pixel work.</p>
+    <div class="gallery-grid" id="gallery-grid"></div>
   </div>
 </section>
 
@@ -146,6 +259,8 @@
           <a href="#" class="social-btn" id="link-itchio">🎮 itch.io</a>
           <a href="#" class="social-btn" id="link-github">⌨ GitHub</a>
           <a href="#" class="social-btn" id="link-linkedin">💼 LinkedIn</a>
+          <a href="#" class="social-btn" id="link-wattpad">📖 Wattpad</a>
+          <a href="#" class="social-btn" id="link-royalroad">📜 Royal Road</a>
         </div>
       </div>
       <div class="contact-art">
