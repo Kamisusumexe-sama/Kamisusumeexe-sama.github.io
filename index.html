@@ -58,26 +58,64 @@
   </div>
 </section>
 
-<!-- ===== SHOWREEL (moved here — seamless hero blend) ===== -->
+<!-- ===== SHOWREEL (retro CRT monitor, seamless below hero) ===== -->
 <section class="showreel-hero" id="showreel">
-  <div class="showreel-bg" id="showreel-bg">
-    <div class="showreel-iframe-wrap" id="showreel-iframe-wrap"></div>
-    <div class="showreel-overlay"></div>
-    <div class="sr-particles" id="sr-particles"></div>
+  <div class="sr-scene">
+    <!-- Desk surface -->
+    <div class="sr-desk">
+      <!-- CRT Monitor -->
+      <div class="sr-monitor" id="sr-monitor">
+        <div class="sr-monitor-body">
+          <!-- Top bezel brand -->
+          <div class="sr-brand-bar">
+            <span class="sr-brand-name">VANESSA·OS</span>
+            <span class="sr-brand-dots"><span></span><span></span><span></span></span>
+          </div>
+          <!-- Screen area -->
+          <div class="sr-screen-bezel">
+            <div class="sr-screen" id="sr-screen">
+              <!-- CRT scanline overlay -->
+              <div class="sr-scanlines"></div>
+              <!-- CRT glare -->
+              <div class="sr-glare"></div>
+              <!-- Video iframe injected here -->
+              <div class="showreel-iframe-wrap" id="showreel-iframe-wrap"></div>
+              <!-- Placeholder when no video -->
+              <div class="showreel-placeholder" id="showreel-placeholder">
+                <span class="sr-placeholder-icon">📺</span>
+                <p>No signal — add your showreel URL in the admin panel</p>
+                <span class="sr-blink">▌</span>
+              </div>
+            </div>
+          </div>
+          <!-- Bottom bezel controls -->
+          <div class="sr-controls-bar">
+            <div class="sr-control-knobs">
+              <div class="sr-knob" title="Brightness"></div>
+              <div class="sr-knob sr-knob-small" title="Contrast"></div>
+            </div>
+            <div class="sr-power-area">
+              <div class="sr-power-led" id="sr-power-led"></div>
+              <div class="sr-power-btn" onclick="srTogglePlay()" title="Toggle video"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Monitor neck + base -->
+        <div class="sr-neck"></div>
+        <div class="sr-base"></div>
+      </div>
+      <!-- Desk items -->
+      <div class="sr-desk-items">
+        <div class="sr-desk-item sr-coffee">☕</div>
+        <div class="sr-desk-item sr-floppy">💾</div>
+      </div>
+    </div>
   </div>
-  <div class="showreel-content">
-    <p class="sr-eyebrow" id="sr-eyebrow">// 05 — showreel</p>
-    <h2 class="sr-title" id="sr-title">Watch the Reel</h2>
-    <p class="sr-sub" id="sr-sub">A glimpse of what I build.</p>
-    <button class="sr-play-btn" id="sr-play-btn" onclick="srTogglePlay()">
-      <span class="sr-play-icon" id="sr-play-icon">&#9654;</span>
-      <span id="sr-play-label">Play Showreel</span>
-    </button>
-    <div class="sr-pill-row" id="sr-pill-row"></div>
-  </div>
-  <div class="showreel-placeholder" id="showreel-placeholder">
-    <span class="sr-placeholder-icon">&#127909;</span>
-    <p>Showreel coming soon — add your YouTube or Vimeo URL via the admin panel.</p>
+  <!-- Particles behind monitor -->
+  <div class="sr-particles" id="sr-particles"></div>
+  <!-- Floating section label -->
+  <div style="position:absolute;top:2.5rem;left:50%;transform:translateX(-50%);z-index:10;text-align:center;pointer-events:none;">
+    <span style="font-family:'Press Start 2P',monospace;font-size:0.38rem;letter-spacing:0.3em;color:rgba(189,147,249,0.55);text-transform:uppercase;text-shadow:0 0 20px rgba(189,147,249,0.4);">05 · Showreel</span>
   </div>
 </section>
 
@@ -292,5 +330,6 @@
 </footer>
 
 <script src="js/main.js"></script>
+<script src="js/critters.js"></script>
 </body>
 </html>

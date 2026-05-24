@@ -220,24 +220,32 @@ function closeEmbed() {
 }
 
 // ---- Showreel (video background hero) ----
-let _srPlaying = false;
+let _srPlaying = true;
 
 function renderVideos(videos, showreelSub) {
-  // Find the primary showreel entry (first video or one marked showreel)
   const main = videos.find(v => v.isShowreel) || videos[0];
   const placeholder = document.getElementById("showreel-placeholder");
-  const content = document.querySelector(".showreel-content");
   const wrap = document.getElementById("showreel-iframe-wrap");
+  const screen = document.getElementById("sr-screen");
 
   if (!main || !main.src) {
     if (placeholder) placeholder.classList.add("visible");
-    if (content) content.style.display = "none";
     return;
   }
   if (placeholder) placeholder.classList.remove("visible");
-  if (content) content.style.display = "";
 
-  // Build muted autoplay embed URL
+  // Detect aspect ratio from URL hint (default 16:9, support 4:3 and 9:16 vertical)
+  const isVertical = main.src.includes("shorts") || (main.aspectRatio === "9:16");
+  const isClassic  = main.aspectRatio === "4:3";
+  if (screen) {
+    screen.style.aspectRatio = isVertical ? "9 / 16" : isClassic ? "4 / 3" : "16 / 9";
+    // Constrain vertical video width so it doesn't stretch the whole monitor
+    if (isVertical) {
+      const monitor = document.getElementById("sr-monitor");
+      if (monitor) monitor.style.maxWidth = "380px";
+    }
+  }
+
   const src = buildShowreelSrc(main.src);
   if (wrap && src) {
     const iframe = document.createElement("iframe");
@@ -246,26 +254,10 @@ function renderVideos(videos, showreelSub) {
     iframe.allowFullscreen = true;
     iframe.setAttribute("tabindex", "-1");
     wrap.appendChild(iframe);
-    setTimeout(() => iframe.classList.add("sr-loaded"), 600);
+    setTimeout(() => iframe.classList.add("sr-loaded"), 800);
   }
 
-  // Update text
-  const titleEl = document.getElementById("sr-title");
-  if (titleEl && main.title) titleEl.textContent = main.title;
-  const subEl = document.getElementById("sr-sub");
-  if (subEl && showreelSub) subEl.textContent = showreelSub;
-
-  // Spawn floating particles
   spawnShowreelParticles();
-
-  // Pills from profile skills
-  const pillRow = document.getElementById("sr-pill-row");
-  if (pillRow) {
-    const pills = (window._profileSkills || []).slice(0, 5);
-    pillRow.innerHTML = pills.map((s, i) =>
-      `<span class="sr-pill" style="animation-delay:${1.1 + i * 0.1}s">${s.name || s}</span>`
-    ).join("");
-  }
 }
 
 function buildShowreelSrc(raw) {
@@ -289,16 +281,10 @@ function extractYTId(url) {
 
 function srTogglePlay() {
   _srPlaying = !_srPlaying;
-  const btn = document.getElementById("sr-play-btn");
-  const icon = document.getElementById("sr-play-icon");
-  const label = document.getElementById("sr-play-label");
-  const wrap = document.getElementById("showreel-iframe-wrap");
-  if (btn) btn.classList.toggle("playing", _srPlaying);
-  if (icon) icon.innerHTML = _srPlaying ? "&#9646;&#9646;" : "&#9654;";
-  if (label) label.textContent = _srPlaying ? "Pause" : "Play Showreel";
-  // Toggle iframe visibility
-  const iframe = wrap?.querySelector("iframe");
-  if (iframe) iframe.style.opacity = _srPlaying ? "0" : "1";
+  const screen = document.getElementById("sr-screen");
+  const led    = document.getElementById("sr-power-led");
+  if (screen) screen.classList.toggle("sr-paused", !_srPlaying);
+  if (led)    led.classList.toggle("off", !_srPlaying);
 }
 
 function spawnShowreelParticles() {
@@ -1058,14 +1044,20 @@ function initRetroEffects(realName) {
 
 
 // ---- Cursor trail ----
+const _trailColors = ['#ff79c6','#bd93f9','#8be9fd','#50fa7b','#f1fa8c','#ffb86c'];
+let _trailI = 0;
 function initCursorTrail() {
   document.addEventListener("mousemove", e => {
     const dot = document.createElement("div");
     dot.className = "trail-dot";
     dot.style.left = e.clientX + "px";
     dot.style.top  = e.clientY + "px";
+    const col = _trailColors[_trailI % _trailColors.length];
+    dot.style.background = col;
+    dot.style.boxShadow = `0 0 8px ${col}, 0 0 14px ${col}`;
+    _trailI++;
     document.body.appendChild(dot);
-    setTimeout(() => dot.remove(), 500);
+    setTimeout(() => dot.remove(), 700);
   });
 }
 
@@ -1134,7 +1126,7 @@ function renderReadingNook(snippets, desc, platforms) {
 
   spawnNookLetters();
 
-  if (snippets.length) bookLoadSnippet(0);
+  if (snippets.length) bookLoadSnippet(0, "open");
 }
 
 function _buildShelves() {
@@ -1180,34 +1172,48 @@ function bookLoadSnippet(idx, direction) {
   const s = _nookSnippets[idx];
   if (!s) return;
 
-  const leftPage  = document.getElementById("book-page-left");
   const rightPage = document.getElementById("book-page-right");
-  const dir = direction || (idx >= prev ? "next" : "prev");
+  const leftPage  = document.getElementById("book-page-left");
 
-  // Flip animation
-  const outClassL = dir === "next" ? "flip-out-left"  : "flip-out-right";
-  const inClassL  = dir === "next" ? "flip-in-left"   : "flip-in-right";
-  const outClassR = dir === "next" ? "flip-out-right" : "flip-out-left";
-  const inClassR  = dir === "next" ? "flip-in-right"  : "flip-in-left";
+  const dir = direction || (idx > prev ? "next" : idx < prev ? "prev" : "open");
 
-  // Animate out
-  [leftPage, rightPage].forEach(p => p && p.classList.add(outClassL));
+  function clearAnims(...els) {
+    els.forEach(el => {
+      if (!el) return;
+      el.classList.remove(
+        "rp-out-next","rp-in-next","rp-out-prev","rp-in-prev",
+        "lp-out-prev","lp-in-prev","lp-react-next","rp-react-prev"
+      );
+      void el.offsetWidth; // force reflow
+    });
+  }
 
-  setTimeout(() => {
-    // Update content
+  if (dir === "open") {
     _fillBookPage(s, idx);
-
-    // Animate in
-    if (leftPage) { leftPage.classList.remove(outClassL); leftPage.classList.add(inClassL); }
-    if (rightPage) { rightPage.classList.remove(outClassR); rightPage.classList.add(inClassR); }
-
+  } else if (dir === "next") {
+    // Right page curls away (hinge = spine/left), left page subtly reacts
+    clearAnims(rightPage, leftPage);
+    rightPage.classList.add("rp-out-next");
+    leftPage.classList.add("lp-react-next");
     setTimeout(() => {
-      if (leftPage) leftPage.classList.remove(inClassL);
-      if (rightPage) rightPage.classList.remove(inClassR);
-    }, 370);
-  }, 350);
+      _fillBookPage(s, idx);
+      clearAnims(rightPage, leftPage);
+      rightPage.classList.add("rp-in-next");
+      setTimeout(() => clearAnims(rightPage, leftPage), 440);
+    }, 420);
+  } else {
+    // Left page curls away (hinge = spine/right), right page subtly reacts
+    clearAnims(rightPage, leftPage);
+    leftPage.classList.add("lp-out-prev");
+    rightPage.classList.add("rp-react-prev");
+    setTimeout(() => {
+      _fillBookPage(s, idx);
+      clearAnims(rightPage, leftPage);
+      leftPage.classList.add("lp-in-prev");
+      setTimeout(() => clearAnims(rightPage, leftPage), 440);
+    }, 420);
+  }
 
-  // Update shelves & controls
   _buildShelves();
 
   const prog = document.getElementById("book-progress");
@@ -1249,10 +1255,8 @@ function _fillBookPage(s, idx) {
     if (!el) return;
     el.innerHTML = "";
     if (!paragraphs.length) { el.innerHTML = '<p style="color:#9b7a4a;font-style:italic;text-align:center;padding-top:2rem;">✦</p>'; return; }
-    paragraphs.forEach((para, i) => {
+    paragraphs.forEach((para) => {
       const p = document.createElement("p");
-      p.className = "book-para-in";
-      p.style.animationDelay = `${i * 0.05}s`;
       p.textContent = para.trim();
       el.appendChild(p);
     });
