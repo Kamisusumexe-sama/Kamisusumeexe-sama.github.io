@@ -86,6 +86,13 @@
   ],
   "videos": [
     {
+      "id": "showreel_main",
+      "title": "2024 Showreel",
+      "src": "https://youtu.be/CG9rlLzCk6Y",
+      "type": "youtube",
+      "isShowreel": true
+    },
+    {
       "id": "vid1",
       "title": "2024 Showreel",
       "type": "youtube",
@@ -137,8 +144,17 @@
       "teaser": "A short Poem",
       "text": "Boredom is good for the mind\nA talk, a walk, chatting too;\nThere’s nothing truly to unwind\nBecause truly, nothing’s left to do.",
       "wordCount": 23
+    },
+    {
+      "title": "PINHOLE IN A SNOWSTORM",
+      "genre": "OTHER",
+      "year": "2026",
+      "teaser": "A short Poem",
+      "text": "1. Seeing with a stick\nOr through other borrowed eyes\nIs the way we grow\nColors start to paint our blindness at 6\nBut colors don’t cross the door\nWhen we become teens\nThe colors start to fight viciously\nFighting to rush out the door\nAnd we follow helplessly\nWe can’t see without them anyways\nOn her 21st birthday, she was given a pinhole camera\nPushed into the world, eager to see the fighting colors\nOnly to see snow on every mile\nShocked, she looked again\nOnly snow\nLittle did she know\nThe colors were attacking from the blinders\nShe ran further into the snow, falling\nLooking into the camera, her lens were ripped\nOnly did she see the snowstorm and the colors from miles away\nRaging like the snowstorm\nShe turned to run\nWeren't the colors beautiful? How could they look so scary?\nRunning home faster, she fell and lost her camera\nShe wasn’t a good runner in the snow\nOnly to realize people all around had \nBig fancy cameras\nAnd it wasn't snowing at all\nThe snowstorm had been a snowstorm of white flashes\nShe had lost her camera\nThe colors were fighting to take pictures\nDetermined to have a taste of her colors\nWithout asking\n\n2. Seeing is with a stick\nOr through other borrowed eyes\nIs the way we grow\nColors paint our blindness at 6\nBut colors don’t cross the door\nWhen we become teens\nThe colors start to fight viciously\nFighting to rush out the door\nAnd we follow helplessly\nWe can’t see without them anyways\nOn her 21st birthday, she was given a pinhole camera\nPushed into the world, eager to see the fighting colors\nOnly to see snow on every mile\nShocked, she looked again\nOnly snow\nLittle did she know\nThe colors were attacking from the blinders\nShe ran further into the snow, falling\nLooking into the camera, her lens were ripped\nOnly did she see the snowstorm and the colors from miles away\nRaging like the snowstorm\nShe turned to run\nWeren't the colors beautiful? How cou   ld they look so scary?\nRunning home faster, she fell and lost her camera\nShe wasn’t a good runner in the snow\nOnly to realize people all around had \nBig fancy cameras\nAnd it wasn't snowing at all\nThe snowstorm had been a snowstorm of white flashes\nShe had lost her camera\nThe colors were fighting to take pictures\nDetermined to have a taste of her colors\nWithout asking",
+      "wordCount": 424
     }
   ],
   "writingPlatforms": [],
-  "writingDesc": "Poems"
+  "writingDesc": "Poems",
+  "showreelSub": "My Portifolio"
 }
