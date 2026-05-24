@@ -1,9 +1,9 @@
 {
   "name": "Vanessa Asafo-Adjei",
-  "tagline": "Game Developer · Designer · World Builder",
+  "tagline": "Game Developer \u00b7 Designer \u00b7 World Builder",
   "heroBio": "Hi, I'm Vanessa",
-  "aboutBio": "Hey there! I'm a game developer who loves crafting immersive worlds and memorable characters. From pixel art platformers to 3D narrative adventures — I build games that feel alive.",
-  "aboutBody": "I specialize in Unity and Godot, with a strong eye for game feel, UI/UX, and storytelling. I believe games are the most powerful art form — and I'm here to prove it.",
+  "aboutBio": "Hey there! I'm a game developer who loves crafting immersive worlds and memorable characters. From pixel art platformers to 3D narrative adventures \u2014 I build games that feel alive.",
+  "aboutBody": "I specialize in Unity and Godot, with a strong eye for game feel, UI/UX, and storytelling. I believe games are the most powerful art form \u2014 and I'm here to prove it.",
   "contactText": "Looking for a game developer for your next project? Interested in collaborating on a jam? Just want to talk games? My inbox is always open!",
   "stats": {
     "gamesShipped": 12,
@@ -57,7 +57,7 @@
     {
       "id": "proj2",
       "title": "BunnyBlast",
-      "description": "A frantic multiplayer party game. 72hr game jam entry — placed 2nd overall.",
+      "description": "A frantic multiplayer party game. 72hr game jam entry \u2014 placed 2nd overall.",
       "tags": [
         "Unity",
         "C#",
@@ -109,10 +109,49 @@
     },
     {
       "id": "vid2",
-      "title": "Starfall Chronicles — Trailer",
+      "title": "Starfall Chronicles \u2014 Trailer",
       "type": "youtube",
       "src": "https://www.youtube.com/embed/dQw4w9WgXcQ",
       "thumb": ""
+    }
+  ],
+  "downloadsDesc": "Everything you need \u2014 linked directly from Google Drive. Always up to date.",
+  "downloads": [
+    {
+      "title": "CV / R\u00e9sum\u00e9",
+      "description": "My full work history, skills & contact info",
+      "type": "PDF",
+      "icon": "cv",
+      "size": "248 KB",
+      "updated": "May 2025",
+      "driveUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_CV/view?usp=sharing"
+    },
+    {
+      "title": "Portfolio PDF",
+      "description": "Full project showcase with screenshots & writeups",
+      "type": "PDF",
+      "icon": "portfolio",
+      "size": "4.2 MB",
+      "updated": "May 2025",
+      "driveUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_PORTFOLIO/view?usp=sharing"
+    },
+    {
+      "title": "Game Design Document",
+      "description": "Sample GDD \u2014 Starfall Chronicles (Godot RPG)",
+      "type": "DOCX",
+      "icon": "doc",
+      "size": "1.1 MB",
+      "updated": "Mar 2025",
+      "driveUrl": "https://drive.google.com/file/d/YOUR_FILE_ID_GDD/view?usp=sharing"
+    },
+    {
+      "title": "Art Pack \u2014 Pixel Sprites",
+      "description": "Royalty-free sprite sheets from my jam games",
+      "type": "ZIP",
+      "icon": "art",
+      "size": "8.7 MB",
+      "updated": "Jan 2025",
+      "driveUrl": ""
     }
   ]
 }
