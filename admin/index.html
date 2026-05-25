@@ -155,6 +155,7 @@
 
 <!-- ===== LOGIN ===== -->
 <div id="login-screen">
+  <a href="../index.html" style="color:var(--muted);font-size:0.82rem;text-decoration:none;align-self:flex-start;margin-left:calc(50% - 210px);transition:color 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">← Back to site</a>
   <div class="login-box">
     <h1>// Admin Panel</h1>
 
@@ -165,11 +166,10 @@
 
     <!-- PASSWORD MODE -->
     <div id="mode-password">
-      <p class="hint">Quick login for testing on Live Server. Changes stay local — won't update the live site.</p>
+      <p class="hint">Quick login for local editing. Changes stay local — won't update the live site.</p>
       <label>Password</label>
-      <input type="password" id="local-pwd" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLocalLogin()"/>
+      <input type="password" id="local-pwd" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLocalLogin()"/>
       <button class="btn-save" style="width:100%" onclick="doLocalLogin()">[ LOGIN ]</button>
-      <p style="color:var(--muted);font-size:0.75rem;margin-top:0.75rem;">Default password: <code>gamedev2024</code></p>
     </div>
 
     <!-- TOKEN MODE -->
@@ -570,7 +570,7 @@ async function doLocalLogin() {
   const pwd    = val("local-pwd");
   const stored = localStorage.getItem("admin_pwd") || "gamedev2024";
   if (!pwd) { showErr("Please enter a password."); return; }
-  if (pwd !== stored) { showErr("✕ Wrong password. Default is: gamedev2024"); return; }
+  if (pwd !== stored) { showErr("✕ Incorrect password."); return; }
   GH_TOKEN = null;
   await enterAdmin(true);
 }
@@ -776,7 +776,7 @@ async function saveLinks() {
 
 // ---- RENDER LIST ----
 function renderList(type, items, labelFn) {
-  const listIdMap = { proj: "proj-list", game: "games-list", video: "videos-list", dl: "dl-list" };
+  const listIdMap = { proj: "proj-list", game: "games-list", video: "videos-list", dl: "downloads-list" };
   const listId = listIdMap[type] || (type + "-list");
   const el = document.getElementById(listId);
   if (!el) return;

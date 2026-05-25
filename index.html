@@ -12,7 +12,8 @@
 
 <div class="scanlines"></div>
 <div id="cursor-trail"></div>
-<div class="sunrise-transition" id="sunrise-transition" aria-hidden="true"><span></span></div>
+<div class="sunrise-transition" id="sunrise-transition" aria-hidden="true"></div>
+<div id="scroll-sun" aria-hidden="true"></div>
 
 <!-- ===== NAV ===== -->
 <nav class="navbar">
@@ -23,12 +24,12 @@
   </div>
   <ul class="nav-links">
     <li><a href="#home">Intro</a></li>
-    <li><a href="#about">About</a></li>
     <li><a href="#showreel">Reel</a></li>
+    <li><a href="#about">About</a></li>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#games">Play</a></li>
-    <li><a href="#art-gallery">&#127912; Art</a></li>
-    <li><a href="#reading-nook">&#128214; Writing</a></li>
+    <li><a href="#art-gallery">Art</a></li>
+    <li><a href="#reading-nook">Writing</a></li>
     <li><a href="#downloads" class="nav-download">CV</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="admin/index.html" class="nav-admin">⚙</a></li>
@@ -60,37 +61,9 @@
   </div>
 </section>
 
-<!-- ===== ABOUT ===== -->
-<section class="about" id="about">
-  <div class="container">
-    <div class="section-header">
-      <span class="section-num">02</span>
-      <h2 class="section-title">About Me</h2>
-      <div class="section-line"></div>
-    </div>
-    <div class="about-grid">
-      <div class="about-photo">
-        <div class="photo-frame">
-          <div class="photo-placeholder"><span>YOUR<br/>PHOTO</span></div>
-          <div class="photo-border-anim"></div>
-        </div>
-        <div class="stat-cards">
-          <div class="stat-card"><span class="stat-num" id="stat-games">0</span><span class="stat-label">Games Shipped</span></div>
-          <div class="stat-card"><span class="stat-num" id="stat-years">0</span><span class="stat-label">Years XP</span></div>
-          <div class="stat-card"><span class="stat-num" id="stat-jams">0</span><span class="stat-label">Game Jams Won</span></div>
-        </div>
-      </div>
-      <div class="about-text">
-        <p class="about-intro" id="about-bio"></p>
-        <p class="about-body" id="about-body"></p>
-        <div class="skills-list" id="skills-list"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ===== SHOWREEL ===== -->
 <section class="showreel-hero" id="showreel">
+  <div class="hero-bg" aria-hidden="true"><canvas id="showreel-canvas"></canvas></div>
   <div class="sr-scene">
     <div class="sr-desk">
       <div class="sr-monitor" id="sr-monitor">
@@ -132,8 +105,33 @@
     </div>
   </div>
   <div class="sr-particles" id="sr-particles"></div>
-  <div style="position:absolute;top:2.5rem;left:50%;transform:translateX(-50%);z-index:10;text-align:center;pointer-events:none;">
-    <span style="font-family:'Press Start 2P',monospace;font-size:0.38rem;letter-spacing:0.3em;color:rgba(189,147,249,0.55);text-transform:uppercase;text-shadow:0 0 20px rgba(189,147,249,0.4);">03 · Showreel</span>
+</section>
+
+<!-- ===== ABOUT ===== -->
+<section class="about" id="about">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">About Me</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="about-grid">
+      <div class="about-photo">
+        <div class="photo-frame">
+          <div class="photo-placeholder"><span>YOUR<br/>PHOTO</span></div>
+          <div class="photo-border-anim"></div>
+        </div>
+        <div class="stat-cards">
+          <div class="stat-card stat-card--games"><span class="stat-num" id="stat-games">0</span><span class="stat-label">Games Shipped</span></div>
+          <div class="stat-card stat-card--years"><span class="stat-num" id="stat-years">0</span><span class="stat-label">Years XP</span></div>
+        </div>
+      </div>
+      <div class="about-text">
+        <p class="about-intro" id="about-bio"></p>
+        <p class="about-body" id="about-body"></p>
+        <div class="skills-list" id="skills-list"></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -361,6 +359,7 @@
 
 <!-- ===== FOOTER ===== -->
 <footer class="footer">
+  <div class="footer-grass" aria-hidden="true"></div>
   <p><span class="pixel-bracket">[</span> Made with ♥ & lots of coffee <span class="pixel-bracket">]</span></p>
   <p class="footer-copy">© <span id="year"></span> <span id="footer-name"></span>. All rights reserved.</p>
 </footer>

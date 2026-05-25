@@ -16,23 +16,28 @@
   // absolutely in the gallery sky layer.
 
   const CLOUD_SHAPES = [
-    // Each shape is rows of pixel widths offset from left
-    // [row, colStart, colEnd] all in 4px units
-    [[1,2,5],[0,1,7],[0,0,8],[0,1,7],[1,3,6]],              // small puffy
-    [[2,4,9],[1,2,11],[0,1,12],[0,0,13],[1,2,11],[2,4,9]],  // medium
-    [[1,1,5],[0,0,6],[0,0,7],[0,1,6],[1,2,5]],              // tiny
-    [[2,5,10],[1,3,13],[0,2,15],[0,1,14],[1,3,12],[2,5,10]], // wide
+    // [row, colStart, colEnd] — 5 px per block
+    // classic 3-bump cumulus
+    [[2,3,7],[1,1,9],[0,0,11],[0,0,12],[1,1,10],[2,3,8]],
+    // wide flat stratus
+    [[1,4,12],[0,2,15],[0,1,16],[0,0,17],[1,3,14],[2,5,12]],
+    // tall fluffy
+    [[3,4,8],[2,2,10],[1,0,12],[0,0,13],[0,1,12],[1,2,10],[2,4,8]],
+    // compact puff
+    [[1,2,5],[0,1,6],[0,0,7],[0,1,6],[1,2,5]],
+    // big anvil
+    [[3,5,13],[2,3,16],[1,1,18],[0,0,19],[0,0,18],[1,2,16],[2,4,14],[3,6,12]],
   ];
 
   const CLOUD_PAL = [
-    'rgba(255,240,200,0.92)',  // warm white
-    'rgba(255,220,160,0.7)',   // amber edge
-    'rgba(255,255,245,0.55)',  // bright top
+    'rgba(255,255,255,0.92)',    // bright white
+    'rgba(220,238,255,0.76)',    // cool blue-white edge
+    'rgba(255,255,255,0.88)',    // top highlight
   ];
 
   function drawPixelCloud(canvas, shapeIdx) {
     const shape = CLOUD_SHAPES[shapeIdx % CLOUD_SHAPES.length];
-    const PX = 4; // pixels per "block"
+    const PX = 5; // bigger blocks for a chunkier pixel-art feel
     const W = (Math.max(...shape.map(r => r[2])) + 1) * PX;
     const H = shape.length * PX;
     canvas.width  = W;
@@ -43,19 +48,19 @@
     shape.forEach((row, ri) => {
       const [, c0, c1] = row;
       for (let c = c0; c < c1; c++) {
-        // Top row lighter, bottom slightly amber
+        // Top rows brightest white, middle solid, bottom has blue-shadow tint
         const pct = ri / (shape.length - 1);
-        ctx.fillStyle = pct < 0.3
-          ? CLOUD_PAL[2]
-          : pct > 0.75
-            ? CLOUD_PAL[1]
-            : CLOUD_PAL[0];
+        ctx.fillStyle = pct < 0.25
+          ? CLOUD_PAL[2]   // bright highlight
+          : pct > 0.72
+            ? CLOUD_PAL[1] // cool blue-white underside
+            : CLOUD_PAL[0];// solid white body
         ctx.fillRect(c * PX, ri * PX, PX, PX);
       }
-      // Dark pixel outline on bottom
+      // Single-pixel blue-shadow strip on the bottom row
       if (ri === shape.length - 1) {
         for (let c = row[1]; c < row[2]; c++) {
-          ctx.fillStyle = 'rgba(180,120,60,0.35)';
+          ctx.fillStyle = 'rgba(120,170,230,0.45)';
           ctx.fillRect(c * PX, ri * PX + PX - 1, PX, 1);
         }
       }
@@ -69,24 +74,33 @@
     gallery.querySelectorAll('.theme-cloud').forEach(c => c.remove());
 
     const W = window.innerWidth;
-    // 6–10 clouds scattered across the sky top portion
-    const count = 6 + Math.floor(Math.random() * 4);
+    // 9–14 clouds layered across the sky, with depth variation
+    const count = 9 + Math.floor(Math.random() * 5);
     for (let i = 0; i < count; i++) {
       const cv = document.createElement('canvas');
       cv.className = 'theme-cloud';
       drawPixelCloud(cv, i % CLOUD_SHAPES.length);
 
-      const scale = 1.5 + Math.random() * 2.5;
-      const x = Math.random() * (W - 200);
-      const y = 52 + Math.random() * 140;  // stay in sky area above wall
+      // Bigger, more varied scales — larger clouds feel more real
+      const scale = 2 + Math.random() * 4;
+      const x = Math.random() * (W - 100) - 80;  // allow slight offscreen
+      // Spread across a taller sky band for depth layering
+      const y = 48 + Math.random() * 180;
+
+      // Store base scale + per-cloud parallax speed/direction for scroll driver
+      cv.dataset.scale  = scale.toFixed(2);
+      cv.dataset.speed  = (0.4 + (i % 4) * 0.22).toFixed(3);
+      cv.dataset.dir    = i % 2 === 0 ? '1' : '-1';
+      cv.dataset.tx     = '0';
 
       cv.style.cssText = `
         left: ${x}px;
         top: ${y}px;
-        transform: scale(${scale});
+        transform: scale(${scale.toFixed(2)}) translateX(0px);
         transform-origin: top left;
-        opacity: ${0.4 + Math.random() * 0.4};
-        animation: cloudDrift ${18 + Math.random() * 14}s linear ${-Math.random() * 10}s infinite;
+        opacity: ${0.55 + Math.random() * 0.38};
+        filter: drop-shadow(0 4px 8px rgba(100,160,230,0.3));
+        will-change: transform;
       `;
       gallery.appendChild(cv);
     }
@@ -100,22 +114,24 @@
       50%  { transform: scale(var(--cs, 1)) translateX(28px); }
       100% { transform: scale(var(--cs, 1)) translateX(0); }
     }
-    /* Pixel sun */
+    /* Pixel sun — upper-right of gallery sky */
     .theme-sun {
       position: absolute;
       pointer-events: none;
       z-index: 1;
       image-rendering: pixelated;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%);
+      top: 55px;
+      right: 8%;
+      left: auto;
+      transform: scale(1.5);
+      transform-origin: top right;
       animation: sunPulse 3s ease-in-out infinite;
     }
     @keyframes sunPulse {
-      0%,100% { filter: drop-shadow(0 0 18px rgba(255,220,60,0.7)); }
-      50%      { filter: drop-shadow(0 0 36px rgba(255,200,40,0.9)); }
+      0%,100% { filter: drop-shadow(0 0 22px rgba(255,235,80,0.75)); }
+      50%      { filter: drop-shadow(0 0 44px rgba(255,220,50,0.95)); }
     }
-    /* Bird sprites */
+    /* Bird sprites — dark navy, visible on blue sky */
     .theme-bird {
       position: absolute;
       pointer-events: none;
@@ -123,7 +139,7 @@
       font-family: monospace;
       font-size: 10px;
       white-space: pre;
-      color: rgba(40,10,60,0.5);
+      color: rgba(20,40,90,0.55);
       animation: birdFly linear infinite;
       image-rendering: pixelated;
     }
@@ -443,6 +459,7 @@
 
   const galleryCritters = [];
   let sunnyCritterTimer = null;
+  let sunnyFirstTimer   = null;
 
   function spawnGalleryCritter(name) {
     const def = GC_SPRITES[name];
@@ -510,37 +527,40 @@
     const bubTimer = setInterval(showBubble, 5000 + Math.random() * 7000);
 
     const life = 16000 + Math.random() * 12000;
+    const entry = { wrap, ticker, bubTimer };
+    galleryCritters.push(entry);
+
     setTimeout(() => {
       clearInterval(ticker); clearInterval(bubTimer);
       wrap.style.transition = 'opacity 0.6s';
       wrap.style.opacity = '0';
       setTimeout(() => wrap.remove(), 700);
+      // self-remove so the live-count stays accurate for the spawn guard
+      const idx = galleryCritters.indexOf(entry);
+      if (idx !== -1) galleryCritters.splice(idx, 1);
     }, life);
-
-    galleryCritters.push({ wrap, ticker, bubTimer });
   }
 
   function spawnSunnySideCritters() {
-    if (sunnyCritterTimer || galleryCritters.length) return;
-    const names = ['ladybug', 'butterfly', 'bee'];
-    names.forEach((name, i) => {
-      setTimeout(() => {
-        if (currentTheme === 'gallery' || currentTheme === 'booknook') spawnGalleryCritter(name);
-      }, i * 550);
-    });
+    if (sunnyCritterTimer) return;
+    const names = ['ladybug', 'butterfly', 'bee', 'bunny', 'frog'];
+    const pick  = () => names[Math.floor(Math.random() * names.length)];
+
+    // One surprise guest after a short delay — feels like they wandered in
+    sunnyFirstTimer = setTimeout(() => {
+      if (currentTheme === 'gallery' || currentTheme === 'booknook') spawnGalleryCritter(pick());
+    }, 3000 + Math.random() * 3000);
+
+    // Rare follow-ups — max 2 on screen, long quiet gaps so each appearance is funny
     sunnyCritterTimer = setInterval(() => {
       if (currentTheme !== 'gallery' && currentTheme !== 'booknook') return;
-      if (galleryCritters.length < 5) {
-        spawnGalleryCritter(names[Math.floor(Math.random() * names.length)]);
-      }
-    }, 5200);
+      if (galleryCritters.length < 2) spawnGalleryCritter(pick());
+    }, 18000);
   }
 
   function clearGalleryCritters() {
-    if (sunnyCritterTimer) {
-      clearInterval(sunnyCritterTimer);
-      sunnyCritterTimer = null;
-    }
+    if (sunnyFirstTimer)   { clearTimeout(sunnyFirstTimer);   sunnyFirstTimer   = null; }
+    if (sunnyCritterTimer) { clearInterval(sunnyCritterTimer); sunnyCritterTimer = null; }
     galleryCritters.forEach(({ wrap, ticker, bubTimer }) => {
       clearInterval(ticker); clearInterval(bubTimer);
       wrap.style.transition = 'opacity 0.4s';
@@ -556,10 +576,31 @@
   function triggerSunrise() {
     const layer = document.getElementById('sunrise-transition');
     if (!layer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    // Clear any leftover cloud elements from a previous trigger
+    layer.querySelectorAll('.sr-cloud').forEach(c => c.remove());
+
+    // Inject three clouds drifting in from alternating sides
+    [
+      { top: '20%', left: '-22%', w: '28vmin', cls: 'sr-cloud-a' },
+      { top: '40%', left: '106%', w: '18vmin', cls: 'sr-cloud-b' },
+      { top: '10%', left: '-32%', w: '36vmin', cls: 'sr-cloud-c' },
+    ].forEach(cfg => {
+      const cloud = document.createElement('div');
+      cloud.className = `sr-cloud ${cfg.cls}`;
+      cloud.style.cssText =
+        `position:absolute;top:${cfg.top};left:${cfg.left};` +
+        `width:${cfg.w};height:calc(${cfg.w} * 0.42);`;
+      layer.appendChild(cloud);
+    });
+
     layer.classList.remove('sunrise-active');
     void layer.offsetWidth;
     layer.classList.add('sunrise-active');
-    window.setTimeout(() => layer.classList.remove('sunrise-active'), 1900);
+    window.setTimeout(() => {
+      layer.classList.remove('sunrise-active');
+      layer.querySelectorAll('.sr-cloud').forEach(c => c.remove());
+    }, 4000);
   }
 
   function applyTheme(theme) {
@@ -572,19 +613,17 @@
 
     if (theme === 'gallery') {
       if (previousTheme === 'booknook' || previousTheme === 'default') triggerSunrise();
-      body.classList.add('theme-gallery');
-      // Add sunny-world class with slight delay for smoother cascade
-      setTimeout(() => body.classList.add('theme-sunny-world'), 200);
-      // Spawn decorations after short delay for transition
+      // Give the sunrise animation space to breathe before the sky colour changes
+      setTimeout(() => body.classList.add('theme-gallery'), 500);
+      setTimeout(() => body.classList.add('theme-sunny-world'), 800);
       setTimeout(() => {
         spawnSun();
         spawnClouds();
         spawnBirds();
         spawnSunnySideCritters();
-        // Gallery critters removed — no evening critters on sunny side
-      }, 400);
+      }, 900);
     } else if (theme === 'default') {
-      // Leaving gallery — clean up decorations
+      // Leaving sunny world — strip theme classes and clean up gallery decorations
       const gallery = document.getElementById('art-gallery');
       if (gallery) {
         gallery.querySelectorAll('.theme-cloud,.theme-sun,.theme-bird').forEach(e => e.remove());
@@ -601,33 +640,28 @@
   }
 
   // ── IntersectionObserver — switch on scroll ──
-  // Only the gallery section triggers the sunny theme.
-  // The booknook and sections below inherit the sunny-world class
-  // (applied by applyTheme('gallery')), so we only need to watch gallery
-  // for the on/off toggle. Reading-nook no longer triggers its own theme
-  // while the gallery is active — it sits inside the sunny world.
+  // Projects section triggers the sunny world theme so the sky
+  // starts changing before the user even reaches the gallery.
+  // Booknook is kept as a secondary key for its own warm theme.
 
   const SECTION_THEMES = {
-    'art-gallery':  'gallery',
+    'projects':     'gallery',
     'reading-nook': 'booknook',
   };
 
-  // Lower threshold so sunny theme kicks in earlier as user scrolls into gallery
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const sectionTheme = SECTION_THEMES[entry.target.id];
       if (entry.isIntersecting && sectionTheme) {
         applyTheme(sectionTheme);
       } else if (!entry.isIntersecting && sectionTheme && currentTheme === sectionTheme) {
-        // Only revert to default if we're scrolling back UP (above gallery).
-        // Check scroll direction: if gallery is below viewport, keep sunny.
+        // Only revert when scrolling back UP above the trigger section
         const rect = entry.target.getBoundingClientRect();
         if (sectionTheme === 'gallery' && rect.top > 0) {
           applyTheme('default');
         } else if (sectionTheme === 'booknook' && rect.top > 0) {
           applyTheme('gallery');
         }
-        // If rect.top < 0, we scrolled past gallery downward — keep sunny
       }
     });
   }, { threshold: 0.08 });
@@ -649,5 +683,105 @@
       }
     }, 300);
   });
+
+  // ── Scroll-driven cloud parallax ────────────
+  // Each gallery cloud drifts sideways at its own speed as you scroll,
+  // creating a layered depth effect with no auto-animation.
+  function initCloudParallax() {
+    const gallery = document.getElementById('art-gallery');
+    if (!gallery) return;
+
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    function update() {
+      const dy = window.scrollY - lastScrollY;
+      lastScrollY = window.scrollY;
+
+      const rect = gallery.getBoundingClientRect();
+      // Only move clouds while the gallery is near the viewport
+      if (rect.bottom < -200 || rect.top > window.innerHeight + 200) {
+        ticking = false; return;
+      }
+
+      gallery.querySelectorAll('.theme-cloud').forEach(cv => {
+        const s    = parseFloat(cv.dataset.scale  || '1');
+        const spd  = parseFloat(cv.dataset.speed  || '0.4');
+        const dir  = parseFloat(cv.dataset.dir    || '1');
+        let   tx   = parseFloat(cv.dataset.tx     || '0');
+
+        tx += dy * spd * dir;
+        // Gentle wrap-around so clouds never disappear off edge
+        tx = Math.max(-120, Math.min(120, tx));
+        cv.dataset.tx = tx.toFixed(2);
+        cv.style.transform = `scale(${s}) translateX(${tx}px)`;
+      });
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+  }
+
+  // ── Scroll-driven sun arc ────────────────────
+  // Moves #scroll-sun along a bottom-left → upper-right arc
+  // purely based on scroll position between the Projects section
+  // and the midpoint of the Art Gallery section.
+  function initScrollSun() {
+    const sunEl      = document.getElementById('scroll-sun');
+    const projectsEl = document.getElementById('projects');
+    const galleryEl  = document.getElementById('art-gallery');
+    if (!sunEl || !projectsEl || !galleryEl) return;
+
+    let projTop, galMid;
+
+    function recalc() {
+      const scrollY = window.scrollY || window.pageYOffset;
+      projTop = scrollY + projectsEl.getBoundingClientRect().top;
+      galMid  = scrollY + galleryEl.getBoundingClientRect().top
+                + galleryEl.offsetHeight * 0.35;
+    }
+    recalc();
+    window.addEventListener('resize', recalc, { passive: true });
+
+    // Smooth ease-in-out curve
+    function easeInOut(t) {
+      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    }
+
+    let ticking = false;
+
+    function update() {
+      // Use the vertical midpoint of the viewport as the scroll probe
+      const scrollMid = (window.scrollY || window.pageYOffset) + window.innerHeight * 0.55;
+      const raw = (scrollMid - projTop) / Math.max(1, galMid - projTop);
+      const p   = Math.max(0, Math.min(1, raw));
+      const ep  = easeInOut(p);
+
+      // Arc: bottom-left (12 %, -18 vh) → upper-right (79 %, 68 vh)
+      sunEl.style.left      = (12 + 67 * ep) + '%';
+      sunEl.style.bottom    = (-18 + 86 * ep) + 'vh';
+      // Scale up as it rises, keeping translateX(-50%) for centering
+      sunEl.style.transform = `translateX(-50%) scale(${(0.45 + 0.55 * ep).toFixed(3)})`;
+      // Fade in quickly at the start, fully opaque by ~12 % progress
+      sunEl.style.opacity   = p > 0.01 ? String(Math.min(0.72, p * 8).toFixed(3)) : '0';
+
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(update);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    // Run once on load in case the user lands mid-page
+    update();
+  }
+
+  initScrollSun();
+  initCloudParallax();
 
 })();

@@ -446,16 +446,18 @@ function initPageTransitions() {
 
   const obs = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      entry.target.classList.toggle("section-in-view", entry.isIntersecting);
-      if (entry.isIntersecting && entry.target.id) {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("section-in-view");
+      obs.unobserve(entry.target);
+      if (entry.target.id) {
         navLinks.forEach(link => {
           link.classList.toggle("is-active", link.getAttribute("href") === `#${entry.target.id}`);
         });
       }
     });
   }, {
-    threshold: 0.18,
-    rootMargin: "-8% 0px -12% 0px"
+    threshold: 0.08,
+    rootMargin: "0px 0px -8% 0px"
   });
 
   sections.forEach(section => obs.observe(section));
@@ -467,65 +469,67 @@ function initPageTransitions() {
 //  STARFIELD — canvas stars + nebulas
 // =============================================
 function initStarfield() {
-  const canvas = document.getElementById("starfield");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  let W, H, layers = [], nebulas = [];
+  function makeStarCanvas(canvasEl) {
+    if (!canvasEl) return;
+    const ctx = canvasEl.getContext("2d");
+    let W, H, layers = [], nebulas = [];
 
-  function makeStars(count, minR, maxR, minS, maxS) {
-    return Array.from({ length: count }, () => ({
-      x: Math.random()*W, y: Math.random()*H,
-      r: minR + Math.random()*(maxR-minR),
-      speed: minS + Math.random()*(maxS-minS),
-      alpha: 0.2 + Math.random()*0.8,
-      ts: 0.005 + Math.random()*0.02,
-      td: Math.random()>0.5?1:-1,
-      hue: Math.random()>0.85?(Math.random()>0.5?"200,230,255":"255,200,220"):"255,235,255",
-    }));
-  }
+    function makeStars(count, minR, maxR, minS, maxS) {
+      return Array.from({ length: count }, () => ({
+        x: Math.random()*W, y: Math.random()*H,
+        r: minR + Math.random()*(maxR-minR),
+        speed: minS + Math.random()*(maxS-minS),
+        alpha: 0.2 + Math.random()*0.8,
+        ts: 0.005 + Math.random()*0.02,
+        td: Math.random()>0.5?1:-1,
+        hue: Math.random()>0.85?(Math.random()>0.5?"200,230,255":"255,200,220"):"255,235,255",
+      }));
+    }
 
-  function resize() {
-    W = canvas.width  = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
-    layers = [makeStars(90,0.2,0.8,0.08,0.15), makeStars(60,0.6,1.4,0.15,0.3), makeStars(30,1.0,2.0,0.3,0.6)];
-    nebulas = Array.from({length:5}, ()=>({
-      x:Math.random()*W, y:Math.random()*H*0.8,
-      rx:80+Math.random()*160, ry:50+Math.random()*100,
-      hue:Math.random()>0.5?[189,147,249]:[255,121,198],
-      alpha:0.02+Math.random()*0.04,
-    }));
-  }
-  resize();
-  window.addEventListener("resize", resize);
+    function resize() {
+      W = canvasEl.width  = canvasEl.offsetWidth;
+      H = canvasEl.height = canvasEl.offsetHeight;
+      layers = [makeStars(90,0.2,0.8,0.08,0.15), makeStars(60,0.6,1.4,0.15,0.3), makeStars(30,1.0,2.0,0.3,0.6)];
+      nebulas = Array.from({length:5}, ()=>({
+        x:Math.random()*W, y:Math.random()*H*0.8,
+        rx:80+Math.random()*160, ry:50+Math.random()*100,
+        hue:Math.random()>0.5?[189,147,249]:[255,121,198],
+        alpha:0.02+Math.random()*0.04,
+      }));
+    }
+    resize();
+    window.addEventListener("resize", resize);
 
-  (function draw() {
-    ctx.clearRect(0,0,W,H);
-    // Nebulas
-    nebulas.forEach(n=>{
-      const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.rx);
-      g.addColorStop(0,`rgba(${n.hue.join(",")},${n.alpha*2})`);
-      g.addColorStop(0.5,`rgba(${n.hue.join(",")},${n.alpha})`);
-      g.addColorStop(1,`rgba(${n.hue.join(",")},0)`);
-      ctx.save(); ctx.scale(1,n.ry/n.rx);
-      ctx.beginPath(); ctx.arc(n.x,n.y*(n.rx/n.ry),n.rx,0,Math.PI*2);
-      ctx.fillStyle=g; ctx.fill(); ctx.restore();
-    });
-    // Stars
-    layers.forEach((stars,li)=>{
-      stars.forEach(s=>{
-        s.alpha+=s.ts*s.td; if(s.alpha>0.95||s.alpha<0.1)s.td*=-1;
-        s.y+=s.speed; if(s.y>H){s.y=-s.r;s.x=Math.random()*W;}
-        if(li===2&&s.r>1.2){
-          const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);
-          g.addColorStop(0,`rgba(${s.hue},${s.alpha})`); g.addColorStop(1,`rgba(${s.hue},0)`);
-          ctx.beginPath(); ctx.arc(s.x,s.y,s.r*3,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
-        }
-        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${s.hue},${s.alpha})`; ctx.fill();
+    (function draw() {
+      ctx.clearRect(0,0,W,H);
+      nebulas.forEach(n=>{
+        const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.rx);
+        g.addColorStop(0,`rgba(${n.hue.join(",")},${n.alpha*2})`);
+        g.addColorStop(0.5,`rgba(${n.hue.join(",")},${n.alpha})`);
+        g.addColorStop(1,`rgba(${n.hue.join(",")},0)`);
+        ctx.save(); ctx.scale(1,n.ry/n.rx);
+        ctx.beginPath(); ctx.arc(n.x,n.y*(n.rx/n.ry),n.rx,0,Math.PI*2);
+        ctx.fillStyle=g; ctx.fill(); ctx.restore();
       });
-    });
-    requestAnimationFrame(draw);
-  })();
+      layers.forEach((stars,li)=>{
+        stars.forEach(s=>{
+          s.alpha+=s.ts*s.td; if(s.alpha>0.95||s.alpha<0.1)s.td*=-1;
+          s.y+=s.speed; if(s.y>H){s.y=-s.r;s.x=Math.random()*W;}
+          if(li===2&&s.r>1.2){
+            const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);
+            g.addColorStop(0,`rgba(${s.hue},${s.alpha})`); g.addColorStop(1,`rgba(${s.hue},0)`);
+            ctx.beginPath(); ctx.arc(s.x,s.y,s.r*3,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+          }
+          ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+          ctx.fillStyle=`rgba(${s.hue},${s.alpha})`; ctx.fill();
+        });
+      });
+      requestAnimationFrame(draw);
+    })();
+  }
+
+  makeStarCanvas(document.getElementById("starfield"));
+  makeStarCanvas(document.getElementById("showreel-canvas"));
 }
 
 // =============================================

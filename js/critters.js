@@ -272,56 +272,29 @@
     },
   };
 
-  // ── Speech bubble lines ─────────────────────
-  const LINES = [
-    'hire me pls',
-    'looking for bugs...',
-    'git commit -m "fix"',
-    '10 PRINT "hello"',
-    'it\'s a feature!',
-    'null ptr exc.',
-    '99 bugs...',
-    'coffee++',
-    'while(true){}',
-    'owo what\'s this',
-    'ERROR 404',
-    'LGTM 👍',
-    'push to prod',
-    'works on my machine',
-    'segfault :(',
-    '...loading...',
-    'stack overflow',
-    'sudo make me',
-    'ctrl+z ctrl+z',
-    'rm -rf /',
-    'pls no review',
-    'shipped it!',
-    ':root { --fun: yes }',
-    'pew pew ✦',
-    'speedrun any%',
-    'skill issue',
-    'touch grass',
-    '♡ u',
-    'beep boop',
-    // Legend of Zelda
-    'HEY! LISTEN!',
-    'it\'s dangerous alone',
-    'take this ⚔',
-    'TRIFORCE GET',
-    'secret to everybody',
-    'dodongo dislikes smoke',
-    'your princess is here',
-    'do you have a fairy?',
-    'power of gold...',
-    'you\'ve met a terrible fate',
-    'can I interest u in a mask?',
-    'item get! 🎵',
-    'new dungeon unlocked',
-    'low hearts... boop boop',
-    'found a secret!',
-    'CUCCO REVENGE GANG',
-    'tingle tingle!',
-    'ocarina loaded',
+  // ── Speech bubble lines — split by zone ─────
+  // Space/dark zone: techy, glitchy, ominous
+  const SPACE_LINES = [
+    'hire me pls', 'looking for bugs...', 'git commit -m "fix"',
+    '10 PRINT "hello"', "it's a feature!", 'null ptr exc.', '99 bugs...',
+    'coffee++', 'while(true){}', "owo what's this", 'ERROR 404', 'LGTM 👍',
+    'push to prod', 'works on my machine', 'segfault :(', '...loading...',
+    'stack overflow', 'sudo make me', 'ctrl+z ctrl+z', 'rm -rf /',
+    'pls no review', 'pew pew ✦', 'beep boop',
+    // LoZ — mysterious & dark
+    'HEY! LISTEN!', "it's dangerous alone", 'take this ⚔', 'TRIFORCE GET',
+    'secret to everybody', 'dodongo dislikes smoke', "you've met a terrible fate",
+    'can I interest u in a mask?', 'power of gold...', 'ocarina loaded',
+  ];
+
+  // Sunny/daytime zone: cheerful, colourful, adventurous
+  const SUNNY_LINES = [
+    'shipped it!', ':root { --fun: yes }', 'speedrun any%', 'skill issue',
+    'touch grass', '♡ u', '★ fave ★', 'golden hour ☀', 'grass touched ✓',
+    // LoZ — daylight quests & silly
+    'your princess is here', 'do you have a fairy?', 'item get! 🎵',
+    'new dungeon unlocked', 'low hearts... boop boop', 'found a secret!',
+    'CUCCO REVENGE GANG', 'tingle tingle!',
   ];
 
   // ── Behavior definitions ────────────────────
@@ -547,6 +520,27 @@
   const BEHAVIOR_NAMES = Object.keys(BEHAVIORS);
   const SPRITE_NAMES   = Object.keys(SPRITES);
 
+  // ── Zone-aware pools ──────────────────────────
+  // Space (dark sky) — eerie, mechanical, dungeon-dwelling
+  const SPACE_SPRITES = [
+    'ghost', 'robot', 'ufo', 'alien', 'pixel_knight', 'slime',
+    'keese', 'navi', 'sheik', 'triforce', 'wizard', 'dragon',
+  ];
+  const SPACE_BEHAVIORS = ['floater', 'glitcher', 'spinner', 'ceiling_crawler', 'swinger', 'chaser'];
+
+  // Sunny (day sky) — cheerful, outdoor, Hyrule-field vibes
+  const SUNNY_SPRITES = [
+    'cat', 'mushroom', 'sword', 'link', 'cucco', 'heart_container', 'octorok',
+  ];
+  const SUNNY_BEHAVIORS = ['walker', 'bouncer', 'peeker', 'sprinter', 'typer', 'chaser'];
+
+  // Reads current theme from body classes set by themes.js
+  function getCurrentZone() {
+    const b = document.body;
+    return (b.classList.contains('theme-gallery') || b.classList.contains('theme-sunny-world'))
+      ? 'sunny' : 'space';
+  }
+
   // ── Utility helpers ─────────────────────────
   function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -559,8 +553,12 @@
 
   // ── Critter factory ─────────────────────────
   function createCritter(opts = {}) {
-    const spriteKey = opts.sprite || rand(SPRITE_NAMES);
-    const behaviorKey = opts.behavior || rand(BEHAVIOR_NAMES);
+    const zone        = opts.zone || getCurrentZone();
+    const spritePool  = zone === 'sunny' ? SUNNY_SPRITES   : SPACE_SPRITES;
+    const behaviorPool= zone === 'sunny' ? SUNNY_BEHAVIORS : SPACE_BEHAVIORS;
+    const linePool    = zone === 'sunny' ? SUNNY_LINES     : SPACE_LINES;
+    const spriteKey   = opts.sprite   || rand(spritePool);
+    const behaviorKey = opts.behavior || rand(behaviorPool);
     const sprite = SPRITES[spriteKey];
 
     const el = document.createElement('div');
@@ -597,12 +595,12 @@
       },
     };
 
-    // Occasional random speech bubble
+    // Occasional random speech bubble — zone-appropriate text
     if (Math.random() < 0.55) {
       const delay = 1000 + Math.random() * 3000;
       setTimeout(() => {
         if (document.body.contains(c.el)) {
-          showBubble(c, rand(LINES), 2500);
+          showBubble(c, rand(linePool), 2500);
         }
       }, delay);
     }
@@ -613,18 +611,37 @@
 
   // ── Spawning logic ───────────────────────────
   let active = 0;
-  const MAX_CRITTERS = 5;
+  const MAX_CRITTERS = 2;
+  const activePool = []; // tracks all live randomly-spawned critters
+
+  function clearActivePool() {
+    activePool.slice().forEach(c => { if (document.body.contains(c.el)) c.destroy(); });
+    activePool.length = 0;
+    active = 0;
+  }
 
   function spawnRandom() {
     if (active >= MAX_CRITTERS) return;
     active++;
     const c = createCritter();
-    // Patch destroy to decrement counter
+    activePool.push(c);
     const origDestroy = c.destroy.bind(c);
-    c.destroy = function() { active = Math.max(0, active - 1); origDestroy(); };
-    // Safety: destroy after 20s max
+    c.destroy = function() {
+      active = Math.max(0, active - 1);
+      const idx = activePool.indexOf(this);
+      if (idx !== -1) activePool.splice(idx, 1);
+      origDestroy();
+    };
     setTimeout(() => { if (document.body.contains(c.el)) c.destroy(); }, 20000);
   }
+
+  // Flush all active critters the moment the zone flips so stale-zone
+  // sprites don't linger over the wrong background.
+  let _lastZone = getCurrentZone();
+  new MutationObserver(() => {
+    const z = getCurrentZone();
+    if (z !== _lastZone) { _lastZone = z; clearActivePool(); }
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   // ── Special event: cursor follower (click spawn) ─
   document.addEventListener('click', (e) => {
@@ -632,7 +649,9 @@
     const el = document.createElement('div');
     el.className = 'critter';
     el.setAttribute('aria-hidden', 'true');
-    const sprite = SPRITES[rand(SPRITE_NAMES)];
+    const zone = getCurrentZone();
+    const pool = zone === 'sunny' ? SUNNY_SPRITES : SPACE_SPRITES;
+    const sprite = SPRITES[rand(pool)];
     el.style.left = (e.clientX - 35) + 'px';
     el.style.top  = (e.clientY - 44) + 'px';
     el.style.pointerEvents = 'none';
@@ -661,10 +680,9 @@
   });
 
   // ── Start spawning ───────────────────────────
-  // Spawn a couple right away, then periodically
-  setTimeout(() => spawnRandom(), 1500);
-  setTimeout(() => spawnRandom(), 3500);
-  setInterval(() => spawnRandom(), 7000 + Math.random() * 5000);
+  // One critter on load, then rare periodic visits
+  setTimeout(() => spawnRandom(), 2500);
+  setInterval(() => spawnRandom(), 16000 + Math.random() * 10000);
 
   // Inject CSS
   const style = document.createElement('style');
@@ -672,15 +690,19 @@
   document.head.appendChild(style);
 
   // ── Scroll-triggered critter: pops up when you hit certain sections ─
+  // zone field forces the right pool even before theme classes apply.
   const sectionTriggers = {
-    'projects':     { sprite: 'link',            behavior: 'bouncer' },
-    'reading-nook': { sprite: 'wizard',          behavior: 'swinger' },
-    'art-gallery':  { sprite: 'dragon',          behavior: 'floater' },
-    'games':        { sprite: 'octorok',         behavior: 'peeker'  },
-    'showreel':     { sprite: 'navi',            behavior: 'spinner' },
-    'contact':      { sprite: 'cat',             behavior: 'typer'   },
-    'about':        { sprite: 'triforce',        behavior: 'glitcher'},
-    'downloads':    { sprite: 'heart_container', behavior: 'bouncer' },
+    // ── Space zone (dark sky) ──────────────────
+    'home':         { sprite: 'ufo',             behavior: 'floater',          zone: 'space' },
+    'about':        { sprite: 'triforce',         behavior: 'glitcher',         zone: 'space' },
+    'showreel':     { sprite: 'navi',             behavior: 'spinner',          zone: 'space' },
+    // ── Sunny zone (day sky) ──────────────────
+    'projects':     { sprite: 'link',             behavior: 'bouncer',          zone: 'sunny' },
+    'games':        { sprite: 'cucco',            behavior: 'sprinter',         zone: 'sunny' },
+    'art-gallery':  { sprite: 'heart_container',  behavior: 'bouncer',          zone: 'sunny' },
+    'reading-nook': { sprite: 'cat',              behavior: 'typer',            zone: 'sunny' },
+    'downloads':    { sprite: 'sword',            behavior: 'peeker',           zone: 'sunny' },
+    'contact':      { sprite: 'mushroom',         behavior: 'walker',           zone: 'sunny' },
   };
 
   const triggered = new Set();
@@ -705,9 +727,10 @@
   document.addEventListener('keydown', (e) => {
     zeldaSeq = (zeldaSeq + e.key.toUpperCase()).slice(-5);
     if (zeldaSeq === ZELDA_CODE) {
-      const lozSprites  = ['triforce','navi','heart_container','link','sheik','keese','cucco'];
+      // ZELDA flood uses all LoZ sprites regardless of zone
+      const lozSprites  = ['triforce','navi','heart_container','link','sheik','keese','cucco','octorok','sword'];
       const lozBehavior = ['floater','spinner','bouncer','glitcher'];
-      const lozLines    = ['HEY! LISTEN!','TRIFORCE GET',"it's dangerous alone",'item get! \uD83C\uDFB5','power of gold...'];
+      const lozLines    = ['HEY! LISTEN!','TRIFORCE GET',"it's dangerous alone",'item get! \uD83C\uDFB5','power of gold...','CUCCO REVENGE GANG','found a secret!'];
       for (let i = 0; i < 10; i++) {
         setTimeout(() => {
           const c = createCritter({
