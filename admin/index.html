@@ -567,10 +567,9 @@ function switchMode(mode) {
 
 // ---- LOCAL PASSWORD LOGIN ----
 async function doLocalLogin() {
-  const pwd    = val("local-pwd");
-  const stored = localStorage.getItem("admin_pwd") || "gamedev2024";
+  const pwd = val("local-pwd");
   if (!pwd) { showErr("Please enter a password."); return; }
-  if (pwd !== stored) { showErr("✕ Incorrect password."); return; }
+  if (pwd !== "gamedev2024") { showErr("✕ Incorrect password."); return; }
   GH_TOKEN = null;
   await enterAdmin(true);
 }
