@@ -402,6 +402,7 @@
           <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="handleGalleryUpload(this)"/>
         </div>
         <div class="gallery-grid" id="gallery-grid"></div>
+        <button class="btn-save" style="margin-top:1rem;" onclick="saveImageGallery()">[ SAVE IMAGE GALLERY ]</button>
       </div>
 
       <!-- LINKS -->
@@ -1042,13 +1043,11 @@ async function handleGalleryUpload(input) {
     try {
       const dataUrl = await fileToBase64(file);
       addToGallery(dataUrl, file.name);
-      if (!contentData.gallery) contentData.gallery = [];
-      contentData.gallery.push({ name: file.name, src: dataUrl });
     } catch(e) {
       toast("✕ " + file.name + ": " + e.message, true);
     }
   }
-  toast("✓ " + files.length + " image(s) added to gallery!");
+  toast("✓ " + files.length + " image(s) added — click [ SAVE IMAGE GALLERY ] to publish.");
 }
 
 // ---- Render gallery ----
@@ -1093,7 +1092,12 @@ function deleteGalleryImg(i) {
   if (!confirm("Remove this image from the gallery?")) return;
   (contentData.gallery || []).splice(i, 1);
   renderGallery();
-  toast("✓ Removed from gallery.");
+  toast("✓ Removed — click [ SAVE IMAGE GALLERY ] to publish.");
+}
+
+function saveImageGallery() {
+  if (!contentData.gallery) contentData.gallery = [];
+  pushContent("Update image gallery");
 }
 
 // ---- Drag and drop on dropzone ----

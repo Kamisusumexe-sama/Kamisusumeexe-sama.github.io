@@ -12,6 +12,7 @@
 
 <div class="scanlines"></div>
 <div id="cursor-trail"></div>
+<div class="sunrise-transition" id="sunrise-transition" aria-hidden="true"><span></span></div>
 
 <!-- ===== NAV ===== -->
 <nav class="navbar">
@@ -21,14 +22,15 @@
     <span class="pixel-bracket">]</span>
   </div>
   <ul class="nav-links">
+    <li><a href="#home">Intro</a></li>
     <li><a href="#about">About</a></li>
+    <li><a href="#showreel">Reel</a></li>
     <li><a href="#projects">Projects</a></li>
     <li><a href="#games">Play</a></li>
-    <li><a href="#showreel">Reel</a></li>
-    <li><a href="#reading-nook">&#128214; Writing</a></li>
     <li><a href="#art-gallery">&#127912; Art</a></li>
+    <li><a href="#reading-nook">&#128214; Writing</a></li>
+    <li><a href="#downloads" class="nav-download">CV</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#downloads" class="nav-download">⬇ Downloads</a></li>
     <li><a href="admin/index.html" class="nav-admin">⚙</a></li>
   </ul>
   <button class="nav-toggle" onclick="toggleMenu()">☰</button>
@@ -55,67 +57,6 @@
       <a href="#projects" class="btn btn-primary">View My Work</a>
       <a href="#games" class="btn btn-ghost">Play My Games ▶</a>
     </div>
-  </div>
-</section>
-
-<!-- ===== SHOWREEL (retro CRT monitor, seamless below hero) ===== -->
-<section class="showreel-hero" id="showreel">
-  <div class="sr-scene">
-    <!-- Desk surface -->
-    <div class="sr-desk">
-      <!-- CRT Monitor -->
-      <div class="sr-monitor" id="sr-monitor">
-        <div class="sr-monitor-body">
-          <!-- Top bezel brand -->
-          <div class="sr-brand-bar">
-            <span class="sr-brand-name">VANESSA·OS</span>
-            <span class="sr-brand-dots"><span></span><span></span><span></span></span>
-          </div>
-          <!-- Screen area -->
-          <div class="sr-screen-bezel">
-            <div class="sr-screen" id="sr-screen">
-              <!-- CRT scanline overlay -->
-              <div class="sr-scanlines"></div>
-              <!-- CRT glare -->
-              <div class="sr-glare"></div>
-              <!-- Video iframe injected here -->
-              <div class="showreel-iframe-wrap" id="showreel-iframe-wrap"></div>
-              <!-- Placeholder when no video -->
-              <div class="showreel-placeholder" id="showreel-placeholder">
-                <span class="sr-placeholder-icon">📺</span>
-                <p>No signal — add your showreel URL in the admin panel</p>
-                <span class="sr-blink">▌</span>
-              </div>
-            </div>
-          </div>
-          <!-- Bottom bezel controls -->
-          <div class="sr-controls-bar">
-            <div class="sr-control-knobs">
-              <div class="sr-knob" title="Brightness"></div>
-              <div class="sr-knob sr-knob-small" title="Contrast"></div>
-            </div>
-            <div class="sr-power-area">
-              <div class="sr-power-led" id="sr-power-led"></div>
-              <div class="sr-power-btn" onclick="srTogglePlay()" title="Toggle video"></div>
-            </div>
-          </div>
-        </div>
-        <!-- Monitor neck + base -->
-        <div class="sr-neck"></div>
-        <div class="sr-base"></div>
-      </div>
-      <!-- Desk items -->
-      <div class="sr-desk-items">
-        <div class="sr-desk-item sr-coffee">☕</div>
-        <div class="sr-desk-item sr-floppy">💾</div>
-      </div>
-    </div>
-  </div>
-  <!-- Particles behind monitor -->
-  <div class="sr-particles" id="sr-particles"></div>
-  <!-- Floating section label -->
-  <div style="position:absolute;top:2.5rem;left:50%;transform:translateX(-50%);z-index:10;text-align:center;pointer-events:none;">
-    <span style="font-family:'Press Start 2P',monospace;font-size:0.38rem;letter-spacing:0.3em;color:rgba(189,147,249,0.55);text-transform:uppercase;text-shadow:0 0 20px rgba(189,147,249,0.4);">05 · Showreel</span>
   </div>
 </section>
 
@@ -148,11 +89,59 @@
   </div>
 </section>
 
+<!-- ===== SHOWREEL ===== -->
+<section class="showreel-hero" id="showreel">
+  <div class="sr-scene">
+    <div class="sr-desk">
+      <div class="sr-monitor" id="sr-monitor">
+        <div class="sr-monitor-body">
+          <div class="sr-brand-bar">
+            <span class="sr-brand-name">VANESSA·OS</span>
+            <span class="sr-brand-dots"><span></span><span></span><span></span></span>
+          </div>
+          <div class="sr-screen-bezel">
+            <div class="sr-screen" id="sr-screen">
+              <div class="sr-scanlines"></div>
+              <div class="sr-glare"></div>
+              <div class="showreel-iframe-wrap" id="showreel-iframe-wrap"></div>
+              <div class="showreel-placeholder" id="showreel-placeholder">
+                <span class="sr-placeholder-icon">📺</span>
+                <p>No signal — add your showreel URL in the admin panel</p>
+                <span class="sr-blink">▌</span>
+              </div>
+            </div>
+          </div>
+          <div class="sr-controls-bar">
+            <div class="sr-control-knobs">
+              <div class="sr-knob" title="Brightness"></div>
+              <div class="sr-knob sr-knob-small" title="Contrast"></div>
+            </div>
+            <div class="sr-power-area">
+              <div class="sr-power-led" id="sr-power-led"></div>
+              <div class="sr-power-btn" onclick="srTogglePlay()" title="Toggle video"></div>
+            </div>
+          </div>
+        </div>
+        <div class="sr-neck"></div>
+        <div class="sr-base"></div>
+      </div>
+      <div class="sr-desk-items">
+        <div class="sr-desk-item sr-coffee">☕</div>
+        <div class="sr-desk-item sr-floppy">💾</div>
+      </div>
+    </div>
+  </div>
+  <div class="sr-particles" id="sr-particles"></div>
+  <div style="position:absolute;top:2.5rem;left:50%;transform:translateX(-50%);z-index:10;text-align:center;pointer-events:none;">
+    <span style="font-family:'Press Start 2P',monospace;font-size:0.38rem;letter-spacing:0.3em;color:rgba(189,147,249,0.55);text-transform:uppercase;text-shadow:0 0 20px rgba(189,147,249,0.4);">03 · Showreel</span>
+  </div>
+</section>
+
 <!-- ===== PROJECTS ===== -->
 <section class="projects" id="projects">
   <div class="container">
     <div class="section-header">
-      <span class="section-num">03</span>
+      <span class="section-num">04</span>
       <h2 class="section-title">Projects</h2>
       <div class="section-line"></div>
     </div>
@@ -164,11 +153,11 @@
 <section class="games-section" id="games">
   <div class="container">
     <div class="section-header">
-      <span class="section-num">04</span>
-      <h2 class="section-title">Play My Games</h2>
+      <span class="section-num">05</span>
+      <h2 class="section-title">Play In Browser</h2>
       <div class="section-line"></div>
     </div>
-    <p class="section-desc">These run right in your browser — no download needed.</p>
+    <p class="section-desc">Playable builds and browser demos — no download needed.</p>
     <div class="games-grid" id="games-grid"></div>
     <div class="game-embed-area" id="game-embed-area" style="display:none;">
       <div class="game-embed-header">
@@ -180,17 +169,79 @@
   </div>
 </section>
 
+<!-- ===== ART GALLERY ===== -->
+<section class="art-gallery" id="art-gallery">
+
+  <!-- Pixel world decorations -->
+  <div class="gallery-sun" aria-hidden="true"></div>
+  <div class="gallery-cloud gallery-cloud--a" aria-hidden="true"></div>
+  <div class="gallery-cloud gallery-cloud--b" aria-hidden="true"></div>
+  <div class="gallery-cloud gallery-cloud--c" aria-hidden="true"></div>
+  <div class="gallery-ground" aria-hidden="true"></div>
+
+  <!-- Scanline overlay -->
+  <div class="gallery-scanlines" aria-hidden="true"></div>
+
+  <!-- Corner brackets -->
+  <div class="gallery-corner gallery-corner--tl" aria-hidden="true"></div>
+  <div class="gallery-corner gallery-corner--tr" aria-hidden="true"></div>
+  <div class="gallery-corner gallery-corner--bl" aria-hidden="true"></div>
+  <div class="gallery-corner gallery-corner--br" aria-hidden="true"></div>
+
+  <!-- HUD header bar -->
+  <div class="gallery-hud">
+    <div class="gallery-hud-left">
+      <span class="gallery-hud-num">06</span>
+      <span class="gallery-hud-sep">▶</span>
+      <span class="gallery-hud-title">ART_GALLERY</span>
+    </div>
+    <div class="gallery-hud-center">
+      <span class="gallery-hud-desc" id="art-desc">Original art — illustrations, concepts &amp; pixel work</span>
+    </div>
+    <div class="gallery-hud-right">
+      <span class="gallery-hud-count" id="gallery-count">00 PIECES</span>
+    </div>
+  </div>
+
+  <!-- Full-screen collage wall -->
+  <div class="gallery-wall" id="gallery-grid"></div>
+
+  <!-- Lightbox -->
+  <div class="gallery-lightbox" id="gallery-lightbox" aria-hidden="true">
+    <button class="gallery-lb-close" id="gallery-lb-close" aria-label="Close"><span>✕ CLOSE</span></button>
+    <div class="gallery-lb-img-wrap">
+      <img id="gallery-lb-img" src="" alt="" />
+    </div>
+    <div class="gallery-lb-meta">
+      <span class="gallery-lb-title" id="gallery-lb-title"></span>
+      <span class="gallery-lb-tag" id="gallery-lb-tag"></span>
+    </div>
+    <button class="gallery-lb-nav gallery-lb-prev" id="gallery-lb-prev" aria-label="Previous">&#9664;</button>
+    <button class="gallery-lb-nav gallery-lb-next" id="gallery-lb-next" aria-label="Next">&#9654;</button>
+  </div>
+
+</section>
+
 <!-- ===== BOOK NOOK ===== -->
 <section class="book-nook" id="reading-nook">
   <div class="nook-letters-bg" id="nook-letters-bg" aria-hidden="true"></div>
+  <div class="nook-candle-glow nook-candle-glow--l" aria-hidden="true"></div>
+  <div class="nook-candle-glow nook-candle-glow--r" aria-hidden="true"></div>
+
+  <!-- HUD bar matching gallery style -->
+  <div class="nook-hud">
+    <div class="nook-hud-left">
+      <span class="nook-hud-num">07</span>
+      <span class="nook-hud-sep">▶</span>
+      <span class="nook-hud-name">BOOK_NOOK</span>
+    </div>
+    <div class="nook-hud-center">
+      <span class="nook-hud-desc" id="reading-desc">Snippets from the worlds I'm building — pull up a chair.</span>
+    </div>
+    <div class="nook-hud-right" id="nook-hud-count">00 STORIES</div>
+  </div>
 
   <div class="container">
-    <div class="section-header">
-      <span class="section-num">06</span>
-      <h2 class="section-title">Book Nook</h2>
-      <div class="section-line"></div>
-    </div>
-    <p class="section-desc" id="reading-desc">Snippets from the worlds I'm building — pull up a chair.</p>
 
     <!-- Book flip layout -->
     <div class="book-stage" id="book-stage">
@@ -267,16 +318,16 @@
   </div>
 </section>
 
-<!-- ===== ART GALLERY ===== -->
-<section class="art-gallery" id="art-gallery">
+<!-- ===== CV & MATERIALS ===== -->
+<section class="downloads" id="downloads">
   <div class="container">
     <div class="section-header">
-      <span class="section-num">07</span>
-      <h2 class="section-title">Art Gallery</h2>
+      <span class="section-num">08</span>
+      <h2 class="section-title">CV & Materials</h2>
       <div class="section-line"></div>
     </div>
-    <p class="section-desc" id="art-desc">Original art — illustrations, concepts, and pixel work.</p>
-    <div class="gallery-grid" id="gallery-grid"></div>
+    <p class="section-desc" id="downloads-desc"></p>
+    <div id="downloads-grid"></div>
   </div>
 </section>
 
@@ -284,7 +335,7 @@
 <section class="contact" id="contact">
   <div class="container">
     <div class="section-header">
-      <span class="section-num">07</span>
+      <span class="section-num">09</span>
       <h2 class="section-title">Let's Connect</h2>
       <div class="section-line"></div>
     </div>
@@ -308,19 +359,6 @@
   </div>
 </section>
 
-<!-- ===== DOWNLOADS ===== -->
-<section class="downloads" id="downloads">
-  <div class="container">
-    <div class="section-header">
-      <span class="section-num">06</span>
-      <h2 class="section-title">Downloads</h2>
-      <div class="section-line"></div>
-    </div>
-    <p class="section-desc" id="downloads-desc"></p>
-    <div id="downloads-grid"></div>
-  </div>
-</section>
-
 <!-- ===== FOOTER ===== -->
 <footer class="footer">
   <p><span class="pixel-bracket">[</span> Made with ♥ & lots of coffee <span class="pixel-bracket">]</span></p>
@@ -329,5 +367,6 @@
 
 <script src="js/main.js"></script>
 <script src="js/critters.js"></script>
+<script src="js/themes.js"></script>
 </body>
 </html>

@@ -81,12 +81,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderVideos(data.videos || [], data.showreelSub || '');
   renderDownloads(data.downloads || [], data.downloadsDesc || "");
   renderReadingNook(data.writingSnippets || [], data.writingDesc || "", data.writingPlatforms || []);
-  renderArtGallery(data.artGallery || [], data.artDesc || "");
+  renderArtGallery(data.artGallery || data.gallery || [], data.artDesc || "");
 
   // ---- EXTRAS ----
   initStarfield();
   initShips();
   initCursorTrail();
+  initNookCount(data.stories || data.books || []);
+  initPageTransitions();
 });
 
 // ---- Helpers ----
@@ -227,6 +229,8 @@ function renderVideos(videos, showreelSub) {
   const placeholder = document.getElementById("showreel-placeholder");
   const wrap = document.getElementById("showreel-iframe-wrap");
   const screen = document.getElementById("sr-screen");
+  const bezel = document.querySelector(".sr-screen-bezel");
+  const monitor = document.getElementById("sr-monitor");
 
   if (!main || !main.src) {
     if (placeholder) placeholder.classList.add("visible");
@@ -237,13 +241,14 @@ function renderVideos(videos, showreelSub) {
   // Detect aspect ratio from URL hint (default 16:9, support 4:3 and 9:16 vertical)
   const isVertical = main.src.includes("shorts") || (main.aspectRatio === "9:16");
   const isClassic  = main.aspectRatio === "4:3";
+  if (bezel) {
+    bezel.style.aspectRatio = isVertical ? "9 / 16" : isClassic ? "4 / 3" : "16 / 9";
+  }
   if (screen) {
-    screen.style.aspectRatio = isVertical ? "9 / 16" : isClassic ? "4 / 3" : "16 / 9";
-    // Constrain vertical video width so it doesn't stretch the whole monitor
-    if (isVertical) {
-      const monitor = document.getElementById("sr-monitor");
-      if (monitor) monitor.style.maxWidth = "380px";
-    }
+    screen.style.aspectRatio = "";
+  }
+  if (monitor) {
+    monitor.style.maxWidth = isVertical ? "380px" : isClassic ? "900px" : "";
   }
 
   const src = buildShowreelSrc(main.src);
@@ -307,7 +312,7 @@ function spawnShowreelParticles() {
   }
 }
 
-// ---- Downloads ----
+// ---- CV / materials ----
 function renderDownloads(downloads, desc) {
   const grid = document.getElementById("downloads-grid");
   const descEl = document.getElementById("downloads-desc");
@@ -315,7 +320,7 @@ function renderDownloads(downloads, desc) {
   if (!grid) return;
 
   if (!downloads.length) {
-    grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No files yet.</p>';
+    grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No CV materials yet.</p>';
     return;
   }
 
@@ -427,6 +432,33 @@ function observeReveal(selector) {
     });
   }, { threshold: 0.1 });
   document.querySelectorAll(selector).forEach(el => obs.observe(el));
+}
+
+function initPageTransitions() {
+  const sections = Array.from(document.querySelectorAll("body > section, body > footer"));
+  const navLinks = Array.from(document.querySelectorAll(".nav-links a[href^='#']"));
+  if (!sections.length) return;
+
+  sections.forEach((section, i) => {
+    section.classList.add("section-flow");
+    section.style.setProperty("--section-delay", `${Math.min(i * 45, 220)}ms`);
+  });
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      entry.target.classList.toggle("section-in-view", entry.isIntersecting);
+      if (entry.isIntersecting && entry.target.id) {
+        navLinks.forEach(link => {
+          link.classList.toggle("is-active", link.getAttribute("href") === `#${entry.target.id}`);
+        });
+      }
+    });
+  }, {
+    threshold: 0.18,
+    rootMargin: "-8% 0px -12% 0px"
+  });
+
+  sections.forEach(section => obs.observe(section));
 }
 
 
@@ -1372,43 +1404,340 @@ function toggleCRT() {}
 //  ART GALLERY
 // =============================================
 function renderArtGallery(items, desc) {
-  const descEl = document.getElementById('art-desc');
+  const descEl   = document.getElementById('art-desc');
+  const countEl  = document.getElementById('gallery-count');
+  const wall     = document.getElementById('gallery-grid');
+  if (!wall) return;
+
   if (descEl && desc) descEl.textContent = desc;
 
-  const grid = document.getElementById('gallery-grid');
-  if (!grid) return;
-
   if (!items.length) {
-    grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No art yet — upload pieces via the admin panel!</p>';
+    wall.innerHTML = `
+      <div class="gallery-empty">
+        <span class="gallery-empty-icon">🎨</span>
+        <span>NO ART UPLOADED YET</span>
+        <span style="font-size:0.35rem;opacity:0.5;">Add pieces via the admin panel</span>
+      </div>`;
+    if (countEl) countEl.textContent = '00 PIECES';
     return;
   }
 
-  grid.innerHTML = '';
-  items.forEach(item => {
-    const el = document.createElement('div');
-    el.className = 'gallery-item reveal';
-    el.innerHTML = `
-      ${item.image
-        ? `<img src="${item.image}" alt="${item.title}" loading="lazy"/>`
-        : `<div class="gallery-item-placeholder"><span>🎨</span><span>${item.title}</span></div>`}
-      <div class="gallery-overlay">
-        <div class="gallery-overlay-title">${item.title}</div>
-        <div class="gallery-overlay-tag">${item.medium || 'DIGITAL ART'}</div>
-      </div>`;
-    if (item.image) {
-      el.addEventListener('click', () => openLightbox(item.image, item.title));
-    }
-    grid.appendChild(el);
+  if (countEl) {
+    countEl.textContent = String(items.length).padStart(2, '0') + ' PIECES';
+  }
+
+  wall.innerHTML = '';
+
+  items.forEach((item, i) => {
+    const image  = item.image || item.src || item.fileUrl || '';
+    const title  = item.title || item.name || 'Artwork';
+    const medium = (item.medium || item.type || 'DIGITAL ART').toUpperCase();
+
+    const piece = document.createElement('div');
+    piece.className = 'gallery-piece';
+    piece.dataset.index = i;
+    piece.style.transitionDelay = Math.min(i * 40, 600) + 'ms';
+
+    piece.innerHTML = image
+      ? `<img src="${image}" alt="${title}" loading="lazy" draggable="false"/>
+         <div class="gallery-piece-overlay">
+           <div class="gp-overlay-title">${title}</div>
+           <div class="gp-overlay-tag">${medium}</div>
+         </div>`
+      : `<div class="gallery-piece-placeholder">
+           <span class="gp-icon">🎨</span>
+           <span class="gp-label">${title}</span>
+         </div>
+         <div class="gallery-piece-overlay">
+           <div class="gp-overlay-title">${title}</div>
+           <div class="gp-overlay-tag">${medium}</div>
+         </div>`;
+
+    piece.addEventListener('click', () => openLightbox(items, i));
+    wall.appendChild(piece);
   });
-  observeReveal('.gallery-item');
+
+  // Staggered entrance
+  requestAnimationFrame(() => {
+    const pieces = wall.querySelectorAll('.gallery-piece');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('gp-in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.05 });
+    pieces.forEach(p => io.observe(p));
+  });
 }
 
-function openLightbox(src, title) {
-  const lb = document.createElement('div');
-  lb.className = 'gallery-lightbox';
-  lb.innerHTML = `
-    <button class="gallery-lightbox-close" onclick="this.parentElement.remove()">✕</button>
-    <img src="${src}" alt="${title}"/>`;
-  lb.addEventListener('click', e => { if (e.target === lb) lb.remove(); });
-  document.body.appendChild(lb);
+// ── Retro lightbox with prev/next navigation ──
+let _lbItems = [], _lbIdx = 0;
+
+function openLightbox(items, startIdx) {
+  _lbItems = items;
+  _lbIdx   = startIdx;
+
+  const lb     = document.getElementById('gallery-lightbox');
+  const img    = document.getElementById('gallery-lb-img');
+  const title  = document.getElementById('gallery-lb-title');
+  const tag    = document.getElementById('gallery-lb-tag');
+  const prev   = document.getElementById('gallery-lb-prev');
+  const next   = document.getElementById('gallery-lb-next');
+  const close  = document.getElementById('gallery-lb-close');
+  if (!lb) return;
+
+  function load(idx) {
+    const item   = _lbItems[idx];
+    const src    = item.image || item.src || item.fileUrl || '';
+    const t      = item.title || item.name || 'Artwork';
+    const m      = (item.medium || item.type || 'DIGITAL ART').toUpperCase();
+    img.src      = src;
+    img.alt      = t;
+    title.textContent = t;
+    tag.textContent   = m;
+    prev.disabled = idx <= 0;
+    next.disabled = idx >= _lbItems.length - 1;
+    _lbIdx        = idx;
+  }
+
+  load(startIdx);
+  lb.classList.add('lb-open');
+  document.body.style.overflow = 'hidden';
+
+  prev.onclick  = () => { if (_lbIdx > 0) load(_lbIdx - 1); };
+  next.onclick  = () => { if (_lbIdx < _lbItems.length - 1) load(_lbIdx + 1); };
+  close.onclick = closeLightbox;
+
+  // Keyboard nav
+  function onKey(e) {
+    if (e.key === 'ArrowLeft')  prev.onclick();
+    if (e.key === 'ArrowRight') next.onclick();
+    if (e.key === 'Escape')     closeLightbox();
+  }
+  lb._onKey = onKey;
+  window.addEventListener('keydown', onKey);
+
+  // Click outside image closes
+  lb.addEventListener('click', function handler(e) {
+    if (e.target === lb) { closeLightbox(); lb.removeEventListener('click', handler); }
+  });
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('gallery-lightbox');
+  if (!lb) return;
+  lb.classList.remove('lb-open');
+  document.body.style.overflow = '';
+  if (lb._onKey) { window.removeEventListener('keydown', lb._onKey); lb._onKey = null; }
+}
+
+
+// =============================================
+//  GALLERY WORLD TRANSITION
+//  When the gallery section enters the viewport,
+//  the whole site shifts to sunny pixel-game mode.
+//  Bespoke sunny critters replace the dark-world ones.
+// =============================================
+
+// Sunny critters — CSS text-art, warm palette
+const SUNNY_CRITTERS = [
+  {
+    name: 'bunny',
+    frames: [
+      ` (\\ /) \n( ^.^ )\n o(_)o \n  |_|  `,
+      ` (\\ /) \n( -.^ )\n o(_)o \n /   \\ `,
+    ],
+    color: '#f8f8f2', lines: ['hop hop!','carrot?','boing!','✿ hi ✿'],
+  },
+  {
+    name: 'bee',
+    frames: [
+      ` /\\ /\\ \n(°▾°  )\n  bzz  \n  \\|/  `,
+      ` \\/ \\/ \n( °▾° )\n  bzz  \n  /|\\  `,
+    ],
+    color: '#f1fa8c', lines: ['bzzzz!','collecting ✿','honey time','buzz buzz'],
+  },
+  {
+    name: 'frog',
+    frames: [
+      ` (●●●) \n( ° ° )\n  | |  \n  |_|  `,
+      ` (●●●) \n( ^ ^ )\n / | \\ \n  |_|  `,
+    ],
+    color: '#50fa7b', lines: ['ribbit!','rainy day?','lily pad pls','croak croak'],
+  },
+  {
+    name: 'sunflower',
+    frames: [
+      `  \\|/  \n \\(*)/ \n  |*|  \n  |||  `,
+      `  /|\\  \n /(*)\\  \n  |*|  \n  |||  `,
+    ],
+    color: '#f1fa8c', lines: ['☀ sunshine!','growing!','water me pls','✿✿✿'],
+  },
+  {
+    name: 'chick',
+    frames: [
+      ` (●●●) \n( >●< )\n  | |  \n  |_|  `,
+      ` (●●●) \n( >-< )\n  |/|  \n  |_|  `,
+    ],
+    color: '#ffb86c', lines: ['peep peep!','fluffy!','tweet tweet','chirp!'],
+  },
+  {
+    name: 'ladybug',
+    frames: [
+      ` (•••) \n(• ∞ •)\n  ~~~  \n  | |  `,
+      ` (•••) \n(• ◠ •)\n  ~~~  \n  |_|  `,
+    ],
+    color: '#ff5555', lines: ['lucky!','spot on!','flying away','dotty!'],
+  },
+];
+
+let _galleryWorldActive = false;
+let _sunnyCritters = [];
+
+function initGalleryWorld() {
+  const gallerySection = document.getElementById('art-gallery');
+  if (!gallerySection) return;
+
+  // Create the full-page overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'gallery-world-overlay';
+  overlay.id = 'gallery-world-overlay';
+  document.body.appendChild(overlay);
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && !_galleryWorldActive) {
+        enterGalleryWorld(overlay);
+      } else if (!e.isIntersecting && _galleryWorldActive) {
+        exitGalleryWorld(overlay);
+      }
+    });
+  }, { threshold: 0.25 });
+
+  io.observe(gallerySection);
+}
+
+function enterGalleryWorld(overlay) {
+  _galleryWorldActive = true;
+
+  // Apply world theme to body — background & colour changes only, no overlay flash
+  document.body.classList.add('gallery-world');
+
+  // 3. Clear normal critters, spawn sunny ones
+  document.querySelectorAll('.critter').forEach(el => {
+    el.style.transition = 'opacity 0.5s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 600);
+  });
+
+  setTimeout(() => spawnSunnyCritters(), 800);
+}
+
+function exitGalleryWorld(overlay) {
+  _galleryWorldActive = false;
+  document.body.classList.remove('gallery-world');
+
+  // Remove sunny critters
+  _sunnyCritters.forEach(c => {
+    if (c.el && document.body.contains(c.el)) {
+      c.el.style.transition = 'opacity 0.5s';
+      c.el.style.opacity = '0';
+      setTimeout(() => c.el.remove(), 600);
+    }
+  });
+  _sunnyCritters = [];
+}
+
+function spawnSunnyCritters() {
+  if (!_galleryWorldActive) return;
+  const count = 4 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      if (!_galleryWorldActive) return;
+      spawnOneSunnyCritter();
+    }, i * 400);
+  }
+}
+
+function spawnOneSunnyCritter() {
+  if (!_galleryWorldActive) return;
+  const def = SUNNY_CRITTERS[Math.floor(Math.random() * SUNNY_CRITTERS.length)];
+
+  const el = document.createElement('div');
+  el.className = 'gallery-critter';
+  el.style.color = def.color;
+  el.style.textShadow = `0 0 8px ${def.color}88`;
+  document.body.appendChild(el);
+
+  let x = Math.random() * (window.innerWidth - 80);
+  let y = Math.random() * (window.innerHeight * 0.5) + window.innerHeight * 0.25;
+  let dx = (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.8);
+  let frame = 0;
+  let tick = 0;
+
+  // Bubble
+  const bubble = document.createElement('div');
+  bubble.style.cssText = `position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+    background:rgba(255,245,200,0.95);border:1px solid #ffb347;border-radius:6px;
+    padding:3px 7px;font-family:'Press Start 2P',monospace;font-size:5px;
+    color:#7a3e00;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.25s;`;
+  bubble.innerHTML = `<span></span>
+    <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);
+      border:4px solid transparent;border-top-color:#ffb347;"></div>`;
+  el.appendChild(bubble);
+
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+
+  setTimeout(() => el.classList.add('gc-visible'), 50);
+
+  const tickId = setInterval(() => {
+    if (!document.body.contains(el)) { clearInterval(tickId); return; }
+    x += dx;
+    tick++;
+    if (tick % 16 === 0) frame = (frame + 1) % def.frames.length;
+    if (x < 0 || x > window.innerWidth - 70) dx *= -1;
+    el.style.left = Math.round(x) + 'px';
+    el.style.top  = Math.round(y + Math.sin(tick * 0.04) * 4) + 'px';
+    el.style.transform = `scaleX(${dx < 0 ? -1 : 1})`;
+    el.textContent = '';
+    el.appendChild(document.createTextNode(def.frames[frame]));
+    el.appendChild(bubble);
+  }, 60);
+
+  // Initial text render
+  el.textContent = def.frames[0];
+  el.appendChild(bubble);
+
+  // Bubbles
+  function showBubble() {
+    if (!document.body.contains(el)) return;
+    bubble.querySelector('span').textContent = def.lines[Math.floor(Math.random() * def.lines.length)];
+    bubble.style.opacity = '1';
+    setTimeout(() => { bubble.style.opacity = '0'; }, 2200);
+  }
+  setTimeout(showBubble, 1000 + Math.random() * 2000);
+  const bubbleId = setInterval(showBubble, 5000 + Math.random() * 5000);
+
+  // Lifetime
+  const life = 14000 + Math.random() * 10000;
+  _sunnyCritters.push({ el, tickId, bubbleId });
+
+  setTimeout(() => {
+    clearInterval(tickId);
+    clearInterval(bubbleId);
+    el.style.opacity = '0';
+    setTimeout(() => { el.remove(); }, 600);
+    // Respawn another if still in gallery world
+    if (_galleryWorldActive) setTimeout(spawnOneSunnyCritter, 2000);
+  }, life);
+}
+
+// =============================================
+//  BOOK NOOK — piece count in HUD
+// =============================================
+function initNookCount(stories) {
+  const el = document.getElementById('nook-hud-count');
+  if (el && stories && stories.length) {
+    el.textContent = String(stories.length).padStart(2, '0') + ' STORIES';
+  }
 }

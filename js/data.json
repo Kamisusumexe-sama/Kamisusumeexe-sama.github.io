@@ -153,5 +153,73 @@
       "updated": "Jan 2025",
       "driveUrl": ""
     }
+  ],
+  "artDesc": "Original art \u2014 illustrations, concept work & pixel pieces.",
+  "artGallery": [
+    {
+      "title": "Neon Cityscape",
+      "medium": "DIGITAL ART",
+      "image": ""
+    },
+    {
+      "title": "Pixel Knight",
+      "medium": "PIXEL ART",
+      "image": ""
+    },
+    {
+      "title": "Space Witch",
+      "medium": "CONCEPT ART",
+      "image": ""
+    },
+    {
+      "title": "Glitch Portal",
+      "medium": "DIGITAL ART",
+      "image": ""
+    },
+    {
+      "title": "Dungeon Map",
+      "medium": "INK",
+      "image": ""
+    },
+    {
+      "title": "Character Sheet 01",
+      "medium": "CONCEPT ART",
+      "image": ""
+    },
+    {
+      "title": "Starfall Cover",
+      "medium": "ILLUSTRATION",
+      "image": ""
+    },
+    {
+      "title": "Mech Sketch",
+      "medium": "PENCIL",
+      "image": ""
+    },
+    {
+      "title": "Pixel Town",
+      "medium": "PIXEL ART",
+      "image": ""
+    },
+    {
+      "title": "Forest Spirit",
+      "medium": "DIGITAL PAINT",
+      "image": ""
+    },
+    {
+      "title": "Boss Fight",
+      "medium": "CONCEPT ART",
+      "image": ""
+    },
+    {
+      "title": "Title Screen",
+      "medium": "PIXEL ART",
+      "image": ""
+    },
+    {
+      "title": "Rune Tablet",
+      "medium": "INK",
+      "image": ""
+    }
   ]
 }
