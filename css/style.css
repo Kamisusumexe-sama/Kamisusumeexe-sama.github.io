@@ -180,26 +180,22 @@ body {
    HERO
    ============================================= */
 .hero {
-  min-height: 100vh; position: relative;
+  min-height: auto; position: relative;
   display: flex; align-items: center;
-  padding: 8rem 2.5rem 4rem;
-  overflow: hidden;
-  margin-bottom: -1px;
+  padding: 8rem 2.5rem 2rem;
+  overflow: visible;
+  margin-bottom: 0;
 }
-/* Bottom fade so the intro dissolves into About. */
+/* Bottom fade — removed to merge with showreel */
 .hero::after {
   content: "";
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: min(34vh, 360px);
-  background: linear-gradient(to bottom,
-    transparent 0%,
-    rgba(6,6,15,0.32) 28%,
-    rgba(9,9,24,0.78) 68%,
-    var(--bg2) 100%
-  );
+  height: 0;
+  background: none;
   z-index: 2;
   pointer-events: none;
+  display: none;
 }
 
 /* Deep space background layers */
@@ -427,6 +423,24 @@ section { padding: 6rem 0; }
   padding-bottom: clamp(7rem, 12vh, 10rem);
   margin-bottom: -1px;
 }
+
+/* =============================================
+   PROJECTS — START OF TRANSITION TO SUNNY
+   ============================================= */
+.projects {
+  background: linear-gradient(to bottom,
+    var(--bg2) 0%,
+    #1a1a32 25%,
+    #2d2844 50%,
+    #4a4860 75%,
+    #5a6b7f 100%
+  );
+  position: relative;
+  overflow: hidden;
+  padding-top: clamp(6rem, 10vh, 8rem);
+  padding-bottom: clamp(7rem, 12vh, 10rem);
+  margin-bottom: -1px;
+}
 /* subtle dot grid bg */
 .about::before {
   content: "";
@@ -583,9 +597,17 @@ section { padding: 6rem 0; }
 .card-actions { display: flex; gap: 0.5rem; }
 
 /* =============================================
-   GAMES SECTION
+   GAMES SECTION — CONTINUES TRANSITION
    ============================================= */
-.games-section { background: var(--bg2); }
+.games-section {
+  background: linear-gradient(to bottom,
+    #5a6b7f 0%,
+    #6b7c8f 25%,
+    #7c8d9f 50%,
+    #8d9eaf 75%,
+    #9eaebf 100%
+  );
+}
 .games-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr));
   gap: 1.25rem; margin-bottom: 2rem;
@@ -650,7 +672,14 @@ section { padding: 6rem 0; }
 /* =============================================
    CONTACT
    ============================================= */
-.contact { background: var(--bg2); position: relative; overflow: hidden; }
+.contact {
+  background: linear-gradient(to bottom,
+    #fffaf5 0%,
+    #fff8f0 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
 .contact::before {
   content: "";
   position: absolute; inset: 0; pointer-events: none;
@@ -690,14 +719,24 @@ section { padding: 6rem 0; }
    ============================================= */
 .footer {
   background: var(--bg); border-top: 1px solid var(--border);
-  text-align: center; padding: 2rem; color: var(--muted); font-size: 0.82rem;
+  text-align: center; padding: 3rem 2rem; color: var(--muted); font-size: 0.82rem;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 .footer::before {
-  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent2), var(--accent), var(--accent2), transparent);
-  opacity: 0.2;
+  content: "🐸"; position: absolute; left: 2.5rem; top: 50%; transform: translateY(-50%);
+  font-size: 2rem; opacity: 0.6; pointer-events: none;
+  text-shadow: 0 0 20px rgba(80,250,123,0.3);
 }
+.footer::after {
+  content: "💡"; position: absolute; right: 2.5rem; top: 50%; transform: translateY(-50%);
+  font-size: 2rem; opacity: 0.6; pointer-events: none;
+  text-shadow: 0 0 20px rgba(241,250,140,0.3);
+}
+.footer > p { position: relative; z-index: 1; }
 .footer-copy { margin-top: 0.4rem; font-size: 0.72rem; }
 
 /* =============================================
@@ -914,7 +953,12 @@ section { padding: 6rem 0; }
 /* =============================================
    DOWNLOADS — refined link-list UI
    ============================================= */
-.downloads { background: var(--bg); }
+.downloads {
+  background: linear-gradient(to bottom,
+    #fff0e0 0%,
+    #fffaf5 100%
+  );
+}
 
 /* Section intro */
 .downloads .section-desc {
@@ -1417,7 +1461,14 @@ section { padding: 6rem 0; }
 .art-gallery {
   position: relative;
   min-height: 100vh;
-  background: #06040e;
+  background: linear-gradient(to bottom,
+    #9eaebf 0%,
+    #b8c8d8 20%,
+    #d4dce4 40%,
+    #ffd89b 60%,
+    #ffb366 80%,
+    #ff9d5c 100%
+  );
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1916,9 +1967,7 @@ section { padding: 6rem 0; }
 .showreel-hero {
   padding: 0 !important;
   position: relative;
-  background:
-    radial-gradient(ellipse 70% 34% at 50% 0%, rgba(189,147,249,0.12), transparent 68%),
-    #000;
+  background: var(--bg);
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1927,35 +1976,36 @@ section { padding: 6rem 0; }
   margin-top: 0;
 }
 
-/* Hero bleeds INTO showreel — wave wipe transition */
+/* LED lights decoration — colorful lights at top */
 .showreel-hero::before {
   content: "";
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 300px;
-  background: linear-gradient(to bottom,
-    #05050c 0%,
-    rgba(10,10,22,0.95) 20%,
-    rgba(5,5,12,0.72) 58%,
-    transparent 100%
-  );
-  z-index: 5;
+  top: 2rem; left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  height: 28px;
+  z-index: 10;
   pointer-events: none;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 28"><circle cx="14" cy="14" r="8" fill="%23ff4d4d" filter="drop-shadow(0 0 8px %23ff4d4d)"/><circle cx="42" cy="14" r="8" fill="%23ffcc00" filter="drop-shadow(0 0 8px %23ffcc00)"/><circle cx="70" cy="14" r="8" fill="%2350fa7b" filter="drop-shadow(0 0 8px %2350fa7b)"/><circle cx="98" cy="14" r="8" fill="%238be9fd" filter="drop-shadow(0 0 8px %238be9fd)"/><circle cx="126" cy="14" r="8" fill="%23bd93f9" filter="drop-shadow(0 0 8px %23bd93f9)"/><circle cx="154" cy="14" r="8" fill="%23ff79c6" filter="drop-shadow(0 0 8px %23ff79c6)"/><circle cx="182" cy="14" r="8" fill="%23ffb86c" filter="drop-shadow(0 0 8px %23ffb86c)"/><circle cx="210" cy="14" r="8" fill="%23ff4d4d" filter="drop-shadow(0 0 8px %23ff4d4d)"/><circle cx="238" cy="14" r="8" fill="%23ffcc00" filter="drop-shadow(0 0 8px %23ffcc00)"/><circle cx="266" cy="14" r="8" fill="%2350fa7b" filter="drop-shadow(0 0 8px %2350fa7b)"/></svg>') no-repeat center;
+  background-size: contain;
+  animation: ledBlink 3s ease-in-out infinite;
 }
 
-/* Bottom fade out */
+@keyframes ledBlink {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; filter: drop-shadow(0 0 12px rgba(255,204,0,0.6)); }
+}
+
+/* Bottom fade out — removed */
 .showreel-hero::after {
   content: "";
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 180px;
-  background: linear-gradient(to top,
-    #080816 0%,
-    rgba(8,8,22,0.6) 60%,
-    transparent 100%
-  );
+  height: 0;
+  background: none;
   z-index: 5;
   pointer-events: none;
+  display: none;
 }
 
 /* Fullscreen video background */
@@ -2489,7 +2539,14 @@ body.gallery-world {
 
 .book-nook {
   padding: 0 0 4rem !important;
-  background: #0e0a04 !important;
+  background: linear-gradient(to bottom,
+    #ff9d5c 0%,
+    #ffb380 20%,
+    #ffc9a4 40%,
+    #ffd9b8 60%,
+    #ffe4cc 80%,
+    #fff0e0 100%
+  ) !important;
   position: relative;
   overflow: hidden;
 }
