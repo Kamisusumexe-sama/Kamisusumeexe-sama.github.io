@@ -87,7 +87,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
   initShips();
   initCursorTrail();
-  initTransitionAnimations();
   initNookCount(data.stories || data.books || []);
   initPageTransitions();
 });
@@ -1731,50 +1730,6 @@ function spawnOneSunnyCritter() {
     // Respawn another if still in gallery world
     if (_galleryWorldActive) setTimeout(spawnOneSunnyCritter, 2000);
   }, life);
-}
-
-// =============================================
-//  TRANSITION ANIMATIONS — Scroll-triggered
-// =============================================
-function initTransitionAnimations() {
-  const projectsSection = document.querySelector('.projects');
-  const gamesSection = document.querySelector('.games-section');
-  const artGallery = document.querySelector('.art-gallery');
-  
-  const observerOptions = {
-    threshold: 0.3,
-    rootMargin: '0px'
-  };
-  
-  const animationObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        if (entry.target === projectsSection) {
-          entry.target.style.animation = 'none';
-          setTimeout(() => {
-            entry.target.style.animation = '';
-          }, 10);
-        } else if (entry.target === gamesSection) {
-          entry.target.style.animation = 'none';
-          setTimeout(() => {
-            entry.target.style.animation = '';
-          }, 10);
-        } else if (entry.target === artGallery) {
-          const sunEl = artGallery.querySelector('::before');
-          const cloudEl = artGallery.querySelector('::after');
-          // Pseudo-elements can't be directly triggered, but the CSS animation will play
-          entry.target.style.animation = 'none';
-          setTimeout(() => {
-            entry.target.style.animation = '';
-          }, 10);
-        }
-      }
-    });
-  }, observerOptions);
-  
-  if (projectsSection) animationObserver.observe(projectsSection);
-  if (gamesSection) animationObserver.observe(gamesSection);
-  if (artGallery) animationObserver.observe(artGallery);
 }
 
 // =============================================
