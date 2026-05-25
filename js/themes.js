@@ -601,16 +601,18 @@
   }
 
   // ── IntersectionObserver — switch on scroll ──
-  // Only the gallery section triggers the sunny theme.
-  // The booknook and sections below inherit the sunny-world class
-  // (applied by applyTheme('gallery')), so we only need to watch gallery
-  // for the on/off toggle. Reading-nook no longer triggers its own theme
-  // while the gallery is active — it sits inside the sunny world.
+  // Gallery theme (sunny world) now starts from Projects section.
+  // Reading-nook triggers warm booknook variant.
 
   const SECTION_THEMES = {
+    'projects':     'gallery',
+    'games':        'gallery',
     'art-gallery':  'gallery',
     'reading-nook': 'booknook',
   };
+
+  // IDs that all belong to the sunny gallery world
+  const GALLERY_TRIGGER_IDS = ['projects', 'games', 'art-gallery'];
 
   // Lower threshold so sunny theme kicks in earlier as user scrolls into gallery
   const obs = new IntersectionObserver((entries) => {
@@ -618,16 +620,21 @@
       const sectionTheme = SECTION_THEMES[entry.target.id];
       if (entry.isIntersecting && sectionTheme) {
         applyTheme(sectionTheme);
-      } else if (!entry.isIntersecting && sectionTheme && currentTheme === sectionTheme) {
-        // Only revert to default if we're scrolling back UP (above gallery).
-        // Check scroll direction: if gallery is below viewport, keep sunny.
+      } else if (!entry.isIntersecting) {
         const rect = entry.target.getBoundingClientRect();
         if (sectionTheme === 'gallery' && rect.top > 0) {
-          applyTheme('default');
+          // Scrolling back up out of a gallery section — only revert if none remain visible
+          const anyStillVisible = GALLERY_TRIGGER_IDS.some(id => {
+            const el = document.getElementById(id);
+            if (!el) return false;
+            const r = el.getBoundingClientRect();
+            return r.bottom > 0 && r.top < window.innerHeight;
+          });
+          if (!anyStillVisible) applyTheme('default');
         } else if (sectionTheme === 'booknook' && rect.top > 0) {
           applyTheme('gallery');
         }
-        // If rect.top < 0, we scrolled past gallery downward — keep sunny
+        // If rect.top < 0, we scrolled past the section downward — keep current theme
       }
     });
   }, { threshold: 0.08 });
