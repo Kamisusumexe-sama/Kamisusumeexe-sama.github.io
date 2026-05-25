@@ -7,7 +7,7 @@
 document.addEventListener("DOMContentLoaded", async () => {
   let data;
   try {
-    const res = await fetch("/content.json");
+    const res = await fetch("content.json");
     if (!res.ok) throw new Error("not found");
     data = await res.json();
   } catch (e) {
