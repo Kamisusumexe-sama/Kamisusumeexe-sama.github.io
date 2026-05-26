@@ -135,47 +135,67 @@
     }
     .proj-description-text p { margin-bottom: 1.25rem; }
 
-    /* Gallery */
-    .proj-gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 0.75rem;
+    /* ---- MEDIA COLLAGE ---- */
+    .collage-section { margin-bottom: 0; }
+    .collage-header {
+      max-width: 900px; margin: 0 auto;
+      padding: 0 2.5rem 1.5rem;
     }
-    .proj-gallery-item {
-      aspect-ratio: 16/9; border-radius: 8px; overflow: hidden;
-      border: 1px solid var(--border); cursor: zoom-in;
-      background: var(--bg3);
-    }
-    .proj-gallery-item img {
-      width: 100%; height: 100%; object-fit: cover;
-      transition: transform 0.35s, filter 0.35s;
-    }
-    .proj-gallery-item:hover img { transform: scale(1.05); filter: brightness(1.1); }
-    .proj-gallery-item:nth-child(3n+1) { grid-column: span 2; }
 
-    /* Lightbox */
+    .media-collage {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: clamp(150px, 16vw, 230px);
+      gap: 5px;
+      padding: 0 5px 5px;
+    }
+    .media-item {
+      position: relative; overflow: hidden;
+      background: var(--bg3); border-radius: 6px;
+    }
+    /* mosaic size pattern */
+    .media-item:nth-child(7n+1) { grid-column: span 2; grid-row: span 2; }
+    .media-item:nth-child(7n+4) { grid-column: span 2; }
+    .media-item:nth-child(7n+7) { grid-column: span 2; }
+    /* videos always get 2 cols */
+    .media-item.is-video       { grid-column: span 2; }
+
+    .media-item img {
+      width: 100%; height: 100%; object-fit: cover;
+      cursor: zoom-in; display: block;
+      transition: transform 0.4s ease, filter 0.3s;
+    }
+    .media-item:hover img { transform: scale(1.05); filter: brightness(1.08); }
+
+    .media-item.is-video iframe {
+      width: 100%; height: 100%; border: none; display: block;
+    }
+
+    /* hover caption */
+    .media-caption {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 1.5rem 0.9rem 0.55rem;
+      background: linear-gradient(to top, rgba(6,6,15,0.88) 0%, transparent 100%);
+      font-size: 0.8rem; color: rgba(240,238,255,0.82);
+      opacity: 0; transition: opacity 0.22s; pointer-events: none;
+    }
+    .media-item:hover .media-caption { opacity: 1; }
+
+    /* lightbox */
     .proj-lb {
-      position: fixed; inset: 0; z-index: 500;
-      background: rgba(0,0,0,0.92); display: none;
-      align-items: center; justify-content: center;
+      position: fixed; inset: 0; z-index: 600;
+      background: rgba(0,0,0,0.93);
+      display: none; align-items: center; justify-content: center;
     }
     .proj-lb.open { display: flex; }
-    .proj-lb img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+    .proj-lb img { max-width: 92vw; max-height: 90vh; border-radius: 8px; }
     .proj-lb-close {
       position: absolute; top: 1.5rem; right: 1.5rem;
-      background: none; border: 1px solid var(--border); color: var(--muted);
-      padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+      background: none; border: 1px solid var(--border-bright); color: var(--muted);
+      padding: 0.4rem 0.85rem; border-radius: 6px; cursor: pointer;
+      font-family: var(--font-pixel); font-size: 0.42rem; letter-spacing: 0.06em;
     }
-
-    /* Video */
-    .proj-video-wrap {
-      position: relative; padding-bottom: 56.25%; height: 0;
-      border-radius: 12px; overflow: hidden; border: 1px solid var(--border);
-      background: var(--bg3);
-    }
-    .proj-video-wrap iframe {
-      position: absolute; inset: 0; width: 100%; height: 100%; border: none;
-    }
+    .proj-lb-close:hover { color: var(--text); border-color: var(--accent); }
 
     /* Links */
     .proj-links-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
@@ -185,21 +205,21 @@
       font-family: var(--font-pixel); font-size: 0.52rem; letter-spacing: 0.04em;
       transition: all 0.2s;
     }
-    .proj-link-btn.primary {
-      background: var(--accent); color: var(--bg);
-    }
+    .proj-link-btn.primary { background: var(--accent); color: var(--bg); }
     .proj-link-btn.primary:hover { opacity: 0.85; }
-    .proj-link-btn.ghost {
-      border: 1px solid var(--border-bright); color: var(--text); background: transparent;
-    }
+    .proj-link-btn.ghost { border: 1px solid var(--border-bright); color: var(--text); }
     .proj-link-btn.ghost:hover { border-color: var(--accent2); color: var(--accent2); }
 
+    @media (max-width: 768px) {
+      .media-collage { grid-template-columns: repeat(2, 1fr); }
+      .media-item:nth-child(7n+1) { grid-column: span 2; grid-row: span 1; }
+      .media-item.is-video { grid-column: span 2; }
+    }
     @media (max-width: 640px) {
       .proj-hero-content { padding: 0 1.25rem 3rem; }
       .proj-main { padding: 2.5rem 1.25rem 4rem; }
       .proj-nav { padding: 0 1.25rem; }
-      .proj-gallery-item:nth-child(3n+1) { grid-column: span 1; }
-      .proj-gallery-grid { grid-template-columns: 1fr 1fr; }
+      .collage-header { padding: 0 1.25rem 1.25rem; }
     }
   </style>
 </head>
@@ -234,29 +254,25 @@
 </section>
 
 <main class="proj-main">
-
   <section class="proj-section" id="section-desc" style="display:none;">
     <div class="proj-section-label">// ABOUT THIS PROJECT</div>
     <div class="proj-description-text" id="proj-desc-text"></div>
   </section>
+</main>
 
-  <section class="proj-section" id="section-gallery" style="display:none;">
-    <div class="proj-section-label">// SCREENSHOTS</div>
-    <div class="proj-gallery-grid" id="proj-gallery-grid"></div>
-  </section>
+<!-- Media collage — full-width, breaks out of proj-main constraint -->
+<section id="section-media" style="display:none; margin-bottom:4rem;">
+  <div class="collage-header">
+    <div class="proj-section-label">// MEDIA</div>
+  </div>
+  <div class="media-collage" id="proj-media-collage"></div>
+</section>
 
-  <section class="proj-section" id="section-video" style="display:none;">
-    <div class="proj-section-label">// VIDEO</div>
-    <div class="proj-video-wrap">
-      <iframe id="proj-video-frame" src="" allowfullscreen></iframe>
-    </div>
-  </section>
-
+<main class="proj-main" style="padding-top:0;">
   <section class="proj-section" id="section-links" style="display:none;">
     <div class="proj-section-label">// LINKS</div>
     <div class="proj-links-row" id="proj-links-row"></div>
   </section>
-
 </main>
 
 <script src="js/main.js"></script>
@@ -346,20 +362,23 @@
       document.getElementById("section-desc").style.display = "block";
     }
 
-    // Gallery
-    const gallery = Array.isArray(p.gallery) ? p.gallery : [];
-    if (gallery.length) {
-      document.getElementById("proj-gallery-grid").innerHTML =
-        gallery.map(url => `<div class="proj-gallery-item" onclick="openLb('${url}')">
-          <img src="${url}" alt="" loading="lazy"/>
-        </div>`).join("");
-      document.getElementById("section-gallery").style.display = "block";
-    }
-
-    // Video
-    if (p.videoUrl) {
-      document.getElementById("proj-video-frame").src = p.videoUrl;
-      document.getElementById("section-video").style.display = "block";
+    // Media collage — combines images and videos (new schema) + legacy gallery/videoUrl
+    const mediaItems = buildMediaItems(p);
+    if (mediaItems.length) {
+      document.getElementById("proj-media-collage").innerHTML = mediaItems.map(item => {
+        if (item.type === "video") {
+          return `<div class="media-item is-video">
+            <iframe src="${item.url}" allowfullscreen loading="lazy"></iframe>
+            ${item.caption ? `<div class="media-caption">${item.caption}</div>` : ""}
+          </div>`;
+        }
+        const safe = item.url.replace(/'/g, "\\'");
+        return `<div class="media-item" onclick="openLb('${safe}')">
+          <img src="${item.url}" alt="${item.caption || ""}" loading="lazy"/>
+          ${item.caption ? `<div class="media-caption">${item.caption}</div>` : ""}
+        </div>`;
+      }).join("");
+      document.getElementById("section-media").style.display = "block";
     }
 
     // Links
@@ -378,6 +397,29 @@
         links.map((l, i) => `<a href="${l.url}" target="_blank" class="proj-link-btn ${i === 0 && l.primary ? 'primary' : 'ghost'}">${l.label}</a>`).join("");
       document.getElementById("section-links").style.display = "block";
     }
+  }
+
+  // Build media items list from new `media` field + legacy `gallery` array + legacy `videoUrl`
+  function buildMediaItems(p) {
+    const items = [];
+    // New unified media array
+    if (Array.isArray(p.media) && p.media.length) {
+      p.media.forEach(m => {
+        if (typeof m === "string") {
+          items.push({ type: "image", url: m });
+        } else {
+          items.push({ type: m.type || "image", url: m.url, caption: m.caption });
+        }
+      });
+    } else {
+      // Legacy: gallery (image URLs) + single videoUrl
+      if (p.videoUrl) items.push({ type: "video", url: p.videoUrl });
+      (Array.isArray(p.gallery) ? p.gallery : []).forEach(url => {
+        if (typeof url === "string") items.push({ type: "image", url });
+        else if (url && url.url) items.push({ type: url.type || "image", url: url.url, caption: url.caption });
+      });
+    }
+    return items;
   }
 
   // Lightbox
