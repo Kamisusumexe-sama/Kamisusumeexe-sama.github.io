@@ -30,6 +30,17 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 
+/* ---- PAGE RIPPLE TRANSITION ---- */
+#page-ripple {
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  background: var(--bg);
+  clip-path: circle(0px at var(--rx, 50%) var(--ry, 50%));
+}
+#page-ripple.ripple-out {
+  clip-path: circle(150vmax at var(--rx, 50%) var(--ry, 50%));
+  transition: clip-path 0.58s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -733,7 +744,7 @@ section { padding: 6rem 0; margin-bottom: -1px; }
   border-radius: 12px; overflow: hidden;
   transition: transform 0.35s, box-shadow 0.35s, border-color 0.35s;
   opacity: 0; transform: translateY(28px);
-  position: relative;
+  position: relative; cursor: pointer;
 }
 /* Neon corner accents on cards */
 .project-card::before, .project-card::after {
@@ -773,10 +784,23 @@ section { padding: 6rem 0; margin-bottom: -1px; }
   box-shadow: 0 0 10px var(--glow-pink);
 }
 .card-body { padding: 1.25rem; }
-.card-title { font-family: var(--font-pixel); font-size: 0.7rem; margin-bottom: 0.6rem; line-height: 1.6; }
+.card-title { font-family: var(--font-pixel); font-size: 0.7rem; margin-bottom: 0.4rem; line-height: 1.6; }
+.card-meta-line { font-size: 0.75rem; color: var(--accent2); margin-bottom: 0.6rem; opacity: 0.8; }
 .card-desc { font-size: 0.92rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.7; }
 .card-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1rem; }
-.card-actions { display: flex; gap: 0.5rem; }
+.card-actions { display: flex; align-items: center; gap: 0.5rem; }
+.card-view-hint {
+  font-family: var(--font-pixel); font-size: 0.42rem; color: var(--muted);
+  letter-spacing: 0.06em; flex: 1;
+  transition: color 0.2s;
+}
+.project-card:hover .card-view-hint { color: var(--accent2); }
+.card-status-badge {
+  position: absolute; bottom: 0.75rem; left: 0.75rem;
+  font-family: var(--font-pixel); font-size: 0.38rem; letter-spacing: 0.06em;
+  padding: 0.25rem 0.55rem; border-radius: 3px;
+  background: rgba(6,6,15,0.75); color: var(--green); border: 1px solid rgba(80,250,123,0.3);
+}
 
 /* =============================================
    GAMES SECTION

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title id="page-title">Project — Portfolio</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+  <style>
+    /* ---- RIPPLE OVERLAY ---- */
+    #page-ripple {
+      position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+      background: var(--bg);
+      clip-path: circle(150vmax at var(--rx, 50%) var(--ry, 50%));
+    }
+    #page-ripple.ripple-shrink {
+      clip-path: circle(0px at var(--rx, 50%) var(--ry, 50%));
+      transition: clip-path 0.62s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ---- PROJECT NAV ---- */
+    .proj-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem; height: 60px;
+      background: rgba(6,6,15,0.82); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .proj-nav-back {
+      display: flex; align-items: center; gap: 0.5rem;
+      color: var(--muted); text-decoration: none; font-size: 0.85rem;
+      transition: color 0.2s; cursor: pointer; background: none; border: none;
+    }
+    .proj-nav-back:hover { color: var(--text); }
+    .proj-nav-back::before { content: "←"; font-size: 1rem; }
+    .proj-nav-title {
+      font-family: var(--font-pixel); font-size: 0.55rem;
+      color: var(--accent2); letter-spacing: 0.08em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 40vw;
+    }
+    .proj-nav-play {
+      display: flex; gap: 0.5rem;
+    }
+    .proj-nav-play a {
+      display: none; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 1rem; border-radius: 6px;
+      font-family: var(--font-pixel); font-size: 0.5rem;
+      text-decoration: none; transition: opacity 0.2s;
+    }
+    .proj-nav-play a.show { display: flex; }
+    .proj-nav-play a.btn-primary { background: var(--accent); color: var(--bg); }
+    .proj-nav-play a.btn-ghost { border: 1px solid var(--border-bright); color: var(--text); }
+
+    /* ---- HERO ---- */
+    .proj-hero {
+      position: relative; min-height: 72vh;
+      display: flex; align-items: flex-end;
+      padding-top: 60px; overflow: hidden;
+    }
+    .proj-hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+    }
+    .proj-hero-bg canvas { width: 100%; height: 100%; }
+    .proj-hero-image {
+      position: absolute; inset: 0; z-index: 1;
+    }
+    .proj-hero-image img {
+      width: 100%; height: 100%; object-fit: cover;
+      opacity: 0.45;
+    }
+    .proj-hero-fade {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 55%; z-index: 2;
+      background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
+    }
+    .proj-hero-content {
+      position: relative; z-index: 3;
+      width: 100%; max-width: 900px; margin: 0 auto;
+      padding: 0 2.5rem 4rem;
+    }
+    .proj-status-badge {
+      display: inline-block; margin-bottom: 1rem;
+      font-family: var(--font-pixel); font-size: 0.42rem;
+      padding: 0.35rem 0.7rem; border-radius: 3px; letter-spacing: 0.08em;
+    }
+    .proj-status-badge.released  { background: rgba(80,250,123,0.15); color: var(--green); border: 1px solid rgba(80,250,123,0.3); }
+    .proj-status-badge.jam       { background: rgba(241,250,140,0.12); color: var(--yellow); border: 1px solid rgba(241,250,140,0.25); }
+    .proj-status-badge.wip       { background: rgba(255,184,108,0.12); color: var(--orange); border: 1px solid rgba(255,184,108,0.25); }
+    .proj-hero-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.1rem; }
+    .proj-hero-tags .tag {
+      background: rgba(189,147,249,0.12); border: 1px solid rgba(189,147,249,0.25);
+      color: var(--accent2); font-family: var(--font-pixel); font-size: 0.42rem;
+      padding: 0.3rem 0.6rem; border-radius: 3px; letter-spacing: 0.06em;
+    }
+    .proj-hero-title {
+      font-family: var(--font-pixel); font-size: clamp(0.9rem, 3vw, 1.6rem);
+      line-height: 1.4; margin-bottom: 1.5rem;
+      text-shadow: 0 0 40px rgba(189,147,249,0.4);
+    }
+    .proj-meta-row {
+      display: flex; flex-wrap: wrap; gap: 1.5rem;
+    }
+    .proj-meta-item {
+      display: flex; flex-direction: column; gap: 0.2rem;
+    }
+    .proj-meta-label {
+      font-family: var(--font-pixel); font-size: 0.34rem;
+      color: var(--muted); letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .proj-meta-value {
+      font-size: 0.92rem; color: var(--text); font-weight: 500;
+    }
+
+    /* ---- MAIN CONTENT ---- */
+    .proj-main {
+      max-width: 900px; margin: 0 auto; padding: 4rem 2.5rem 6rem;
+    }
+
+    .proj-section { margin-bottom: 4rem; }
+    .proj-section-label {
+      font-family: var(--font-pixel); font-size: 0.5rem;
+      color: var(--accent); letter-spacing: 0.15em;
+      margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;
+    }
+    .proj-section-label::after {
+      content: ""; flex: 1; height: 1px;
+      background: linear-gradient(to right, var(--border), transparent);
+    }
+
+    /* Description */
+    .proj-description-text {
+      font-size: 1.05rem; line-height: 1.9; color: var(--muted);
+    }
+    .proj-description-text p { margin-bottom: 1.25rem; }
+
+    /* Gallery */
+    .proj-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0.75rem;
+    }
+    .proj-gallery-item {
+      aspect-ratio: 16/9; border-radius: 8px; overflow: hidden;
+      border: 1px solid var(--border); cursor: zoom-in;
+      background: var(--bg3);
+    }
+    .proj-gallery-item img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.35s, filter 0.35s;
+    }
+    .proj-gallery-item:hover img { transform: scale(1.05); filter: brightness(1.1); }
+    .proj-gallery-item:nth-child(3n+1) { grid-column: span 2; }
+
+    /* Lightbox */
+    .proj-lb {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.92); display: none;
+      align-items: center; justify-content: center;
+    }
+    .proj-lb.open { display: flex; }
+    .proj-lb img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+    .proj-lb-close {
+      position: absolute; top: 1.5rem; right: 1.5rem;
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+    }
+
+    /* Video */
+    .proj-video-wrap {
+      position: relative; padding-bottom: 56.25%; height: 0;
+      border-radius: 12px; overflow: hidden; border: 1px solid var(--border);
+      background: var(--bg3);
+    }
+    .proj-video-wrap iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: none;
+    }
+
+    /* Links */
+    .proj-links-row { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .proj-link-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.65rem 1.3rem; border-radius: 8px; text-decoration: none;
+      font-family: var(--font-pixel); font-size: 0.52rem; letter-spacing: 0.04em;
+      transition: all 0.2s;
+    }
+    .proj-link-btn.primary {
+      background: var(--accent); color: var(--bg);
+    }
+    .proj-link-btn.primary:hover { opacity: 0.85; }
+    .proj-link-btn.ghost {
+      border: 1px solid var(--border-bright); color: var(--text); background: transparent;
+    }
+    .proj-link-btn.ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    @media (max-width: 640px) {
+      .proj-hero-content { padding: 0 1.25rem 3rem; }
+      .proj-main { padding: 2.5rem 1.25rem 4rem; }
+      .proj-nav { padding: 0 1.25rem; }
+      .proj-gallery-item:nth-child(3n+1) { grid-column: span 1; }
+      .proj-gallery-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="page-ripple"></div>
+
+<div class="proj-lb" id="proj-lb">
+  <button class="proj-lb-close" onclick="closeLb()">✕ CLOSE</button>
+  <img id="proj-lb-img" src="" alt=""/>
+</div>
+
+<nav class="proj-nav">
+  <button class="proj-nav-back" onclick="goBack()">Back to Projects</button>
+  <span class="proj-nav-title" id="proj-nav-title"></span>
+  <div class="proj-nav-play" id="proj-nav-play"></div>
+</nav>
+
+<section class="proj-hero" id="proj-hero">
+  <div class="proj-hero-bg">
+    <canvas id="starfield"></canvas>
+  </div>
+  <div class="proj-hero-image" id="proj-hero-image" style="display:none;">
+    <img id="proj-hero-img" src="" alt=""/>
+  </div>
+  <div class="proj-hero-fade"></div>
+  <div class="proj-hero-content">
+    <div id="proj-status-wrap"></div>
+    <div class="proj-hero-tags" id="proj-tags"></div>
+    <h1 class="proj-hero-title" id="proj-title">Loading...</h1>
+    <div class="proj-meta-row" id="proj-meta"></div>
+  </div>
+</section>
+
+<main class="proj-main">
+
+  <section class="proj-section" id="section-desc" style="display:none;">
+    <div class="proj-section-label">// ABOUT THIS PROJECT</div>
+    <div class="proj-description-text" id="proj-desc-text"></div>
+  </section>
+
+  <section class="proj-section" id="section-gallery" style="display:none;">
+    <div class="proj-section-label">// SCREENSHOTS</div>
+    <div class="proj-gallery-grid" id="proj-gallery-grid"></div>
+  </section>
+
+  <section class="proj-section" id="section-video" style="display:none;">
+    <div class="proj-section-label">// VIDEO</div>
+    <div class="proj-video-wrap">
+      <iframe id="proj-video-frame" src="" allowfullscreen></iframe>
+    </div>
+  </section>
+
+  <section class="proj-section" id="section-links" style="display:none;">
+    <div class="proj-section-label">// LINKS</div>
+    <div class="proj-links-row" id="proj-links-row"></div>
+  </section>
+
+</main>
+
+<script src="js/main.js"></script>
+<script>
+(function() {
+  // Reverse-ripple entry animation
+  const ripple = document.getElementById("page-ripple");
+  const stored = sessionStorage.getItem("ripple_origin");
+  if (stored) {
+    try {
+      const {x, y} = JSON.parse(stored);
+      ripple.style.setProperty("--rx", x + "px");
+      ripple.style.setProperty("--ry", y + "px");
+    } catch {}
+    sessionStorage.removeItem("ripple_origin");
+  }
+  // Shrink the ripple away after paint
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ripple.classList.add("ripple-shrink");
+  }));
+
+  // Load project data
+  const params = new URLSearchParams(location.search);
+  const projId = params.get("id");
+
+  fetch("content.json")
+    .then(r => r.json())
+    .then(data => {
+      const proj = (data.projects || []).find(p => p.id === projId);
+      if (!proj) { document.getElementById("proj-title").textContent = "Project not found"; return; }
+      renderProject(proj);
+    })
+    .catch(() => {
+      document.getElementById("proj-title").textContent = "Could not load project";
+    });
+
+  function renderProject(p) {
+    document.getElementById("page-title").textContent = p.title + " — Portfolio";
+    document.getElementById("proj-nav-title").textContent = p.title;
+    document.getElementById("proj-title").textContent = p.title;
+
+    // Status badge
+    if (p.status) {
+      const statusWrap = document.getElementById("proj-status-wrap");
+      const cls = p.status.toLowerCase().includes("jam") ? "jam"
+                : p.status.toLowerCase().includes("dev") || p.status.toLowerCase().includes("progress") ? "wip"
+                : "released";
+      statusWrap.innerHTML = `<span class="proj-status-badge ${cls}">${p.status.toUpperCase()}</span>`;
+    }
+
+    // Tags
+    const tags = Array.isArray(p.tags) ? p.tags : (p.tags||"").split(",").map(t=>t.trim()).filter(Boolean);
+    document.getElementById("proj-tags").innerHTML = tags.map(t => `<span class="tag">${t}</span>`).join("");
+
+    // Hero image
+    if (p.image) {
+      const heroImg = document.getElementById("proj-hero-image");
+      document.getElementById("proj-hero-img").src = p.image;
+      heroImg.style.display = "block";
+    }
+
+    // Meta row
+    const metaItems = [
+      p.year       && { label: "Year",      value: p.year },
+      p.platform   && { label: "Platform",  value: p.platform },
+      p.engine     && { label: "Engine",    value: p.engine },
+      p.role       && { label: "My Role",   value: p.role },
+      p.teamSize   && { label: "Team",      value: p.teamSize },
+      p.duration   && { label: "Duration",  value: p.duration },
+    ].filter(Boolean);
+    document.getElementById("proj-meta").innerHTML = metaItems.map(m => `
+      <div class="proj-meta-item">
+        <span class="proj-meta-label">${m.label}</span>
+        <span class="proj-meta-value">${m.value}</span>
+      </div>`).join("");
+
+    // Nav play buttons
+    const navPlay = document.getElementById("proj-nav-play");
+    if (p.playUrl) navPlay.innerHTML += `<a href="${p.playUrl}" target="_blank" class="btn-primary show">▶ Play</a>`;
+    if (p.videoUrl) navPlay.innerHTML += `<a href="${p.videoUrl}" target="_blank" class="btn-ghost show">🎬 Trailer</a>`;
+
+    // Full description
+    const fullDesc = p.fullDescription || p.description || "";
+    if (fullDesc) {
+      document.getElementById("proj-desc-text").innerHTML =
+        fullDesc.split(/\n\n+/).map(para => `<p>${para.replace(/\n/g, "<br>")}</p>`).join("");
+      document.getElementById("section-desc").style.display = "block";
+    }
+
+    // Gallery
+    const gallery = Array.isArray(p.gallery) ? p.gallery : [];
+    if (gallery.length) {
+      document.getElementById("proj-gallery-grid").innerHTML =
+        gallery.map(url => `<div class="proj-gallery-item" onclick="openLb('${url}')">
+          <img src="${url}" alt="" loading="lazy"/>
+        </div>`).join("");
+      document.getElementById("section-gallery").style.display = "block";
+    }
+
+    // Video
+    if (p.videoUrl) {
+      document.getElementById("proj-video-frame").src = p.videoUrl;
+      document.getElementById("section-video").style.display = "block";
+    }
+
+    // Links
+    const links = [];
+    if (p.playUrl)  links.push({ label: "▶ Play", url: p.playUrl, primary: true });
+    if (p.extraLinks) {
+      const extras = Array.isArray(p.extraLinks) ? p.extraLinks
+        : p.extraLinks.split("\n").map(l => {
+            const [label, url] = l.split("|").map(s => s.trim());
+            return url ? { label, url } : null;
+          }).filter(Boolean);
+      links.push(...extras);
+    }
+    if (links.length) {
+      document.getElementById("proj-links-row").innerHTML =
+        links.map((l, i) => `<a href="${l.url}" target="_blank" class="proj-link-btn ${i === 0 && l.primary ? 'primary' : 'ghost'}">${l.label}</a>`).join("");
+      document.getElementById("section-links").style.display = "block";
+    }
+  }
+
+  // Lightbox
+  window.openLb = function(src) {
+    document.getElementById("proj-lb-img").src = src;
+    document.getElementById("proj-lb").classList.add("open");
+  };
+  window.closeLb = function() {
+    document.getElementById("proj-lb").classList.remove("open");
+  };
+  document.getElementById("proj-lb").addEventListener("click", e => {
+    if (e.target === e.currentTarget) closeLb();
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLb(); });
+
+  // Back navigation with ripple
+  window.goBack = function() {
+    const ripple = document.getElementById("page-ripple");
+    ripple.style.setProperty("--rx", "50%");
+    ripple.style.setProperty("--ry", "50%");
+    // Reset to 0 instantly, then expand
+    ripple.classList.remove("ripple-shrink");
+    ripple.style.clipPath = "circle(0px at 50% 50%)";
+    ripple.style.transition = "none";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      ripple.style.transition = "clip-path 0.52s cubic-bezier(0.4, 0, 0.2, 1)";
+      ripple.style.clipPath = "circle(150vmax at 50% 50%)";
+    }));
+    setTimeout(() => history.back(), 520);
+  };
+})();
+</script>
+</body>
+</html>

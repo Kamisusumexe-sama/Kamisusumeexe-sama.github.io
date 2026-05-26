@@ -256,7 +256,6 @@
         <div class="editor" id="proj-editor">
           <h3 id="proj-editor-title">Project</h3>
           <div class="field"><label>Title</label><input id="pe-title"/></div>
-          <div class="field"><label>Description</label><textarea id="pe-desc"></textarea></div>
           <div class="field"><label>Tags (comma separated)</label><input id="pe-tags" placeholder="Unity, C#, RPG"/></div>
           <div class="field">
             <label>Project Cover Image</label>
@@ -268,12 +267,50 @@
             <input type="hidden" id="pe-image"/>
           </div>
           <div class="field">
-            <label>Featured?</label>
-            <select id="pe-featured"><option value="false">No</option><option value="true">Yes ★</option></select>
+            <label>Short Description (shown on card)</label>
+            <textarea id="pe-desc" style="min-height:70px;"></textarea>
+          </div>
+          <div class="field">
+            <label>Full Description (shown on project page — separate paragraphs with a blank line)</label>
+            <textarea id="pe-fulldesc" style="min-height:140px;" placeholder="Write a detailed description of the project. Separate paragraphs with a blank line."></textarea>
+          </div>
+          <div class="field-row3">
+            <div class="field"><label>Year</label><input id="pe-year" type="number" placeholder="2024"/></div>
+            <div class="field"><label>Platform</label><input id="pe-platform" placeholder="PC, Web, Mobile"/></div>
+            <div class="field">
+              <label>Status</label>
+              <select id="pe-status">
+                <option value="">— none —</option>
+                <option value="Released">Released</option>
+                <option value="In Development">In Development</option>
+                <option value="Game Jam">Game Jam</option>
+                <option value="Prototype">Prototype</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row3">
+            <div class="field"><label>Engine</label><input id="pe-engine" placeholder="Unity, Godot…"/></div>
+            <div class="field"><label>My Role</label><input id="pe-role" placeholder="Designer, Programmer…"/></div>
+            <div class="field"><label>Team Size</label><input id="pe-team" placeholder="Solo, 3-person team…"/></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Duration</label><input id="pe-duration" placeholder="3 months, 48 hrs…"/></div>
+            <div class="field">
+              <label>Featured?</label>
+              <select id="pe-featured"><option value="false">No</option><option value="true">Yes ★</option></select>
+            </div>
           </div>
           <div class="field-row">
             <div class="field"><label>Play URL</label><input id="pe-play" placeholder="https://vanessa.itch.io/game"/></div>
             <div class="field"><label>YouTube Embed URL</label><input id="pe-video" placeholder="https://www.youtube.com/embed/..."/></div>
+          </div>
+          <div class="field">
+            <label>Extra Links — one per line as: Label | URL</label>
+            <textarea id="pe-links" style="min-height:80px;" placeholder="GitHub | https://github.com/…&#10;Itch.io | https://itch.io/…"></textarea>
+          </div>
+          <div class="field">
+            <label>Gallery Images — one URL per line</label>
+            <textarea id="pe-gallery" style="min-height:90px;" placeholder="https://i.imgur.com/screenshot1.png&#10;assets/img/screen2.jpg"></textarea>
           </div>
           <div class="editor-actions">
             <button class="btn-save" onclick="saveItem('proj')">[ SAVE ]</button>
@@ -801,6 +838,7 @@ function openEditor(type, i) {
     document.getElementById("proj-img-preview").style.display = "none";
     document.getElementById("proj-img-placeholder").style.display = "flex";
     document.getElementById("pe-featured").value = "false";
+    document.getElementById("pe-status").value = "";
     document.getElementById("pe-image").value = "";
   }
   if (type === "game") {
@@ -825,12 +863,22 @@ function openEditor(type, i) {
   if (!item) return;
 
   if (type === "proj") {
-    set("pe-title",  item.title||"");
-    set("pe-desc",   item.description||"");
-    set("pe-tags",   (item.tags||[]).join(", "));
-    set("pe-play",   item.playUrl||"");
-    set("pe-video",  item.videoUrl||"");
-    set("pe-image",  item.image||"");
+    set("pe-title",    item.title||"");
+    set("pe-desc",     item.description||"");
+    set("pe-fulldesc", item.fullDescription||"");
+    set("pe-tags",     (item.tags||[]).join(", "));
+    set("pe-year",     item.year||"");
+    set("pe-platform", item.platform||"");
+    set("pe-engine",   item.engine||"");
+    set("pe-role",     item.role||"");
+    set("pe-team",     item.teamSize||"");
+    set("pe-duration", item.duration||"");
+    set("pe-play",     item.playUrl||"");
+    set("pe-video",    item.videoUrl||"");
+    set("pe-image",    item.image||"");
+    set("pe-links",    Array.isArray(item.extraLinks) ? item.extraLinks.map(l=>l.label+" | "+l.url).join("\n") : (item.extraLinks||""));
+    set("pe-gallery",  Array.isArray(item.gallery) ? item.gallery.join("\n") : (item.gallery||""));
+    document.getElementById("pe-status").value  = item.status||"";
     document.getElementById("pe-featured").value = String(!!item.featured);
     if (item.image) {
       document.getElementById("proj-img-preview").src = item.image;
@@ -874,10 +922,31 @@ async function saveItem(type) {
   let item;
   const existingId = editIndex >= 0 ? arr[editIndex].id : null;
   if (type === "proj") {
-    item = { id: existingId||"proj_"+Date.now(), title:val("pe-title"), description:val("pe-desc"),
-      tags: val("pe-tags").split(",").map(t=>t.trim()).filter(Boolean),
-      image:val("pe-image"), playUrl:val("pe-play"), videoUrl:val("pe-video"),
-      featured: val("pe-featured") === "true" };
+    const rawLinks = val("pe-links").split("\n").map(l => {
+      const [label, url] = l.split("|").map(s => s.trim());
+      return url ? { label, url } : null;
+    }).filter(Boolean);
+    const rawGallery = val("pe-gallery").split("\n").map(s => s.trim()).filter(Boolean);
+    item = {
+      id: existingId||"proj_"+Date.now(),
+      title:           val("pe-title"),
+      description:     val("pe-desc"),
+      fullDescription: val("pe-fulldesc"),
+      tags:            val("pe-tags").split(",").map(t=>t.trim()).filter(Boolean),
+      image:           val("pe-image"),
+      year:            val("pe-year") || undefined,
+      platform:        val("pe-platform") || undefined,
+      engine:          val("pe-engine") || undefined,
+      role:            val("pe-role") || undefined,
+      teamSize:        val("pe-team") || undefined,
+      duration:        val("pe-duration") || undefined,
+      status:          val("pe-status") || undefined,
+      playUrl:         val("pe-play") || undefined,
+      videoUrl:        val("pe-video") || undefined,
+      extraLinks:      rawLinks.length ? rawLinks : undefined,
+      gallery:         rawGallery.length ? rawGallery : undefined,
+      featured:        val("pe-featured") === "true"
+    };
   } else if (type === "game") {
     item = { id: existingId||"game_"+Date.now(), title:val("ge-title"),
       description:val("ge-desc"), image:val("ge-image"), embedUrl:val("ge-url") };

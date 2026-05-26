@@ -160,25 +160,47 @@ function renderProjects(projects) {
     const tags = Array.isArray(p.tags) ? p.tags : (p.tags||"").split(",").map(t=>t.trim());
     const card = document.createElement("div");
     card.className = "project-card" + (p.featured ? " featured" : "");
+    const metaBits = [p.year, p.platform, p.engine].filter(Boolean);
     card.innerHTML = `
       <div class="card-img">
         ${p.image
           ? `<img src="${p.image}" alt="${p.title}"/>`
           : `<div class="card-img-placeholder"><span>${p.title}</span></div>`}
         ${p.featured ? '<span class="featured-badge">★ Featured</span>' : ""}
+        ${p.status ? `<span class="card-status-badge">${p.status}</span>` : ""}
       </div>
       <div class="card-body">
         <h3 class="card-title">${p.title}</h3>
+        ${metaBits.length ? `<p class="card-meta-line">${metaBits.join(" · ")}</p>` : ""}
         <p class="card-desc">${p.description}</p>
         <div class="card-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
         <div class="card-actions">
-          ${p.playUrl  ? `<a href="${p.playUrl}" class="btn btn-primary btn-sm" target="_blank">▶ Play</a>` : ""}
-          ${p.videoUrl ? `<button class="btn btn-ghost btn-sm" onclick="openVideo('${p.videoUrl}','${p.title}')">🎬 Watch</button>` : ""}
+          <span class="card-view-hint">View Project →</span>
+          ${p.playUrl ? `<a href="${p.playUrl}" class="btn btn-primary btn-sm" target="_blank" onclick="event.stopPropagation()">▶ Play</a>` : ""}
         </div>
       </div>`;
+    card.addEventListener("click", e => {
+      if (e.target.closest("a")) return;
+      navigateWithRipple("project.html?id=" + encodeURIComponent(p.id), e.clientX, e.clientY);
+    });
     grid.appendChild(card);
   });
   observeReveal(".project-card");
+}
+
+function navigateWithRipple(url, x, y) {
+  sessionStorage.setItem("ripple_origin", JSON.stringify({ x, y }));
+  const ripple = document.getElementById("page-ripple");
+  if (!ripple) { location.href = url; return; }
+  ripple.style.setProperty("--rx", x + "px");
+  ripple.style.setProperty("--ry", y + "px");
+  ripple.style.clipPath = `circle(0px at ${x}px ${y}px)`;
+  ripple.style.transition = "none";
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ripple.style.transition = "clip-path 0.58s cubic-bezier(0.4, 0, 0.2, 1)";
+    ripple.style.clipPath = `circle(150vmax at ${x}px ${y}px)`;
+  }));
+  setTimeout(() => { location.href = url; }, 560);
 }
 
 // ---- Web Games ----
