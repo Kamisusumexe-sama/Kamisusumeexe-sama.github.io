@@ -2710,22 +2710,17 @@ body.gallery-world {
   background: rgba(255,255,255,0.9);
   border-radius: 2px;
 }
-.gallery-cloud--a { width: 64px; height: 24px; top: 10%; left: 12%; animation: cloudDrift 28s linear infinite; }
+.gallery-cloud--a { width: 64px; height: 24px; top: 10%; left: 12%; }
 .gallery-cloud--a::before { width: 32px; height: 16px; top: -12px; left: 12px; }
 .gallery-cloud--a::after  { width: 20px; height: 12px; top: -8px; left: 36px; }
 
-.gallery-cloud--b { width: 80px; height: 24px; top: 20%; left: 60%; animation: cloudDrift 36s linear 4s infinite; }
+.gallery-cloud--b { width: 80px; height: 24px; top: 20%; left: 60%; }
 .gallery-cloud--b::before { width: 40px; height: 20px; top: -14px; left: 16px; }
 .gallery-cloud--b::after  { width: 24px; height: 14px; top: -10px; left: 48px; }
 
-.gallery-cloud--c { width: 48px; height: 20px; top: 8%; right: 15%; animation: cloudDrift 22s linear 8s infinite; }
+.gallery-cloud--c { width: 48px; height: 20px; top: 8%; right: 15%; }
 .gallery-cloud--c::before { width: 28px; height: 16px; top: -10px; left: 8px; }
 .gallery-cloud--c::after  { width: 16px; height: 10px; top: -6px; left: 28px; }
-
-@keyframes cloudDrift {
-  from { transform: translateX(0); }
-  to   { transform: translateX(110vw); }
-}
 
 /* Pixel-art ground strip at the bottom of the gallery wall */
 .gallery-ground {

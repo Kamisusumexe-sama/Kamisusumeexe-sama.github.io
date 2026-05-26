@@ -734,6 +734,10 @@
     const galleryEl  = document.getElementById('art-gallery');
     if (!sunEl || !projectsEl || !galleryEl) return;
 
+    const cloudA = document.querySelector('.gallery-cloud--a');
+    const cloudB = document.querySelector('.gallery-cloud--b');
+    const cloudC = document.querySelector('.gallery-cloud--c');
+
     let projTop, galMid;
 
     function recalc() {
@@ -745,7 +749,6 @@
     recalc();
     window.addEventListener('resize', recalc, { passive: true });
 
-    // Smooth ease-in-out curve
     function easeInOut(t) {
       return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     }
@@ -753,19 +756,24 @@
     let ticking = false;
 
     function update() {
-      // Use the vertical midpoint of the viewport as the scroll probe
       const scrollMid = (window.scrollY || window.pageYOffset) + window.innerHeight * 0.55;
       const raw = (scrollMid - projTop) / Math.max(1, galMid - projTop);
       const p   = Math.max(0, Math.min(1, raw));
       const ep  = easeInOut(p);
 
-      // Arc: bottom-left (12 %, -18 vh) → upper-right (79 %, 68 vh)
+      // Sun arc: bottom-left → upper-right
       sunEl.style.left      = (12 + 67 * ep) + '%';
       sunEl.style.bottom    = (-18 + 86 * ep) + 'vh';
-      // Scale up as it rises, keeping translateX(-50%) for centering
       sunEl.style.transform = `translateX(-50%) scale(${(0.45 + 0.55 * ep).toFixed(3)})`;
-      // Fade in quickly at the start, fully opaque by ~12 % progress
       sunEl.style.opacity   = p > 0.01 ? String(Math.min(0.72, p * 8).toFixed(3)) : '0';
+
+      // Clouds — same scroll progress, each at its own depth speed
+      // cloud-a (close, fast) drifts right
+      // cloud-b (mid)        drifts right, slower
+      // cloud-c (far, right edge) drifts left, slowest
+      if (cloudA) cloudA.style.transform = `translateX(${(ep * 48).toFixed(1)}vw)`;
+      if (cloudB) cloudB.style.transform = `translateX(${(ep * 28).toFixed(1)}vw)`;
+      if (cloudC) cloudC.style.transform = `translateX(${(-ep * 18).toFixed(1)}vw)`;
 
       ticking = false;
     }
@@ -777,7 +785,6 @@
       }
     }, { passive: true });
 
-    // Run once on load in case the user lands mid-page
     update();
   }
 
