@@ -19,9 +19,6 @@
     #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:1.5rem;padding:2rem;}
     .login-box{background:var(--bg2);border:2px solid var(--accent);border-radius:14px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 0 40px rgba(255,121,198,0.2);}
     .login-box h1{font-family:var(--font-pixel);font-size:0.8rem;color:var(--accent);margin-bottom:1.25rem;}
-    .mode-tabs{display:flex;gap:0.5rem;margin-bottom:1.5rem;}
-    .mode-tab{flex:1;padding:0.6rem;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);cursor:pointer;font-size:0.82rem;font-family:var(--font-body);transition:all 0.2s;}
-    .mode-tab.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
     .login-box label{display:block;font-size:0.8rem;color:var(--muted);margin-bottom:0.35rem;}
     .login-box input{width:100%;padding:0.75rem 1rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.92rem;font-family:var(--font-body);outline:none;margin-bottom:1rem;transition:border-color 0.2s;}
     .login-box input:focus{border-color:var(--accent);}
@@ -158,31 +155,15 @@
   <a href="../index.html" style="color:var(--muted);font-size:0.82rem;text-decoration:none;align-self:flex-start;margin-left:calc(50% - 210px);transition:color 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">← Back to site</a>
   <div class="login-box">
     <h1>// Admin Panel</h1>
+    <p class="hint">Paste your GitHub token below to log in and push changes live.</p>
 
-    <div class="mode-tabs">
-      <button class="mode-tab" id="tab-pwd-btn" onclick="switchMode('password')">🔒 Password</button>
-      <button class="mode-tab active" id="tab-token-btn" onclick="switchMode('token')">🔑 GitHub Token</button>
-    </div>
-
-    <!-- PASSWORD MODE -->
-    <div id="mode-password" style="display:none;">
-      <p class="hint">Quick login for local editing. Changes stay local — won't update the live site.</p>
-      <label>Password</label>
-      <input type="password" id="local-pwd" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLocalLogin()"/>
-      <button class="btn-save" style="width:100%" onclick="doLocalLogin()">[ LOGIN ]</button>
-    </div>
-
-    <!-- TOKEN MODE -->
-    <div id="mode-token">
-      <p class="hint">Saves changes directly to GitHub and updates your live site.</p>
-      <label>GitHub Username</label>
-      <input type="text" id="gh-user" value="Kamisusumexe-sama"/>
-      <label>Repository Name</label>
-      <input type="text" id="gh-repo" value="Kamisusumeexe-sama.github.io"/>
-      <label>Personal Access Token</label>
-      <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" onkeydown="if(event.key==='Enter')doGitHubLogin()"/>
-      <button class="btn-save" style="width:100%" onclick="doGitHubLogin()">[ LOGIN WITH GITHUB ]</button>
-    </div>
+    <label>GitHub Username</label>
+    <input type="text" id="gh-user" value="Kamisusumexe-sama"/>
+    <label>Repository Name</label>
+    <input type="text" id="gh-repo" value="Kamisusumeexe-sama.github.io"/>
+    <label>Personal Access Token</label>
+    <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" onkeydown="if(event.key==='Enter')doGitHubLogin()"/>
+    <button class="btn-save" style="width:100%;margin-top:0.25rem;" onclick="doGitHubLogin()">[ LOGIN ]</button>
 
     <p class="error-msg" id="login-err"></p>
   </div>
@@ -190,19 +171,19 @@
   <div class="token-hint" id="token-hint" style="display:block;">
     <h3>🔑 How to get a GitHub Token</h3>
 
-    <p style="color:var(--accent2);font-size:0.8rem;margin-bottom:0.6rem;font-weight:600;">Option A — Classic token (easiest)</p>
+    <p style="color:var(--accent2);font-size:0.8rem;margin-bottom:0.6rem;font-weight:600;">Classic token (easiest)</p>
     <ol>
       <li>Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a></li>
       <li>Note: <code>portfolio-admin</code> · Expiration: <code>No expiration</code></li>
-      <li>Scopes: tick <code>repo</code> (full repo access)</li>
-      <li>Click <code>Generate token</code> → copy → paste above</li>
+      <li>Scopes: tick <code>repo</code> (the first big checkbox)</li>
+      <li>Click <code>Generate token</code> → copy the token → paste above</li>
     </ol>
 
-    <p style="color:var(--accent2);font-size:0.8rem;margin:1rem 0 0.6rem;font-weight:600;">Option B — Fine-grained token</p>
+    <p style="color:var(--accent2);font-size:0.8rem;margin:1rem 0 0.6rem;font-weight:600;">Fine-grained token (more secure)</p>
     <ol>
       <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">github.com/settings/personal-access-tokens/new</a></li>
-      <li>Repository access → <code>Only select repositories</code> → pick your portfolio repo</li>
-      <li>Permissions → Repository permissions → <code>Contents</code> → set to <strong>Read and write</strong></li>
+      <li>Repository access → Only select repositories → pick your portfolio repo</li>
+      <li>Permissions → Repository permissions → <strong>Contents: Read and write</strong></li>
       <li>Generate → copy → paste above</li>
     </ol>
   </div>
@@ -556,25 +537,6 @@ let GH_USER = null, GH_REPO = null, GH_TOKEN = null;
 let contentData = null;
 let editIndex = -1;
 
-// ---- MODE SWITCH ----
-function switchMode(mode) {
-  document.getElementById("mode-password").style.display = mode === "password" ? "block" : "none";
-  document.getElementById("mode-token").style.display    = mode === "token"    ? "block" : "none";
-  document.getElementById("token-hint").style.display    = mode === "token"    ? "block" : "none";
-  document.getElementById("tab-pwd-btn").classList.toggle("active",   mode === "password");
-  document.getElementById("tab-token-btn").classList.toggle("active", mode === "token");
-  document.getElementById("login-err").style.display = "none";
-}
-
-// ---- LOCAL PASSWORD LOGIN ----
-async function doLocalLogin() {
-  const pwd = val("local-pwd");
-  if (!pwd) { showErr("Please enter a password."); return; }
-  if (pwd !== "gamedev2024") { showErr("✕ Incorrect password."); return; }
-  GH_TOKEN = null;
-  await enterAdmin(true);
-}
-
 // ---- GITHUB TOKEN LOGIN ----
 async function doGitHubLogin() {
   GH_USER  = val("gh-user").trim();
@@ -584,34 +546,37 @@ async function doGitHubLogin() {
 
   const headers = { Authorization: `Bearer ${GH_TOKEN}`, Accept: "application/vnd.github.v3+json" };
 
-  showErr("Checking token...");
-  // Step 1 — verify token is valid and can see the repo
-  let repoRes;
-  try { repoRes = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}`, { headers }); }
+  // Step 1 — validate the token itself (works with any valid token)
+  showErr("Validating token...");
+  let userRes;
+  try { userRes = await fetch("https://api.github.com/user", { headers }); }
   catch { showErr("✕ Network error — check your internet connection."); return; }
+  if (userRes.status === 401) { showErr("✕ Token is invalid or expired — generate a new one at github.com/settings/tokens"); return; }
+  if (!userRes.ok) { showErr(`✕ GitHub error ${userRes.status}`); return; }
 
-  if (repoRes.status === 401) { showErr("✕ Token invalid or expired — generate a new one."); return; }
-  if (repoRes.status === 404) { showErr(`✕ Repo not found: ${GH_USER}/${GH_REPO} — check the username and repo name.`); return; }
-  if (!repoRes.ok) { showErr(`✕ GitHub error ${repoRes.status} — try again.`); return; }
+  // Step 2 — load content.json via raw URL (no auth needed, works for public repos)
+  showErr("Loading content...");
+  let rawRes;
+  const rawUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/content.json`;
+  try { rawRes = await fetch(rawUrl); }
+  catch { showErr("✕ Network error loading content.json."); return; }
 
-  showErr("Reading content.json...");
-  // Step 2 — read content.json (needs Contents: Read permission)
-  let fileRes;
-  try { fileRes = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/content.json`, { headers }); }
-  catch { showErr("✕ Network error reading content.json."); return; }
-
-  if (fileRes.status === 403) {
-    showErr("✕ Token missing Contents permission. For fine-grained tokens: Permissions → Contents → Read & write. For classic tokens: tick the repo checkbox.");
+  if (rawRes.status === 404) {
+    showErr(`✕ Repo or content.json not found. Check username (${GH_USER}) and repo (${GH_REPO}) are correct.`);
     return;
   }
-  if (fileRes.status === 404) { showErr("✕ content.json not found in that repo."); return; }
-  if (!fileRes.ok) { showErr(`✕ GitHub error ${fileRes.status} reading content.json.`); return; }
+  if (!rawRes.ok) { showErr(`✕ Could not load content.json (${rawRes.status})`); return; }
 
-  const result = await fileRes.json();
+  try {
+    contentData = await rawRes.json();
+  } catch {
+    showErr("✕ content.json is not valid JSON — check the file in your repo.");
+    return;
+  }
+
   localStorage.setItem("gh_user",  GH_USER);
   localStorage.setItem("gh_repo",  GH_REPO);
   localStorage.setItem("gh_token", GH_TOKEN);
-  contentData = JSON.parse(atob(result.content.replace(/\n/g, "")));
   await enterAdmin(false);
 }
 
@@ -999,18 +964,28 @@ window.addEventListener("DOMContentLoaded", async () => {
     set("gh-user", u); set("gh-repo", r); set("gh-token", t);
     GH_USER = u; GH_REPO = r; GH_TOKEN = t;
     showErr("Reconnecting...");
-    const result = await ghGet("content.json");
-    if (result) {
-      contentData = JSON.parse(atob(result.content.replace(/\n/g, "")));
-      await enterAdmin(false);
-      return;
+    // Validate token
+    const userRes = await fetch("https://api.github.com/user", {
+      headers: { Authorization: `Bearer ${t}`, Accept: "application/vnd.github.v3+json" }
+    }).catch(() => null);
+    if (userRes && userRes.ok) {
+      // Load content via raw URL
+      const rawRes = await fetch(`https://raw.githubusercontent.com/${u}/${r}/main/content.json`).catch(() => null);
+      if (rawRes && rawRes.ok) {
+        try {
+          contentData = await rawRes.json();
+          await enterAdmin(false);
+          return;
+        } catch {}
+      }
     }
-    // Token expired/invalid — clear and show login
-    GH_TOKEN = null;
+    // Clear stale session
+    localStorage.removeItem("gh_token");
+    localStorage.removeItem("gh_user");
+    localStorage.removeItem("gh_repo");
+    GH_TOKEN = null; GH_USER = null; GH_REPO = null;
     showErr("Session expired — please log in again.");
   }
-  // Show token hint by default
-  document.getElementById("token-hint").style.display = "block";
 });
 
 // =============================================
