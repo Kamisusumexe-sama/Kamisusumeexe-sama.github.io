@@ -160,12 +160,12 @@
     <h1>// Admin Panel</h1>
 
     <div class="mode-tabs">
-      <button class="mode-tab active" id="tab-pwd-btn" onclick="switchMode('password')">🔒 Password</button>
-      <button class="mode-tab" id="tab-token-btn" onclick="switchMode('token')">🔑 GitHub Token</button>
+      <button class="mode-tab" id="tab-pwd-btn" onclick="switchMode('password')">🔒 Password</button>
+      <button class="mode-tab active" id="tab-token-btn" onclick="switchMode('token')">🔑 GitHub Token</button>
     </div>
 
     <!-- PASSWORD MODE -->
-    <div id="mode-password">
+    <div id="mode-password" style="display:none;">
       <p class="hint">Quick login for local editing. Changes stay local — won't update the live site.</p>
       <label>Password</label>
       <input type="password" id="local-pwd" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLocalLogin()"/>
@@ -173,12 +173,12 @@
     </div>
 
     <!-- TOKEN MODE -->
-    <div id="mode-token" style="display:none;">
+    <div id="mode-token">
       <p class="hint">Saves changes directly to GitHub and updates your live site.</p>
       <label>GitHub Username</label>
-      <input type="text" id="gh-user" value="Kamisusumeexe-sama"/>
+      <input type="text" id="gh-user" value="Kamisusumexe-sama"/>
       <label>Repository Name</label>
-      <input type="text" id="gh-repo" value="vanessaasafoadjei.com"/>
+      <input type="text" id="gh-repo" value="Kamisusumeexe-sama.github.io"/>
       <label>Personal Access Token</label>
       <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" onkeydown="if(event.key==='Enter')doGitHubLogin()"/>
       <button class="btn-save" style="width:100%" onclick="doGitHubLogin()">[ LOGIN WITH GITHUB ]</button>
@@ -187,13 +187,23 @@
     <p class="error-msg" id="login-err"></p>
   </div>
 
-  <div class="token-hint" id="token-hint">
+  <div class="token-hint" id="token-hint" style="display:block;">
     <h3>🔑 How to get a GitHub Token</h3>
+
+    <p style="color:var(--accent2);font-size:0.8rem;margin-bottom:0.6rem;font-weight:600;">Option A — Classic token (easiest)</p>
     <ol>
       <li>Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a></li>
-      <li>Name: <code>portfolio-admin</code>, Expiration: <code>No expiration</code></li>
-      <li>Tick the <code>repo</code> checkbox</li>
-      <li>Click <code>Generate token</code> → copy it → paste above</li>
+      <li>Note: <code>portfolio-admin</code> · Expiration: <code>No expiration</code></li>
+      <li>Scopes: tick <code>repo</code> (full repo access)</li>
+      <li>Click <code>Generate token</code> → copy → paste above</li>
+    </ol>
+
+    <p style="color:var(--accent2);font-size:0.8rem;margin:1rem 0 0.6rem;font-weight:600;">Option B — Fine-grained token</p>
+    <ol>
+      <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">github.com/settings/personal-access-tokens/new</a></li>
+      <li>Repository access → <code>Only select repositories</code> → pick your portfolio repo</li>
+      <li>Permissions → Repository permissions → <code>Contents</code> → set to <strong>Read and write</strong></li>
+      <li>Generate → copy → paste above</li>
     </ol>
   </div>
 </div>
@@ -371,18 +381,9 @@
           <div class="field"><label>Description</label><textarea id="dl-desc-item" placeholder="A short description of this file..."></textarea></div>
           <div class="field"><label>Updated (year or date)</label><input id="dl-updated" placeholder="2024"/></div>
           <div class="field">
-            <label>Upload File (PDF, DOC, ZIP — max 5MB)</label>
-            <div class="img-upload-box small" id="dl-file-box" onclick="document.getElementById('dl-file-input').click()"
-                 style="height:80px;">
-              <div id="dl-file-placeholder">
-                <span style="font-size:1.5rem;">📁</span>
-                <p id="dl-file-label">Click to upload file</p>
-              </div>
-            </div>
-            <input type="file" id="dl-file-input" accept=".pdf,.doc,.docx,.zip,.txt" style="display:none"
-                   onchange="handleFileUpload(this)"/>
-            <input type="hidden" id="dl-fileurl"/>
-            <input type="hidden" id="dl-filename"/>
+            <label>Link URL</label>
+            <input id="dl-fileurl" placeholder="https://drive.google.com/... or any direct link"/>
+            <p style="color:var(--muted);font-size:0.75rem;margin-top:0.4rem;">Paste any link — Google Drive, Dropbox, OneDrive, direct PDF URL, etc.</p>
           </div>
           <div class="editor-actions">
             <button class="btn-save" onclick="saveItem('dl')">[ SAVE ]</button>
@@ -580,9 +581,33 @@ async function doGitHubLogin() {
   GH_REPO  = val("gh-repo").trim();
   GH_TOKEN = val("gh-token").trim();
   if (!GH_USER || !GH_REPO || !GH_TOKEN) { showErr("Please fill in all fields."); return; }
-  showErr("Connecting...");
-  const result = await ghGet("content.json");
-  if (!result) { showErr("✕ Could not connect. Check your token has 'repo' scope."); return; }
+
+  const headers = { Authorization: `Bearer ${GH_TOKEN}`, Accept: "application/vnd.github.v3+json" };
+
+  showErr("Checking token...");
+  // Step 1 — verify token is valid and can see the repo
+  let repoRes;
+  try { repoRes = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}`, { headers }); }
+  catch { showErr("✕ Network error — check your internet connection."); return; }
+
+  if (repoRes.status === 401) { showErr("✕ Token invalid or expired — generate a new one."); return; }
+  if (repoRes.status === 404) { showErr(`✕ Repo not found: ${GH_USER}/${GH_REPO} — check the username and repo name.`); return; }
+  if (!repoRes.ok) { showErr(`✕ GitHub error ${repoRes.status} — try again.`); return; }
+
+  showErr("Reading content.json...");
+  // Step 2 — read content.json (needs Contents: Read permission)
+  let fileRes;
+  try { fileRes = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/content.json`, { headers }); }
+  catch { showErr("✕ Network error reading content.json."); return; }
+
+  if (fileRes.status === 403) {
+    showErr("✕ Token missing Contents permission. For fine-grained tokens: Permissions → Contents → Read & write. For classic tokens: tick the repo checkbox.");
+    return;
+  }
+  if (fileRes.status === 404) { showErr("✕ content.json not found in that repo."); return; }
+  if (!fileRes.ok) { showErr(`✕ GitHub error ${fileRes.status} reading content.json.`); return; }
+
+  const result = await fileRes.json();
   localStorage.setItem("gh_user",  GH_USER);
   localStorage.setItem("gh_repo",  GH_REPO);
   localStorage.setItem("gh_token", GH_TOKEN);
@@ -619,7 +644,9 @@ async function enterAdmin(isLocal) {
 // ---- LOGOUT ----
 function doLogout() {
   localStorage.removeItem("gh_token");
-  contentData = null; GH_TOKEN = null;
+  localStorage.removeItem("gh_user");
+  localStorage.removeItem("gh_repo");
+  contentData = null; GH_TOKEN = null; GH_USER = null; GH_REPO = null;
   document.getElementById("login-screen").style.display = "flex";
   document.getElementById("admin-panel").style.display  = "none";
   // Remove local badge if present
@@ -637,7 +664,7 @@ function showErr(msg) {
 async function ghGet(path) {
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`, {
-      headers: { Authorization: `token ${GH_TOKEN}`, Accept: "application/vnd.github.v3+json" }
+      headers: { Authorization: `Bearer ${GH_TOKEN}`, Accept: "application/vnd.github.v3+json" }
     });
     if (!res.ok) return null;
     return res.json();
@@ -651,7 +678,7 @@ async function ghSave(path, content, message) {
     const body = { message, content: btoa(unescape(encodeURIComponent(content))), ...(sha ? { sha } : {}) };
     const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`, {
       method: "PUT",
-      headers: { Authorization: `token ${GH_TOKEN}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${GH_TOKEN}`, "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
     return res.ok;
@@ -963,12 +990,27 @@ function showTab(id, btn) {
   }
 }
 
-// Auto-fill saved GitHub creds on load
-window.addEventListener("DOMContentLoaded", () => {
+// Auto-login with saved GitHub creds on load
+window.addEventListener("DOMContentLoaded", async () => {
   const u = localStorage.getItem("gh_user");
   const r = localStorage.getItem("gh_repo");
   const t = localStorage.getItem("gh_token");
-  if (u) { set("gh-user", u); set("gh-repo", r); set("gh-token", t); }
+  if (u && r && t) {
+    set("gh-user", u); set("gh-repo", r); set("gh-token", t);
+    GH_USER = u; GH_REPO = r; GH_TOKEN = t;
+    showErr("Reconnecting...");
+    const result = await ghGet("content.json");
+    if (result) {
+      contentData = JSON.parse(atob(result.content.replace(/\n/g, "")));
+      await enterAdmin(false);
+      return;
+    }
+    // Token expired/invalid — clear and show login
+    GH_TOKEN = null;
+    showErr("Session expired — please log in again.");
+  }
+  // Show token hint by default
+  document.getElementById("token-hint").style.display = "block";
 });
 
 // =============================================

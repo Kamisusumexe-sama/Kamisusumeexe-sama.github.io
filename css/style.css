@@ -17,7 +17,7 @@
   --yellow:    #f1fa8c;
   --orange:    #ffb86c;
   --text:      #f0eeff;
-  --muted:     #5a6a9a;
+  --muted:     #8892b0;
   --border:    rgba(189,147,249,0.12);
   --border-bright: rgba(189,147,249,0.35);
   --glow-pink:   rgba(255,121,198,0.4);
@@ -35,7 +35,7 @@ body {
   color: var(--text);
   font-family: var(--font-body);
   font-size: 1rem;
-  line-height: 1.75;
+  line-height: 1.8;
   overflow-x: hidden;
 }
 
@@ -694,12 +694,12 @@ section { padding: 6rem 0; margin-bottom: -1px; }
 .stat-card--years  .stat-num::before { content: '★ '; font-size: 0.7em; color: #f1fa8c; text-shadow: 0 0 8px rgba(241,250,140,0.6); }
 .stat-card--jams   .stat-num::before { content: '⚔ '; font-size: 0.7em; color: var(--accent2); text-shadow: 0 0 8px rgba(189,147,249,0.6); }
 
-.about-intro { font-size: 1.05rem; color: var(--text); margin-bottom: 1rem; font-weight: 500; line-height: 1.7; }
-.about-body { color: var(--muted); margin-bottom: 2rem; }
+.about-intro { font-size: 1.1rem; color: var(--text); margin-bottom: 1rem; font-weight: 500; line-height: 1.75; }
+.about-body { font-size: 1.05rem; color: var(--muted); margin-bottom: 2rem; line-height: 1.85; }
 
 /* Skill bars */
 .skill-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.9rem; }
-.skill-row span { min-width: 160px; font-size: 0.82rem; color: var(--muted); }
+.skill-row span { min-width: 160px; font-size: 0.88rem; color: var(--muted); }
 .skill-bar {
   flex: 1; height: 6px; background: var(--bg3);
   border-radius: 3px; overflow: hidden;
@@ -774,7 +774,7 @@ section { padding: 6rem 0; margin-bottom: -1px; }
 }
 .card-body { padding: 1.25rem; }
 .card-title { font-family: var(--font-pixel); font-size: 0.7rem; margin-bottom: 0.6rem; line-height: 1.6; }
-.card-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.6; }
+.card-desc { font-size: 0.92rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.7; }
 .card-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1rem; }
 .card-actions { display: flex; gap: 0.5rem; }
 
@@ -811,7 +811,7 @@ section { padding: 6rem 0; margin-bottom: -1px; }
 .game-card:hover .game-thumb-placeholder { text-shadow: 0 0 40px var(--glow-pink); }
 .game-info { padding: 1.1rem; }
 .game-info h3 { font-family: var(--font-pixel); font-size: 0.62rem; margin-bottom: 0.5rem; line-height: 1.6; }
-.game-info p { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.75rem; }
+.game-info p { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.75rem; line-height: 1.7; }
 
 /* Game embed area */
 .game-embed-area {
@@ -868,7 +868,7 @@ section { padding: 6rem 0; margin-bottom: -1px; }
   mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
 }
 .contact-grid { display: grid; grid-template-columns: 1fr auto; gap: 4rem; align-items: center; position: relative; }
-.contact-text p { color: var(--muted); margin-bottom: 2rem; font-size: 1rem; max-width: 500px; line-height: 1.75; }
+.contact-text p { color: var(--muted); margin-bottom: 2rem; font-size: 1.05rem; max-width: 500px; line-height: 1.85; }
 .social-links { display: flex; flex-wrap: wrap; gap: 0.65rem; }
 .social-btn {
   background: var(--bg3); border: 1px solid var(--border);
