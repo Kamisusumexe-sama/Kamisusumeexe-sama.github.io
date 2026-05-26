@@ -642,6 +642,15 @@ async function enterAdmin(isLocal) {
     badge.textContent = "LOCAL";
     document.querySelector(".nav-right").prepend(badge);
   }
+  if (!isLocal && GH_USER && GH_REPO) {
+    const badge = document.createElement("a");
+    badge.className = "local-badge";
+    badge.style.cssText = "background:var(--green);text-decoration:none;";
+    badge.textContent = `⬆ ${GH_USER}/${GH_REPO}`;
+    badge.href = `https://github.com/${GH_USER}/${GH_REPO}`;
+    badge.target = "_blank";
+    document.querySelector(".nav-right").prepend(badge);
+  }
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("admin-panel").style.display  = "block";
   loadAllFields();
@@ -679,33 +688,50 @@ async function ghGet(path) {
 
 async function ghSave(path, content, message) {
   try {
+    // Get current SHA so GitHub accepts the update (required for existing files)
     const current = await ghGet(path);
     const sha = current ? current.sha : undefined;
-    const body = { message, content: btoa(unescape(encodeURIComponent(content))), ...(sha ? { sha } : {}) };
+    const body = {
+      message,
+      content: btoa(unescape(encodeURIComponent(content))),
+      ...(sha ? { sha } : {})
+    };
     const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`, {
       method: "PUT",
       headers: { Authorization: `Bearer ${GH_TOKEN}`, "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
-    return res.ok;
-  } catch { return false; }
+    if (res.ok) return { ok: true };
+    let errMsg = "";
+    try { const j = await res.json(); errMsg = j.message || ""; } catch {}
+    return { ok: false, status: res.status, errMsg };
+  } catch (e) {
+    return { ok: false, status: 0, errMsg: e.message };
+  }
 }
 
 // ---- PUSH CONTENT ----
 async function pushContent(message = "Updated portfolio content") {
   if (!GH_TOKEN) {
-    // LOCAL MODE — write to content.json via a download
-    // This triggers a file download of the updated content.json
-    // which the user replaces in their folder — Live Server then auto-refreshes
     localSave();
     return;
   }
-  // GITHUB MODE
-  document.getElementById("saving-badge").style.display = "inline";
-  const ok = await ghSave("content.json", JSON.stringify(contentData, null, 2), message);
-  document.getElementById("saving-badge").style.display = "none";
-  if (ok) toast("✓ Saved to GitHub! Site updates in ~1 minute.");
-  else    toast("✕ Save failed — check token permissions.", true);
+  const badge = document.getElementById("saving-badge");
+  badge.style.display = "inline";
+  const result = await ghSave("content.json", JSON.stringify(contentData, null, 2), message);
+  badge.style.display = "none";
+
+  if (result.ok) {
+    toast("✓ Saved to GitHub — site updates in ~1 min.");
+  } else if (result.status === 401) {
+    toast("✕ Token expired — log out and log back in.", true);
+  } else if (result.status === 403) {
+    toast("✕ Permission denied — token needs Contents: Read and write.", true);
+  } else if (result.status === 409 || result.status === 422) {
+    toast("✕ Save conflict — reload the page and try again.", true);
+  } else {
+    toast(`✕ Save failed (${result.status || "network"})${result.errMsg ? ": " + result.errMsg : ""}`, true);
+  }
 }
 
 // ---- LOCAL SAVE ----
