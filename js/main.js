@@ -203,6 +203,20 @@ function navigateWithRipple(url, x, y) {
   setTimeout(() => { location.href = url; }, 560);
 }
 
+// When navigating back from a project page the browser restores this page
+// from bfcache with the ripple still fully expanded. Collapse it.
+window.addEventListener("pageshow", e => {
+  if (!e.persisted) return;
+  const ripple = document.getElementById("page-ripple");
+  if (!ripple) return;
+  ripple.style.transition = "none";
+  ripple.style.clipPath = "circle(150vmax at 50% 50%)";
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ripple.style.transition = "clip-path 0.62s cubic-bezier(0.4, 0, 0.2, 1)";
+    ripple.style.clipPath = "circle(0px at 50% 50%)";
+  }));
+});
+
 // ---- Web Games ----
 function renderGames(games) {
   const grid = document.getElementById("games-grid");
