@@ -129,11 +129,13 @@
       background: linear-gradient(to right, var(--border), transparent);
     }
 
-    /* Description */
+    /* Description — two columns */
     .proj-description-text {
-      font-size: 1.05rem; line-height: 1.9; color: var(--muted);
+      font-size: 1.02rem; line-height: 1.9; color: var(--muted);
+      column-count: 2; column-gap: 3rem;
+      column-rule: 1px solid var(--border);
     }
-    .proj-description-text p { margin-bottom: 1.25rem; }
+    .proj-description-text p { margin-bottom: 1.1rem; break-inside: avoid; }
 
     /* ---- MEDIA COLLAGE ---- */
     .collage-section { margin-bottom: 0; }
@@ -238,6 +240,7 @@
       .proj-main { padding: 2.5rem 1.25rem 4rem; }
       .proj-nav { padding: 0 1.25rem; }
       .collage-header { padding: 0 1.25rem 1.25rem; }
+      .proj-description-text { column-count: 1; }
     }
   </style>
 </head>
@@ -410,8 +413,10 @@
     if (mediaItems.length) {
       document.getElementById("proj-media-collage").innerHTML = mediaItems.map(item => {
         if (item.type === "video") {
+          const embedSrc = toEmbedUrl(item.url);
           return `<div class="media-item is-video">
-            <iframe src="${item.url}" allowfullscreen loading="lazy"></iframe>
+            <iframe src="${embedSrc}" allowfullscreen loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
             ${item.caption ? `<div class="media-caption">${item.caption}</div>` : ""}
           </div>`;
         }
@@ -442,6 +447,20 @@
     }
   }
 
+  // Convert any YouTube URL format to the embeddable /embed/ form.
+  // Non-YouTube URLs (Vimeo, etc.) are returned unchanged.
+  function toEmbedUrl(url) {
+    if (!url) return url;
+    if (url.includes("/embed/")) return url;                          // already embed
+    const short  = url.match(/youtu\.be\/([^?&\s]+)/);               // youtu.be/ID
+    if (short)  return `https://www.youtube.com/embed/${short[1]}`;
+    const watch  = url.match(/[?&]v=([^?&\s]+)/);                    // ?v=ID
+    if (watch)  return `https://www.youtube.com/embed/${watch[1]}`;
+    const shorts = url.match(/youtube\.com\/shorts\/([^?&\s]+)/);     // /shorts/ID
+    if (shorts) return `https://www.youtube.com/embed/${shorts[1]}`;
+    return url;
+  }
+
   // Build media items list from new `media` field + legacy `gallery` array + legacy `videoUrl`
   function buildMediaItems(p) {
     const items = [];
@@ -451,12 +470,13 @@
         if (typeof m === "string") {
           items.push({ type: "image", url: m });
         } else {
-          items.push({ type: m.type || "image", url: m.url, caption: m.caption });
+          const url = m.type === "video" ? toEmbedUrl(m.url) : m.url;
+          items.push({ type: m.type || "image", url, caption: m.caption });
         }
       });
     } else {
       // Legacy: gallery (image URLs) + single videoUrl
-      if (p.videoUrl) items.push({ type: "video", url: p.videoUrl });
+      if (p.videoUrl) items.push({ type: "video", url: toEmbedUrl(p.videoUrl) });
       (Array.isArray(p.gallery) ? p.gallery : []).forEach(url => {
         if (typeof url === "string") items.push({ type: "image", url });
         else if (url && url.url) items.push({ type: url.type || "image", url: url.url, caption: url.caption });
