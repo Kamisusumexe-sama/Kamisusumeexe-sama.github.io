@@ -305,6 +305,15 @@
             <div class="field"><label>YouTube Embed URL</label><input id="pe-video" placeholder="https://www.youtube.com/embed/..."/></div>
           </div>
           <div class="field">
+            <label>Google Embed URL</label>
+            <input id="pe-google" placeholder="https://docs.google.com/presentation/d/…/embed  or  /document/  or  drive.google.com/file/d/…/preview"/>
+            <p style="color:var(--muted);font-size:0.75rem;margin-top:0.4rem;line-height:1.6;">
+              Slides: share → Publish to web → Embed → copy src URL<br>
+              Drive file: share → Anyone with link → copy <code>/preview</code> URL<br>
+              Doc / Sheet: File → Share → Publish to web → copy embed URL
+            </p>
+          </div>
+          <div class="field">
             <label>Extra Links — one per line as: Label | URL</label>
             <textarea id="pe-links" style="min-height:80px;" placeholder="GitHub | https://github.com/…&#10;Itch.io | https://itch.io/…"></textarea>
           </div>
@@ -905,6 +914,7 @@ function openEditor(type, i) {
     set("pe-duration", item.duration||"");
     set("pe-play",     item.playUrl||"");
     set("pe-video",    item.videoUrl||"");
+    set("pe-google",   item.googleEmbed||"");
     set("pe-image",    item.image||"");
     set("pe-links",    Array.isArray(item.extraLinks) ? item.extraLinks.map(l=>l.label+" | "+l.url).join("\n") : (item.extraLinks||""));
     // load media collage (new `media` field or legacy `gallery`)
@@ -984,6 +994,7 @@ async function saveItem(type) {
       status:          val("pe-status") || undefined,
       playUrl:         val("pe-play") || undefined,
       videoUrl:        val("pe-video") || undefined,
+      googleEmbed:     val("pe-google") || undefined,
       extraLinks:      rawLinks.length ? rawLinks : undefined,
       media:           rawMedia.length ? rawMedia : undefined,
       featured:        val("pe-featured") === "true"
