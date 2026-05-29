@@ -110,6 +110,16 @@
     @keyframes crit-patrol {
       0%,100% { transform: scaleX(1); }
     }
+    @keyframes sparkle-burst {
+      0%   { transform: translate(0,0) scale(1.3) rotate(0deg); opacity: 1; }
+      60%  { opacity: 0.7; }
+      100% { transform: translate(var(--dx),var(--dy)) scale(0) rotate(var(--rot)); opacity: 0; }
+    }
+    @keyframes fairy-float {
+      0%   { transform: translateY(0) scale(1);    opacity: 1; }
+      70%  { opacity: 0.9; }
+      100% { transform: translateY(-75px) scale(0.25); opacity: 0; }
+    }
   `;
 
   // ── Pixel art sprites (text art, 10px font) ─
@@ -650,31 +660,76 @@
     if (z !== _lastZone) { _lastZone = z; clearActivePool(); }
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
-  // ── Special event: cursor follower (click spawn) ─
+  // ── Click sparkle burst ──────────────────────────
+  const SPACE_SPARKS = {
+    syms:   ['✦','✧','★','·','◆','✦','✦','*'],
+    colors: ['#bd93f9','#8be9fd','#f0eeff','#ff79c6','#ffffff'],
+  };
+  const SUNNY_SPARKS = {
+    syms:   ['★','✦','♡','✿','☆','✨','♪','✦'],
+    colors: ['#f1fa8c','#ff79c6','#50fa7b','#ffb86c','#ffffff'],
+  };
+
+  function spawnSparkles(x, y) {
+    const zone  = getCurrentZone();
+    const pool  = zone === 'sunny' ? SUNNY_SPARKS : SPACE_SPARKS;
+    const count = 8 + Math.floor(Math.random() * 4);
+
+    for (let i = 0; i < count; i++) {
+      const el     = document.createElement('span');
+      const angle  = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
+      const dist   = 28 + Math.random() * 52;
+      const size   = 9 + Math.random() * 10;
+      const color  = pool.colors[Math.floor(Math.random() * pool.colors.length)];
+      const sym    = pool.syms[Math.floor(Math.random() * pool.syms.length)];
+      const rot    = (Math.random() * 360 - 180).toFixed(0) + 'deg';
+      const dur    = (0.55 + Math.random() * 0.4).toFixed(2);
+      const delay  = (i * 0.018).toFixed(3);
+
+      el.setAttribute('aria-hidden', 'true');
+      el.style.cssText = `
+        position:fixed; pointer-events:none; z-index:9997;
+        left:${x}px; top:${y}px;
+        font-size:${size}px; font-family:monospace; user-select:none;
+        color:${color}; text-shadow:0 0 10px ${color};
+        --dx:${(Math.cos(angle)*dist).toFixed(1)}px;
+        --dy:${(Math.sin(angle)*dist).toFixed(1)}px;
+        --rot:${rot};
+        animation: sparkle-burst ${dur}s ${delay}s ease-out forwards;
+        will-change:transform,opacity;
+      `;
+      el.textContent = sym;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), (parseFloat(dur) + parseFloat(delay)) * 1000 + 50);
+    }
+
+    // 1-in-5 chance: a tiny fairy floats up from the click point
+    if (Math.random() < 0.2) spawnFairy(x, y, zone);
+  }
+
+  function spawnFairy(x, y, zone) {
+    const el    = document.createElement('div');
+    const color = zone === 'sunny' ? '#f1fa8c' : '#8be9fd';
+    const frames = [' ✦✦✦\n✦   ✦\n ✦✦✦', '  ···\n· ✦ ·\n  ···'];
+    el.setAttribute('aria-hidden', 'true');
+    el.style.cssText = `
+      position:fixed; pointer-events:none; z-index:9997;
+      left:${x - 18}px; top:${y - 20}px;
+      font-size:9px; font-family:monospace; white-space:pre;
+      color:${color}; text-shadow:0 0 12px ${color};
+      animation: fairy-float 1.1s ease-out forwards;
+      will-change:transform,opacity;
+    `;
+    el.textContent = frames[0];
+    document.body.appendChild(el);
+    let f = 0;
+    const iv = setInterval(() => { f ^= 1; el.textContent = frames[f]; }, 180);
+    setTimeout(() => { clearInterval(iv); el.remove(); }, 1150);
+  }
+
   document.addEventListener('click', (e) => {
     if (e.target.closest('a, button, input, select, textarea')) return;
-    const el = document.createElement('div');
-    el.className = 'critter';
-    el.setAttribute('aria-hidden', 'true');
-    const zone = getCurrentZone();
-    const pool = zone === 'sunny' ? SUNNY_SPRITES : SPACE_SPRITES;
-    const sprite = SPRITES[rand(pool)];
-    el.style.left = (e.clientX - 35) + 'px';
-    el.style.top  = (e.clientY - 44) + 'px';
-    el.style.pointerEvents = 'none';
-    el.style.animation = 'crit-bounce 0.6s ease-out forwards';
-    const artEl = document.createElement('span');
-    artEl.style.color = sprite.color;
-    artEl.style.textShadow = `0 0 10px ${sprite.color}`;
-    artEl.textContent = sprite.frames[0];
-    el.appendChild(artEl);
-    document.body.appendChild(el);
-    // Play a tiny version of the critter's sound on click-spawn
-    if (window.SFX) {
-      const randSprite = rand(pool);
-      setTimeout(() => SFX.critter(randSprite), 50);
-    }
-    setTimeout(() => el.remove(), 1200);
+    spawnSparkles(e.clientX, e.clientY);
   });
 
   // ── Konami-code easter egg: flood of critters ─
