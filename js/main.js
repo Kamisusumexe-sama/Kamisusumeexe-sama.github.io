@@ -222,13 +222,9 @@ window.addEventListener("pageshow", e => {
 });
 
 // ── Sound event delegation ──────────────────────────────────────────────
-// Click: buttons, nav links, book controls, gallery nav
+// Click anywhere on the page
 document.addEventListener("click", e => {
-  if (!window.SFX) return;
-  if (e.target.closest(
-    ".btn, .social-btn, .book-btn, .gallery-lb-close, .gallery-lb-nav," +
-    ".nav-links a, .download-btn, .nook-links-grid a, .shelf-list button"
-  )) SFX.play("click");
+  if (window.SFX) SFX.play("click");
 }, { passive: true });
 
 // Hover: subtle tick on interactive cards and nav

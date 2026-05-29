@@ -510,6 +510,9 @@
   });
   document.addEventListener("keydown", e => { if (e.key === "Escape") closeLb(); });
 
+  // Click sound everywhere on the project page
+  document.addEventListener("click", () => { if (window.SFX) SFX.play("click"); }, { passive: true });
+
   // Back navigation with ripple
   window.goBack = function() {
     if (window.SFX) SFX.play("projectBack");
