@@ -311,6 +311,14 @@
       color: '#50fa7b',
       w: 70, h: 44,
     },
+    plane: {
+      frames: [
+        `   *   \n--[·]--\n =====>\n       `,
+        `  ---  \n--[·]--\n =====>\n       `,
+      ],
+      color: '#8be9fd',
+      w: 70, h: 44,
+    },
   };
 
   // ── Speech bubble lines — split by zone ─────
@@ -600,11 +608,11 @@
 
   // Sunny (day sky) — cheerful, outdoor, Hyrule-field vibes
   const SUNNY_SPRITES = [
-    'cat', 'mushroom', 'sword', 'link', 'cucco', 'heart_container', 'octorok', 'bee', 'frog',
+    'cat', 'mushroom', 'sword', 'link', 'cucco', 'heart_container', 'octorok', 'bee', 'frog', 'plane',
   ];
   const SUNNY_BEHAVIORS = ['walker', 'bouncer', 'peeker', 'sprinter', 'typer', 'chaser'];
-  // Frog always hops on the ground — never gets a random behavior
-  const FORCED_BEHAVIOR = { frog: 'hopper' };
+  // These sprites always get a specific behavior regardless of pool
+  const FORCED_BEHAVIOR = { frog: 'hopper', plane: 'floater' };
 
   // Reads current theme from body classes set by themes.js
   function getCurrentZone() {

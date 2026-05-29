@@ -97,6 +97,12 @@ window.SFX = (function () {
     heart_container() { arp([523, 659, 784, 1047], 0.058, 'sine', 0.40); },
     octorok()         { glide(300, 75, 0.10, 'square',    0.48); },
     frog()            { tone(190,0.08,'square',0.50); tone(150,0.09,'square',0.46,0.11); },
+    plane() {
+      // Propeller drone: engine fundamental + harmonics (like the Pixabay reference)
+      tone(110, 0.80, 'sawtooth', 0.36);       // engine rumble
+      tone(220, 0.80, 'sawtooth', 0.18, 0.0);  // blade-pass harmonic
+      tone(330, 0.65, 'sawtooth', 0.08, 0.0);  // 2nd harmonic for buzz richness
+    },
   };
 
   // ── Toggle button UI ─────────────────────────────────────────────────
