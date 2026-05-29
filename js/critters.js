@@ -1,6 +1,7 @@
 // =============================================
 //  CRITTERS.JS — Pixel art characters that
 //  roam, run, and do weird stuff around the UI
+//  v2 — rAF-based movement, compositor-only transforms
 // =============================================
 
 (function() {
@@ -18,6 +19,7 @@
       white-space: pre;
       line-height: 1;
       font-size: 10px;
+      will-change: transform;
     }
     .critter-label {
       position: absolute;
@@ -141,9 +143,7 @@
   const SPRITES = {
     cat: {
       frames: [
-        // frame A
         ` /\\_/\\ \n( ^w^ )\n > ♡ <\n  |  | `,
-        // frame B (walking)
         ` /\\_/\\ \n( -w- )\n > ♡ <\n /   \\ `,
       ],
       color: '#ff79c6',
@@ -322,7 +322,6 @@
   };
 
   // ── Speech bubble lines — split by zone ─────
-  // Space/dark zone: techy, glitchy, ominous
   const SPACE_LINES = [
     'hire me pls', 'looking for bugs...', 'git commit -m "fix"',
     '10 PRINT "hello"', "it's a feature!", 'null ptr exc.', '99 bugs...',
@@ -330,54 +329,62 @@
     'push to prod', 'works on my machine', 'segfault :(', '...loading...',
     'stack overflow', 'sudo make me', 'ctrl+z ctrl+z', 'rm -rf /',
     'pls no review', 'pew pew ✦', 'beep boop',
-    // LoZ — mysterious & dark
     'HEY! LISTEN!', "it's dangerous alone", 'take this ⚔', 'TRIFORCE GET',
     'secret to everybody', 'dodongo dislikes smoke', "you've met a terrible fate",
     'can I interest u in a mask?', 'power of gold...', 'ocarina loaded',
   ];
 
-  // Sunny/daytime zone: cheerful, colourful, adventurous
   const SUNNY_LINES = [
     'shipped it!', ':root { --fun: yes }', 'speedrun any%', 'skill issue',
     'touch grass', '♡ u', '★ fave ★', 'golden hour ☀', 'grass touched ✓',
-    // LoZ — daylight quests & silly
     'your princess is here', 'do you have a fairy?', 'item get! 🎵',
     'new dungeon unlocked', 'low hearts... boop boop', 'found a secret!',
     'CUCCO REVENGE GANG', 'tingle tingle!',
   ];
 
   // ── Behavior definitions ────────────────────
-  // Each critter has a `behavior` fn that sets up its movement
+  // All movement uses requestAnimationFrame + CSS transform
+  // Only pure-CSS behaviors (bounce, peek, swing, glitch) keep their CSS animations
   const BEHAVIORS = {
 
     // Walks left→right or right→left along bottom of screen
     walker: (c) => {
       const goRight = Math.random() > 0.5;
-      const speed = 0.6 + Math.random() * 1.2; // px per frame
+      const speed = 0.6 + Math.random() * 1.2;
       let x = goRight ? -80 : window.innerWidth + 80;
       const y = window.innerHeight - 80 - Math.random() * 60;
-      c.el.style.bottom = 'auto';
-      c.el.style.top = y + 'px';
-      c.el.style.left = x + 'px';
+
+      // position element at origin; move entirely via transform
+      c.el.style.left = '0px';
+      c.el.style.top  = '0px';
       c.el.style.animation = goRight
         ? 'crit-walk-r 0.4s steps(2) infinite'
         : 'crit-walk-l 0.4s steps(2) infinite';
 
       let frame = 0;
-      const interval = setInterval(() => {
-        if (!document.body.contains(c.el)) { clearInterval(interval); return; }
+      let lastFrameFlip = 0;
+      let rafId;
+
+      function tick(ts) {
+        if (!document.body.contains(c.el)) return;
         x += goRight ? speed : -speed;
-        c.el.style.left = x + 'px';
-        // alternate sprite frames for walking
-        frame = (frame + 1) % 2;
-        c.sprite.el.textContent = c.sprite.frames[frame];
-        // destroy when offscreen
+        c.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+
+        // flip sprite frame every ~200ms without a separate interval
+        if (ts - lastFrameFlip > 200) {
+          frame = (frame + 1) % 2;
+          c.sprite.el.textContent = c.sprite.frames[frame];
+          lastFrameFlip = ts;
+        }
+
         if (x > window.innerWidth + 120 || x < -120) {
           c.destroy();
-          clearInterval(interval);
+          return;
         }
-      }, 16);
-      c.cleanup = () => clearInterval(interval);
+        rafId = requestAnimationFrame(tick);
+      }
+      rafId = requestAnimationFrame(tick);
+      c.cleanup = () => cancelAnimationFrame(rafId);
     },
 
     // Floats in a sine wave diagonally across screen
@@ -385,30 +392,35 @@
       let x = -80;
       const baseY = 80 + Math.random() * (window.innerHeight * 0.5);
       const speed = 0.5 + Math.random() * 0.8;
-      const amp = 20 + Math.random() * 40;
-      const freq = 0.02 + Math.random() * 0.03;
+      const amp   = 20 + Math.random() * 40;
+      const freq  = 0.02 + Math.random() * 0.03;
       let t = 0;
-      c.el.style.left = x + 'px';
-      c.el.style.top = baseY + 'px';
+      let rafId;
+
+      c.el.style.left = '0px';
+      c.el.style.top  = '0px';
       c.el.style.animation = 'crit-float 2s ease-in-out infinite';
 
-      const iv = setInterval(() => {
-        if (!document.body.contains(c.el)) { clearInterval(iv); return; }
+      function tick() {
+        if (!document.body.contains(c.el)) return;
         x += speed;
         t += 1;
-        c.el.style.left = x + 'px';
-        c.el.style.top = (baseY + Math.sin(t * freq) * amp) + 'px';
-        if (x > window.innerWidth + 120) { c.destroy(); clearInterval(iv); }
-      }, 16);
-      c.cleanup = () => clearInterval(iv);
+        const y = baseY + Math.sin(t * freq) * amp;
+        c.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        if (x > window.innerWidth + 120) { c.destroy(); return; }
+        rafId = requestAnimationFrame(tick);
+      }
+      rafId = requestAnimationFrame(tick);
+      c.cleanup = () => cancelAnimationFrame(rafId);
     },
 
-    // Bounces up and down on a spot, then teleports
+    // Bounces up and down on a spot — pure CSS, no rAF needed
     bouncer: (c) => {
       const x = Math.random() * (window.innerWidth - 100) + 50;
-      c.el.style.left = x + 'px';
-      c.el.style.bottom = '60px';
-      c.el.style.top = 'auto';
+      const y = window.innerHeight - 104; // bottom anchor
+      c.el.style.left = '0px';
+      c.el.style.top  = '0px';
+      c.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       c.el.style.animation = 'crit-bounce 0.9s ease-in-out infinite';
       const t = setTimeout(() => c.destroy(), 5000 + Math.random() * 5000);
       c.cleanup = () => clearTimeout(t);
@@ -419,106 +431,141 @@
       const goRight = Math.random() > 0.5;
       const speed = 0.5 + Math.random() * 0.8;
       let x = goRight ? -80 : window.innerWidth + 80;
-      c.el.style.top = '60px';
-      c.el.style.left = x + 'px';
-      c.el.style.transform = 'scaleY(-1)';
-      c.el.style.animation = 'none';
+      const y = 60;
+
+      c.el.style.left   = '0px';
+      c.el.style.top    = '0px';
       c.el.style.filter = 'hue-rotate(120deg)';
 
       let frame = 0;
-      const iv = setInterval(() => {
-        if (!document.body.contains(c.el)) { clearInterval(iv); return; }
+      let lastFrameFlip = 0;
+      let rafId;
+
+      function tick(ts) {
+        if (!document.body.contains(c.el)) return;
         x += goRight ? speed : -speed;
-        c.el.style.left = x + 'px';
-        frame = (frame + 1) % 2;
-        c.sprite.el.textContent = c.sprite.frames[frame];
-        if (x > window.innerWidth + 120 || x < -120) { c.destroy(); clearInterval(iv); }
-      }, 16);
-      c.cleanup = () => clearInterval(iv);
+        // scaleY(-1) flips it upside-down; translateY baked in
+        c.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scaleY(-1)`;
+
+        if (ts - lastFrameFlip > 200) {
+          frame = (frame + 1) % 2;
+          c.sprite.el.textContent = c.sprite.frames[frame];
+          lastFrameFlip = ts;
+        }
+
+        if (x > window.innerWidth + 120 || x < -120) { c.destroy(); return; }
+        rafId = requestAnimationFrame(tick);
+      }
+      rafId = requestAnimationFrame(tick);
+      c.cleanup = () => cancelAnimationFrame(rafId);
     },
 
-    // Runs fast across and panics (shakes)
+    // Runs fast across and shakes (CSS handles shake, rAF moves it)
     sprinter: (c) => {
       const speed = 3 + Math.random() * 3;
       let x = -80;
       const y = window.innerHeight - 90 - Math.random() * 80;
-      c.el.style.top = y + 'px';
-      c.el.style.left = x + 'px';
-      c.el.style.animation = 'crit-shake 0.15s linear infinite';
-      c.el.style.filter = 'brightness(1.6)';
 
-      const iv = setInterval(() => {
-        if (!document.body.contains(c.el)) { clearInterval(iv); return; }
+      c.el.style.left   = '0px';
+      c.el.style.top    = '0px';
+      c.el.style.filter = 'brightness(1.6)';
+      // shake is a tiny CSS animation that only translates X by ±4px —
+      // it composites fine on top of our rAF transform because we keep
+      // the shake on a child wrapper instead of the root element.
+      // Since we can't easily nest, we accept the minor shake override
+      // and drive horizontal movement by updating transform each frame.
+      c.el.style.animation = 'crit-shake 0.15s linear infinite';
+
+      let rafId;
+      function tick() {
+        if (!document.body.contains(c.el)) return;
         x += speed;
+        // Note: crit-shake overrides transform via CSS animation.
+        // We set left directly here so it still moves across the screen.
+        // This is the one case where left is acceptable because the shake
+        // animation already owns the transform property.
         c.el.style.left = x + 'px';
-        if (x > window.innerWidth + 120) { c.destroy(); clearInterval(iv); }
-      }, 16);
-      c.cleanup = () => clearInterval(iv);
+        c.el.style.top  = y + 'px';
+        if (x > window.innerWidth + 120) { c.destroy(); return; }
+        rafId = requestAnimationFrame(tick);
+      }
+      rafId = requestAnimationFrame(tick);
+      c.cleanup = () => cancelAnimationFrame(rafId);
     },
 
-    // Glitches in place, then vanishes
+    // Glitches in place, then vanishes — pure CSS animation, no movement
     glitcher: (c) => {
       const x = Math.random() * (window.innerWidth - 120) + 60;
       const y = Math.random() * (window.innerHeight - 120) + 60;
-      c.el.style.left = x + 'px';
-      c.el.style.top  = y + 'px';
+      c.el.style.left   = '0px';
+      c.el.style.top    = '0px';
+      c.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       c.el.style.animation = 'crit-glitch 0.4s steps(1) infinite';
-      c.el.style.filter = 'brightness(2)';
+      c.el.style.filter   = 'brightness(2)';
       const t = setTimeout(() => c.destroy(), 2500 + Math.random() * 2000);
       c.cleanup = () => clearTimeout(t);
     },
 
-    // Peeks up from the bottom edge
+    // Peeks up from the bottom edge — pure CSS animation
     peeker: (c) => {
       const x = Math.random() * (window.innerWidth - 100) + 50;
-      c.el.style.left = x + 'px';
+      c.el.style.left   = x + 'px';
       c.el.style.bottom = '-44px';
-      c.el.style.top = 'auto';
+      c.el.style.top    = 'auto';
       c.el.style.animation = 'crit-peek 4s ease-in-out forwards';
       const t = setTimeout(() => c.destroy(), 5000);
       c.cleanup = () => clearTimeout(t);
     },
 
-    // Swings from an "anchor" near the top (nav area)
+    // Swings from an anchor near the top — pure CSS animation
     swinger: (c) => {
       const x = Math.random() * (window.innerWidth - 100) + 50;
-      c.el.style.left = x + 'px';
-      c.el.style.top = '52px';
+      c.el.style.left            = '0px';
+      c.el.style.top             = '0px';
+      c.el.style.transform       = `translate(${x.toFixed(1)}px, 52px)`;
       c.el.style.transformOrigin = 'top center';
-      c.el.style.animation = 'crit-swing 1.2s ease-in-out infinite';
+      c.el.style.animation       = 'crit-swing 1.2s ease-in-out infinite';
       const t = setTimeout(() => c.destroy(), 6000 + Math.random() * 4000);
       c.cleanup = () => clearTimeout(t);
     },
 
     // Spins wildly across the screen
     spinner: (c) => {
-      let x = Math.random() * window.innerWidth;
-      let y = Math.random() * window.innerHeight * 0.6 + 80;
+      let x  = Math.random() * window.innerWidth;
+      let y  = Math.random() * window.innerHeight * 0.6 + 80;
       const vx = (Math.random() - 0.5) * 3;
       const vy = (Math.random() - 0.5) * 2;
-      c.el.style.left = x + 'px';
-      c.el.style.top  = y + 'px';
+
+      c.el.style.left      = '0px';
+      c.el.style.top       = '0px';
       c.el.style.animation = 'crit-spin 0.5s linear infinite';
 
-      const iv = setInterval(() => {
-        if (!document.body.contains(c.el)) { clearInterval(iv); return; }
+      let rafId;
+      // crit-spin owns the transform too, so like sprinter we fall back
+      // to left/top for positional movement while spin handles rotation.
+      function tick() {
+        if (!document.body.contains(c.el)) return;
         x += vx; y += vy;
         c.el.style.left = x + 'px';
         c.el.style.top  = y + 'px';
         if (x < -120 || x > window.innerWidth + 120 || y < -80 || y > window.innerHeight + 80) {
-          c.destroy(); clearInterval(iv);
+          c.destroy(); return;
         }
-      }, 16);
-      c.cleanup = () => clearInterval(iv);
+        rafId = requestAnimationFrame(tick);
+      }
+      rafId = requestAnimationFrame(tick);
+      c.cleanup = () => cancelAnimationFrame(rafId);
     },
 
-    // Types at a "desk" in the corner with a keyboard sound visual
+    // Types at a desk — low-frequency interval (80ms) is fine, kept as-is
     typer: (c) => {
       const side = Math.random() > 0.5;
-      c.el.style.left = side ? '20px' : (window.innerWidth - 120) + 'px';
-      c.el.style.bottom = '80px';
-      c.el.style.top = 'auto';
-      // Show bubble with typing
+      const x = side ? 20 : window.innerWidth - 120;
+      const y = window.innerHeight - 124;
+      c.el.style.left = '0px';
+      c.el.style.top  = '0px';
+      c.el.style.transform = `translate(${x}px, ${y}px)`;
+
       const chars = '01ab#@!?';
       let t = 0;
       const iv = setInterval(() => {
@@ -534,64 +581,91 @@
       c.cleanup = () => clearInterval(iv);
     },
 
-    // Chase behavior: slowly drifts toward a random target
+    // Drifts toward a random wandering target
     chaser: (c) => {
-      let x = Math.random() * window.innerWidth;
-      let y = Math.random() * (window.innerHeight - 100) + 50;
+      let x  = Math.random() * window.innerWidth;
+      let y  = Math.random() * (window.innerHeight - 100) + 50;
       let tx = Math.random() * window.innerWidth;
       let ty = Math.random() * (window.innerHeight - 100) + 50;
-      c.el.style.left = x + 'px';
-      c.el.style.top  = y + 'px';
+
+      c.el.style.left = '0px';
+      c.el.style.top  = '0px';
 
       let f = 0;
-      const iv = setInterval(() => {
-        if (!document.body.contains(c.el)) { clearInterval(iv); return; }
-        const dx = tx - x, dy = ty - y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
+      let lastFrameFlip = 0;
+      let rafId;
+
+      function tick(ts) {
+        if (!document.body.contains(c.el)) return;
+        const dx   = tx - x;
+        const dy   = ty - y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
         if (dist < 5) {
           tx = Math.random() * window.innerWidth;
           ty = Math.random() * (window.innerHeight - 100) + 50;
         }
+
         const spd = 0.8;
         x += (dx / dist) * spd;
         y += (dy / dist) * spd;
-        c.el.style.left = x + 'px';
-        c.el.style.top  = y + 'px';
-        c.el.style.transform = dx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
-        f++;
-        c.sprite.el.textContent = c.sprite.frames[f % 2];
-        if (f > 500) { c.destroy(); clearInterval(iv); }
-      }, 16);
-      c.cleanup = () => clearInterval(iv);
+
+        const flip = dx > 0 ? 1 : -1;
+        c.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scaleX(${flip})`;
+
+        if (ts - lastFrameFlip > 200) {
+          f++;
+          c.sprite.el.textContent = c.sprite.frames[f % 2];
+          lastFrameFlip = ts;
+        }
+
+        if (f > 500) { c.destroy(); return; }
+        rafId = requestAnimationFrame(tick);
+      }
+      rafId = requestAnimationFrame(tick);
+      c.cleanup = () => cancelAnimationFrame(rafId);
     },
+
     // Hops along the ground — sunny side only
     hopper: (c) => {
-      let x = Math.random() * (window.innerWidth - 120) + 60;
+      let x      = Math.random() * (window.innerWidth - 120) + 60;
       const ground = window.innerHeight - 82;
-      let posY = ground, vy = 0, hopping = false;
-      c.el.style.top  = ground + 'px';
-      c.el.style.left = x + 'px';
+      let posY   = ground;
+      let vy     = 0;
+      let hopping = false;
 
-      const iv = setInterval(() => {
-        if (!document.body.contains(c.el)) { clearInterval(iv); return; }
+      c.el.style.left = '0px';
+      c.el.style.top  = '0px';
+
+      let rafId;
+      function tick() {
+        if (!document.body.contains(c.el)) return;
+
         if (!hopping && Math.random() < 0.025) {
-          hopping = true; vy = -9;
+          hopping = true;
+          vy = -9;
           x += (Math.random() * 40 - 10);
           c.sprite.el.textContent = c.sprite.frames[1];
         }
+
         if (hopping) {
-          vy += 0.7; posY += vy;
+          vy   += 0.7;
+          posY += vy;
           if (posY >= ground) {
-            posY = ground; vy = 0; hopping = false;
+            posY    = ground;
+            vy      = 0;
+            hopping = false;
             c.sprite.el.textContent = c.sprite.frames[0];
           }
         }
-        c.el.style.left = x + 'px';
-        c.el.style.top  = posY + 'px';
-      }, 16);
+
+        c.el.style.transform = `translate(${x.toFixed(1)}px, ${posY.toFixed(1)}px)`;
+        rafId = requestAnimationFrame(tick);
+      }
+      rafId = requestAnimationFrame(tick);
 
       const t = setTimeout(() => c.destroy(), 9000 + Math.random() * 6000);
-      c.cleanup = () => { clearInterval(iv); clearTimeout(t); };
+      c.cleanup = () => { cancelAnimationFrame(rafId); clearTimeout(t); };
     },
   };
 
@@ -599,22 +673,19 @@
   const SPRITE_NAMES   = Object.keys(SPRITES);
 
   // ── Zone-aware pools ──────────────────────────
-  // Space (dark sky) — eerie, mechanical, dungeon-dwelling
   const SPACE_SPRITES = [
     'ghost', 'robot', 'ufo', 'alien', 'pixel_knight', 'slime',
     'keese', 'navi', 'sheik', 'triforce', 'wizard', 'dragon',
   ];
   const SPACE_BEHAVIORS = ['floater', 'glitcher', 'spinner', 'ceiling_crawler', 'swinger', 'chaser'];
 
-  // Sunny (day sky) — cheerful, outdoor, Hyrule-field vibes
   const SUNNY_SPRITES = [
     'cat', 'mushroom', 'sword', 'link', 'cucco', 'heart_container', 'octorok', 'bee', 'frog', 'plane',
   ];
   const SUNNY_BEHAVIORS = ['walker', 'bouncer', 'peeker', 'sprinter', 'typer', 'chaser'];
-  // These sprites always get a specific behavior regardless of pool
+
   const FORCED_BEHAVIOR = { frog: 'hopper', plane: 'floater' };
 
-  // Reads current theme from body classes set by themes.js
   function getCurrentZone() {
     const b = document.body;
     return (b.classList.contains('theme-gallery') || b.classList.contains('theme-sunny-world'))
@@ -633,28 +704,26 @@
 
   // ── Critter factory ─────────────────────────
   function createCritter(opts = {}) {
-    const zone        = opts.zone || getCurrentZone();
-    const spritePool  = zone === 'sunny' ? SUNNY_SPRITES   : SPACE_SPRITES;
-    const behaviorPool= zone === 'sunny' ? SUNNY_BEHAVIORS : SPACE_BEHAVIORS;
-    const linePool    = zone === 'sunny' ? SUNNY_LINES     : SPACE_LINES;
-    const spriteKey   = opts.sprite   || rand(spritePool);
-    const behaviorKey = opts.behavior || FORCED_BEHAVIOR[spriteKey] || rand(behaviorPool);
-    const sprite = SPRITES[spriteKey];
+    const zone         = opts.zone || getCurrentZone();
+    const spritePool   = zone === 'sunny' ? SUNNY_SPRITES   : SPACE_SPRITES;
+    const behaviorPool = zone === 'sunny' ? SUNNY_BEHAVIORS : SPACE_BEHAVIORS;
+    const linePool     = zone === 'sunny' ? SUNNY_LINES     : SPACE_LINES;
+    const spriteKey    = opts.sprite   || rand(spritePool);
+    const behaviorKey  = opts.behavior || FORCED_BEHAVIOR[spriteKey] || rand(behaviorPool);
+    const sprite       = SPRITES[spriteKey];
 
     const el = document.createElement('div');
     el.className = 'critter';
     el.setAttribute('aria-hidden', 'true');
 
-    // inner text span for the pixel art
     const artEl = document.createElement('span');
-    artEl.style.color = sprite.color;
+    artEl.style.color      = sprite.color;
     artEl.style.textShadow = `0 0 8px ${sprite.color}`;
-    artEl.textContent = sprite.frames[0];
+    artEl.textContent      = sprite.frames[0];
     el.appendChild(artEl);
 
-    // speech bubble
     const bubble = document.createElement('div');
-    bubble.className = 'critter-bubble';
+    bubble.className  = 'critter-bubble';
     bubble.textContent = '';
     el.appendChild(bubble);
 
@@ -672,30 +741,26 @@
         if (this.cleanup) this.cleanup();
         if (document.body.contains(this.el)) {
           this.el.style.transition = 'opacity 0.5s';
-          this.el.style.opacity = '0';
+          this.el.style.opacity    = '0';
           setTimeout(() => { if (document.body.contains(this.el)) this.el.remove(); }, 500);
         }
       },
     };
 
-    // Random ambient sounds while the critter is alive
     function scheduleSound(initialDelay) {
       _soundTimer = setTimeout(() => {
         if (!document.body.contains(c.el)) return;
         if (window.SFX) SFX.critter(spriteKey);
-        scheduleSound(3000 + Math.random() * 5000); // repeat every 3-8 s
+        scheduleSound(3000 + Math.random() * 5000);
       }, initialDelay);
     }
-    // First sound: 600ms after spawn, then recurring
     scheduleSound(600 + Math.random() * 1500);
 
-    // Occasional random speech bubble — zone-appropriate text + a soft chirp
     if (Math.random() < 0.55) {
       const delay = 1000 + Math.random() * 3000;
       setTimeout(() => {
         if (document.body.contains(c.el)) {
           showBubble(c, rand(linePool), 2500);
-          // Brief soft blip when they "speak"
           if (window.SFX) SFX.play('hover');
         }
       }, delay);
@@ -708,7 +773,7 @@
   // ── Spawning logic ───────────────────────────
   let active = 0;
   const MAX_CRITTERS = 2;
-  const activePool = []; // tracks all live randomly-spawned critters
+  const activePool   = [];
 
   function clearActivePool() {
     activePool.slice().forEach(c => { if (document.body.contains(c.el)) c.destroy(); });
@@ -731,17 +796,15 @@
     setTimeout(() => { if (document.body.contains(c.el)) c.destroy(); }, 20000);
   }
 
-  // Flush all active critters the moment the zone flips so stale-zone
-  // sprites don't linger over the wrong background.
-  let _lastZone = getCurrentZone();
-  let _zoneLocked = false; // brief spawn cooldown after zone flip
+  let _lastZone   = getCurrentZone();
+  let _zoneLocked = false;
   new MutationObserver(() => {
     const z = getCurrentZone();
     if (z !== _lastZone) {
       _lastZone = z;
       clearActivePool();
       _zoneLocked = true;
-      setTimeout(() => { _zoneLocked = false; }, 1200); // wait for classes to settle
+      setTimeout(() => { _zoneLocked = false; }, 1200);
     }
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
@@ -752,7 +815,7 @@
   function spawnSparkles(x, y) {
     const zone = getCurrentZone();
     const pool = zone === 'sunny' ? SUNNY_SPARKS : SPACE_SPARKS;
-    const frag = document.createDocumentFragment();
+    const frag  = document.createDocumentFragment();
     const nodes = [];
 
     for (let i = 0; i < 5; i++) {
@@ -762,12 +825,12 @@
       const sym   = pool.syms[Math.floor(Math.random() * pool.syms.length)];
       const el    = document.createElement('span');
       el.setAttribute('aria-hidden', 'true');
-      el.className = 'click-sparkle';
+      el.className    = 'click-sparkle';
       el.style.cssText =
         `left:${x}px;top:${y}px;color:${color};font-size:${10 + i * 2}px;` +
-        `--dx:${(Math.cos(angle)*dist).toFixed(0)}px;` +
-        `--dy:${(Math.sin(angle)*dist).toFixed(0)}px;` +
-        `--rot:${Math.round(Math.random()*240-120)}deg;` +
+        `--dx:${(Math.cos(angle) * dist).toFixed(0)}px;` +
+        `--dy:${(Math.sin(angle) * dist).toFixed(0)}px;` +
+        `--rot:${Math.round(Math.random() * 240 - 120)}deg;` +
         `animation-duration:${(0.55 + i * 0.06).toFixed(2)}s`;
       el.textContent = sym;
       frag.appendChild(el);
@@ -781,8 +844,8 @@
   }
 
   function spawnFairy(x, y, zone) {
-    const el    = document.createElement('div');
-    const color = zone === 'sunny' ? '#f1fa8c' : '#8be9fd';
+    const el     = document.createElement('div');
+    const color  = zone === 'sunny' ? '#f1fa8c' : '#8be9fd';
     const frames = [' ✦✦✦\n✦   ✦\n ✦✦✦', '  ···\n· ✦ ·\n  ···'];
     el.setAttribute('aria-hidden', 'true');
     el.style.cssText = `
@@ -795,7 +858,7 @@
     `;
     el.textContent = frames[0];
     document.body.appendChild(el);
-    let f = 0;
+    let f  = 0;
     const iv = setInterval(() => { f ^= 1; el.textContent = frames[f]; }, 180);
     setTimeout(() => { clearInterval(iv); el.remove(); }, 1150);
   }
@@ -805,14 +868,13 @@
     spawnSparkles(e.clientX, e.clientY);
   });
 
-  // ── Konami-code easter egg: flood of critters ─
+  // ── Konami-code easter egg ─────────────────────
   let konamiSeq = [];
-  const KONAMI = [38,38,40,40,37,39,37,39,66,65];
+  const KONAMI  = [38,38,40,40,37,39,37,39,66,65];
   document.addEventListener('keydown', (e) => {
     konamiSeq.push(e.keyCode);
     konamiSeq = konamiSeq.slice(-10);
     if (konamiSeq.join(',') === KONAMI.join(',')) {
-      // CHAOS MODE
       for (let i = 0; i < 8; i++) {
         setTimeout(() => createCritter({ behavior: rand(['spinner','glitcher','bouncer','sprinter']) }), i * 200);
       }
@@ -824,14 +886,14 @@
     const el = document.createElement('div');
     el.className = 'navi-cursor';
     el.setAttribute('aria-hidden', 'true');
-    el.textContent = '✦';
-    el.style.cssText = 'opacity:0; left:0; top:0;'; // anchor at origin, move via transform
+    el.textContent  = '✦';
+    el.style.cssText = 'opacity:0; left:0; top:0;';
     document.body.appendChild(el);
 
     const FRAMES = ['✦', '·'];
     let frame = 0, tick = 0;
     let tx = -300, ty = -300;
-    let cx = tx, cy = ty;
+    let cx = tx,   cy = ty;
 
     document.addEventListener('mousemove', e => {
       tx = e.clientX; ty = e.clientY;
@@ -842,14 +904,11 @@
     (function loop() {
       cx += (tx - cx) * 0.13;
       cy += (ty - cy) * 0.13;
-      // transform runs on the compositor thread — no layout cost
       el.style.transform = `translate(${(cx + 14).toFixed(1)}px,${(cy + Math.sin(tick * 0.07) * 4 - 18).toFixed(1)}px)`;
-      // update glyph every ~28 frames, not every frame
       if (++tick % 28 === 0) { frame ^= 1; el.textContent = FRAMES[frame]; }
       requestAnimationFrame(loop);
     })();
 
-    // Occasional glow flash + chime — first fires after 12-22s, then repeats
     function flair() {
       el.classList.add('navi-flash');
       if (window.SFX) SFX.critter('navi');
@@ -859,35 +918,27 @@
     setTimeout(flair, 12000 + Math.random() * 10000);
   }
 
-  // Initialise Navi — delayed so it doesn't block page startup
   setTimeout(initNaviCursor, 1000);
-
-  // Auto-spawning removed — critters now appear only via:
-  //   • Section scroll triggers (below)
-  //   • ZELDA easter egg (type "ZELDA" anywhere)
 
   // Inject CSS
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
 
-  // ── Scroll-triggered critter: pops up when you hit certain sections ─
-  // zone field forces the right pool even before theme classes apply.
+  // ── Scroll-triggered critters ────────────────
   const sectionTriggers = {
-    // ── Space zone (dark sky) ──────────────────
-    'home':         { sprite: 'ufo',             behavior: 'floater',          zone: 'space' },
-    'about':        { sprite: 'triforce',         behavior: 'glitcher',         zone: 'space' },
-    'showreel':     { sprite: 'navi',             behavior: 'spinner',          zone: 'space' },
-    // ── Sunny zone (day sky) ──────────────────
-    'projects':     { sprite: 'link',             behavior: 'bouncer',          zone: 'sunny' },
-    'games':        { sprite: 'cucco',            behavior: 'sprinter',         zone: 'sunny' },
-    'art-gallery':  { sprite: 'heart_container',  behavior: 'bouncer',          zone: 'sunny' },
-    'reading-nook': { sprite: 'cat',              behavior: 'typer',            zone: 'sunny' },
-    'downloads':    { sprite: 'sword',            behavior: 'peeker',           zone: 'sunny' },
-    'contact':      { sprite: 'mushroom',         behavior: 'walker',           zone: 'sunny' },
+    'home':         { sprite: 'ufo',            behavior: 'floater',  zone: 'space' },
+    'about':        { sprite: 'triforce',        behavior: 'glitcher', zone: 'space' },
+    'showreel':     { sprite: 'navi',            behavior: 'spinner',  zone: 'space' },
+    'projects':     { sprite: 'link',            behavior: 'bouncer',  zone: 'sunny' },
+    'games':        { sprite: 'cucco',           behavior: 'sprinter', zone: 'sunny' },
+    'art-gallery':  { sprite: 'heart_container', behavior: 'bouncer',  zone: 'sunny' },
+    'reading-nook': { sprite: 'cat',             behavior: 'typer',    zone: 'sunny' },
+    'downloads':    { sprite: 'sword',           behavior: 'peeker',   zone: 'sunny' },
+    'contact':      { sprite: 'mushroom',        behavior: 'walker',   zone: 'sunny' },
   };
 
-  const triggered = new Set();
+  const triggered  = new Set();
   const sectionObs = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting && !triggered.has(entry.target.id)) {
@@ -903,16 +954,15 @@
     if (el) sectionObs.observe(el);
   });
 
-  // ── LoZ Easter egg: type "ZELDA" to summon a critter swarm ─────
+  // ── LoZ Easter egg: type "ZELDA" ─────────────
   let zeldaSeq = '';
   const ZELDA_CODE = 'ZELDA';
   document.addEventListener('keydown', (e) => {
     zeldaSeq = (zeldaSeq + e.key.toUpperCase()).slice(-5);
     if (zeldaSeq === ZELDA_CODE) {
-      // ZELDA flood uses all LoZ sprites regardless of zone
       const lozSprites  = ['triforce','navi','heart_container','link','sheik','keese','cucco','octorok','sword'];
       const lozBehavior = ['floater','spinner','bouncer','glitcher'];
-      const lozLines    = ['HEY! LISTEN!','TRIFORCE GET',"it's dangerous alone",'item get! \uD83C\uDFB5','power of gold...','CUCCO REVENGE GANG','found a secret!'];
+      const lozLines    = ['HEY! LISTEN!','TRIFORCE GET',"it's dangerous alone",'item get! 🎵','power of gold...','CUCCO REVENGE GANG','found a secret!'];
       for (let i = 0; i < 10; i++) {
         setTimeout(() => {
           const c = createCritter({
