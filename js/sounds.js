@@ -75,9 +75,9 @@ window.SFX = (function () {
     ghost()           { glide(260, 180, 0.65, 'sine',     0.45); },
     robot()           { tone(523, 0.09, 'square', 0.48); tone(330, 0.09, 'square', 0.42, 0.13); },
     ufo() {
-      // Doppler zoom: low → high as it approaches, then shoots down as it passes
-      glide(100, 750, 0.22, 'sine', 0.44);          // approaching
-      glide(750,  70, 0.50, 'sine', 0.40, 0.20);    // passing + receding
+      // Doppler zoom — kept in laptop-speaker range (250–1100 Hz)
+      glide(280, 1100, 0.24, 'sine', 0.46);        // rise: ship approaching
+      glide(1100, 220, 0.48, 'sine', 0.42, 0.22);  // fall: passing + receding
     },
     alien()           { glide(880, 1300, 0.14, 'sine', 0.42); glide(1300, 700, 0.18, 'sine', 0.38, 0.14); },
     pixel_knight()    { glide(500, 90,  0.13, 'square',   0.52); },
