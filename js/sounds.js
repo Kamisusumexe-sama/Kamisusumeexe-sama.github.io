@@ -1,32 +1,34 @@
-/* sounds.js — Retro Web Audio sound engine (zero audio files for SFX)
-   Aesthetic: NES square-wave blips, Zelda arpeggios, space sine sweeps */
+/* sounds.js — Retro Web Audio sound engine */
 
 window.SFX = (function () {
   'use strict';
 
-  // ── Persistent state ─────────────────────────────────────────────────
   let ctx    = null;
   let master = null;
   let sfxMuted = localStorage.getItem('sfx_muted') === '1';
   let bgMuted  = localStorage.getItem('bg_muted')  === '1';
-  let bgEl     = null;
-  let bgVol    = 0.28;
+  let bgEl  = null;
+  let bgVol = 0.28;
 
-  // ── Audio context ────────────────────────────────────────────────────
+  // ── AudioContext ─────────────────────────────────────────────────────
+  // Only creates the context; call ensureRunning() before scheduling sound.
   function ac() {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       master = ctx.createGain();
-      master.gain.value = sfxMuted ? 0 : 0.6;
+      master.gain.value = sfxMuted ? 0 : 0.75;
       master.connect(ctx.destination);
     }
-    if (ctx.state === 'suspended') ctx.resume();
     return ctx;
   }
 
-  // ── Primitives ───────────────────────────────────────────────────────
+  // Resume and return a Promise that resolves when the context is running.
+  function ensureRunning() {
+    const c = ac();
+    return c.state === 'running' ? Promise.resolve(c) : c.resume().then(() => c);
+  }
 
-  // Single tone with a quick attack + exponential decay
+  // ── Primitives ───────────────────────────────────────────────────────
   function tone(freq, dur, type, vol, delay) {
     const c   = ac();
     const osc = c.createOscillator();
@@ -36,12 +38,11 @@ window.SFX = (function () {
     osc.frequency.value = freq;
     const t = c.currentTime + (delay || 0);
     env.gain.setValueAtTime(0, t);
-    env.gain.linearRampToValueAtTime(vol || 0.3, t + 0.007);
+    env.gain.linearRampToValueAtTime(vol || 0.4, t + 0.008);
     env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     osc.start(t); osc.stop(t + dur + 0.02);
   }
 
-  // Pitch glide from f1 → f2
   function glide(f1, f2, dur, type, vol, delay) {
     const c   = ac();
     const osc = c.createOscillator();
@@ -51,184 +52,171 @@ window.SFX = (function () {
     const t = c.currentTime + (delay || 0);
     osc.frequency.setValueAtTime(f1, t);
     osc.frequency.exponentialRampToValueAtTime(Math.max(f2, 1), t + dur);
-    env.gain.setValueAtTime(vol || 0.2, t);
+    env.gain.setValueAtTime(vol || 0.3, t);
     env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     osc.start(t); osc.stop(t + dur + 0.02);
   }
 
-  // White noise burst (for hits, pops, swooshes)
-  function noise(dur, vol, delay) {
-    const c       = ac();
-    const bufLen  = Math.ceil(c.sampleRate * dur);
-    const buf     = c.createBuffer(1, bufLen, c.sampleRate);
-    const data    = buf.getChannelData(0);
-    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
-    const src = c.createBufferSource();
-    src.buffer = buf;
-    const env = c.createGain();
-    src.connect(env); env.connect(master);
-    const t = c.currentTime + (delay || 0);
-    env.gain.setValueAtTime(vol || 0.2, t);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.start(t); src.stop(t + dur + 0.02);
+  function arp(notes, step, type, vol) {
+    let t = 0;
+    notes.forEach(f => { tone(f, step, type, vol, t); t += step * 0.82; });
   }
 
-  // Tone with vibrato (LFO modulating frequency)
+  // Vibrato tone — LFO modulates frequency
   function vibTone(freq, mod, lfoHz, dur, type, vol) {
     const c   = ac();
     const osc = c.createOscillator();
     const lfo = c.createOscillator();
     const lg  = c.createGain();
     const env = c.createGain();
-    lfo.frequency.value = lfoHz;
-    lg.gain.value = mod;
+    lfo.frequency.value = lfoHz; lg.gain.value = mod;
     lfo.connect(lg); lg.connect(osc.frequency);
     osc.type = type || 'sine';
     osc.frequency.value = freq;
     osc.connect(env); env.connect(master);
     const t = c.currentTime;
     env.gain.setValueAtTime(0, t);
-    env.gain.linearRampToValueAtTime(vol || 0.2, t + 0.02);
+    env.gain.linearRampToValueAtTime(vol || 0.3, t + 0.02);
     env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     lfo.start(t); osc.start(t);
     lfo.stop(t + dur + 0.02); osc.stop(t + dur + 0.02);
   }
 
-  // Arpeggio
-  function arp(notes, step, type, vol) {
-    let t = 0;
-    notes.forEach(f => { tone(f, step, type, vol, t); t += step * 0.82; });
+  // White noise burst
+  function noise(dur, vol, delay) {
+    const c      = ac();
+    const bufLen = Math.ceil(c.sampleRate * Math.max(dur, 0.01));
+    const buf    = c.createBuffer(1, bufLen, c.sampleRate);
+    const data   = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(); src.buffer = buf;
+    const env = c.createGain();
+    src.connect(env); env.connect(master);
+    const t = c.currentTime + (delay || 0);
+    env.gain.setValueAtTime(vol || 0.3, t);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.start(t); src.stop(t + dur + 0.02);
   }
 
-  // ── UI sound library ─────────────────────────────────────────────────
+  // ── UI sounds ────────────────────────────────────────────────────────
   const S = {
-    click()        { tone(523, 0.065, 'square', 0.32); },
+    click()        { tone(523, 0.065, 'square', 0.35); },
     hover()        { tone(440, 0.022, 'sine',   0.08); },
-    projectEnter() { arp([523, 659, 784, 1047], 0.068, 'square', 0.24); },
-    projectBack()  { arp([784, 659, 523],        0.065, 'square', 0.22); },
+    projectEnter() { arp([523, 659, 784, 1047], 0.068, 'square', 0.28); },
+    projectBack()  { arp([784, 659, 523],        0.065, 'square', 0.25); },
     themeGallery() {
-      arp([262, 330, 392, 523], 0.082, 'square', 0.18);
-      setTimeout(() => tone(784, 0.22, 'square', 0.14), 280);
+      arp([262, 330, 392, 523], 0.082, 'square', 0.22);
+      setTimeout(() => tone(784, 0.22, 'square', 0.18), 280);
     },
-    themeDefault() { glide(660, 160, 0.45, 'sine', 0.20); },
+    themeDefault() { glide(660, 160, 0.45, 'sine', 0.25); },
   };
 
-  // ── Critter sound library ────────────────────────────────────────────
-  // One unique synthesised sound per sprite.
+  // ── Critter sounds ───────────────────────────────────────────────────
+  // Each function uses only tone() / glide() / arp() / vibTone() / noise()
+  // Volumes set high (0.45-0.6) so they cut through clearly.
   const C = {
 
-    // ── SPACE CRITTERS ──────────────────────────────────────────────
+    // ── SPACE ──────────────────────────────────────────
     ghost() {
-      // Eerie wavering moan
-      vibTone(240, 70, 4.5, 0.7, 'sine', 0.18);
+      // Eerie wavering wail — sine with slow vibrato
+      vibTone(260, 80, 4, 0.8, 'sine', 0.45);
     },
     robot() {
-      // Beep-boop (two-tone square)
-      tone(523, 0.09, 'square', 0.22);
-      tone(330, 0.09, 'square', 0.2, 0.12);
+      // Classic beep-boop
+      tone(523, 0.1, 'square', 0.5);
+      tone(330, 0.1, 'square', 0.45, 0.14);
     },
     ufo() {
-      // Sci-fi descending whirr with vibrato
-      vibTone(500, 80, 12, 0.5, 'sine', 0.18);
-      glide(500, 100, 0.5, 'sine', 0.1);
+      // Sci-fi descending whirr
+      glide(600, 120, 0.55, 'sine', 0.45);
+      vibTone(400, 60, 10, 0.55, 'sine', 0.2);
     },
     alien() {
-      // Warbling extra-terrestrial chirp
-      vibTone(900, 250, 20, 0.28, 'sine', 0.17);
+      // Alien warble — rapid vibrato chirp
+      vibTone(880, 300, 18, 0.32, 'sine', 0.45);
     },
     pixel_knight() {
-      // HYAAA! — sword slash impact
-      noise(0.04, 0.28);
-      glide(500, 120, 0.14, 'square', 0.28, 0.02);
-      tone(200, 0.06, 'sine', 0.18, 0.1);
+      // HYAAA! sword slash — descending square + thud
+      glide(500, 100, 0.13, 'square', 0.55);
+      tone(200, 0.09, 'sine', 0.45, 0.1);
     },
     slime() {
-      // Wet gloopy bloop
-      glide(380, 70, 0.22, 'triangle', 0.24);
+      // Wet bloop — triangle glide down
+      glide(400, 65, 0.25, 'triangle', 0.5);
     },
     keese() {
-      // Bat sonar chirp
-      tone(2100, 0.035, 'sine', 0.14);
-      tone(1750, 0.035, 'sine', 0.10, 0.05);
+      // Bat sonar — two high pings
+      tone(1800, 0.05, 'sine', 0.45);
+      tone(1500, 0.05, 'sine', 0.38, 0.07);
     },
     navi() {
-      // "HEY!" — bright fairy chime
-      arp([1047, 1319, 1568], 0.06, 'sine', 0.2);
+      // HEY! — bright fairy chime arpeggio
+      arp([1047, 1319, 1568], 0.065, 'sine', 0.42);
     },
     sheik() {
-      // Ninja dash whoosh + shuriken ping
-      glide(900, 200, 0.12, 'sine', 0.14);
-      noise(0.07, 0.1, 0.02);
-      tone(1800, 0.04, 'sine', 0.1, 0.06);
+      // Ninja whoosh + shuriken ping
+      glide(900, 180, 0.14, 'sine', 0.38);
+      tone(1600, 0.05, 'sine', 0.3, 0.08);
     },
     triforce() {
-      // Mystical three-point chime
-      arp([659, 784, 1047], 0.1, 'triangle', 0.2);
+      // Mystical three-note chime
+      arp([659, 784, 1047], 0.11, 'triangle', 0.45);
     },
     wizard() {
-      // Magic sparkle — ascending sweep + harmonic shimmer
-      glide(180, 1400, 0.38, 'sine', 0.18);
-      glide(360, 2800, 0.38, 'sine', 0.07, 0.0);
+      // Magic sparkle — ascending sweep
+      glide(160, 1400, 0.4, 'sine', 0.4);
     },
     dragon() {
-      // Low growling HYAAA! — big and punchy
-      tone(120, 0.08, 'sawtooth', 0.3);
-      glide(280, 60, 0.28, 'sawtooth', 0.22, 0.04);
-      noise(0.12, 0.18, 0.04);
+      // HYAAA! big roar — low sawtooth growl
+      glide(300, 60, 0.3, 'sawtooth', 0.55);
+      tone(140, 0.1, 'square', 0.5, 0.05);
     },
 
-    // ── SUNNY CRITTERS ──────────────────────────────────────────────
+    // ── SUNNY ──────────────────────────────────────────
     cat() {
-      // Meow — rising then falling sine slide
-      glide(280, 520, 0.12, 'sine', 0.22);
-      glide(520, 260, 0.18, 'sine', 0.18, 0.12);
+      // Meow — sine slide up then down
+      glide(300, 540, 0.13, 'sine', 0.48);
+      glide(540, 270, 0.2,  'sine', 0.42, 0.13);
     },
     mushroom() {
-      // Funny spring boing
-      glide(90, 520, 0.22, 'sine', 0.26);
+      // Boing — quick spring up
+      glide(95, 540, 0.22, 'sine', 0.5);
     },
     sword() {
-      // Sword HYAAA! slash
-      noise(0.05, 0.25);
-      glide(480, 130, 0.13, 'square', 0.26, 0.01);
+      // Sword slash — descending square burst
+      glide(480, 120, 0.13, 'square', 0.52);
     },
     link() {
-      // Link's battle cry HYAAA! (short vocal + slash)
-      tone(380, 0.025, 'square', 0.35);
-      glide(520, 160, 0.14, 'square', 0.28, 0.02);
-      tone(220, 0.07, 'sine', 0.16, 0.11);
+      // HYAAA! Link's attack cry + slash
+      tone(400, 0.03, 'square', 0.55);
+      glide(520, 150, 0.15, 'square', 0.5, 0.02);
+      tone(230, 0.08, 'sine',   0.38, 0.12);
     },
     cucco() {
-      // Cucco cluck cluck! (Zelda chicken)
-      arp([700, 820, 660, 760], 0.048, 'sine', 0.16);
+      // Cucco cluck cluck!
+      arp([700, 840, 660, 780], 0.05, 'sine', 0.42);
     },
     heart_container() {
-      // Health pickup — warm pentatonic chime ascending
-      arp([523, 659, 784, 1047, 1319], 0.055, 'sine', 0.2);
+      // Health pickup — warm ascending pentatonic
+      arp([523, 659, 784, 1047, 1319], 0.058, 'sine', 0.42);
     },
     octorok() {
-      // Spitting pop
-      noise(0.055, 0.28);
-      tone(180, 0.07, 'square', 0.2, 0.02);
+      // Pop / spit
+      glide(300, 80, 0.1, 'square', 0.5);
     },
-    // LoZ extras that might appear
-    triforce_sunny() { C.triforce(); },
-    navi_sunny()     { C.navi(); },
-    sheik_sunny()    { C.sheik(); },
-    octorok_dark()   { C.octorok(); },
   };
 
-  // ── Toggle button DOM update ─────────────────────────────────────────
+  // ── Toggle button UI ─────────────────────────────────────────────────
   function updateToggles() {
     const sfxBtn = document.getElementById('sfx-toggle');
     const bgBtn  = document.getElementById('bg-toggle');
     if (sfxBtn) {
       sfxBtn.textContent = sfxMuted ? '🔇' : '🔊';
-      sfxBtn.title = sfxMuted ? 'Unmute sound effects' : 'Mute sound effects';
+      sfxBtn.title = sfxMuted ? 'Unmute SFX' : 'Mute SFX';
     }
     if (bgBtn) {
       bgBtn.textContent = bgMuted ? '🎵' : '🎶';
-      bgBtn.title = bgMuted ? 'Play background music' : 'Pause background music';
+      bgBtn.title = bgMuted ? 'Play music' : 'Pause music';
     }
   }
 
@@ -237,51 +225,54 @@ window.SFX = (function () {
 
     play(name) {
       if (sfxMuted) return;
-      try { S[name]?.(); } catch (_) {}
+      try { S[name]?.(); } catch (e) { console.warn('[SFX] play error:', name, e); }
     },
 
-    // Play a critter's unique spawn sound
+    // Critter sounds — only plays when AudioContext is already running
+    // (i.e. after the user has clicked at least once). Queues if suspended.
     critter(spriteName) {
       if (sfxMuted) return;
-      try {
-        // Exact match first, then check common aliases
-        const fn = C[spriteName] || C[spriteName + '_sunny'] || C[spriteName + '_dark'];
-        fn?.();
-      } catch (_) {}
+      const attempt = () => {
+        try {
+          const fn = C[spriteName];
+          if (fn) fn();
+          else console.warn('[SFX] no critter sound for:', spriteName);
+        } catch (e) { console.warn('[SFX] critter error:', spriteName, e); }
+      };
+
+      if (!ctx) {
+        // AudioContext not created yet — queue for next user click
+        const once = () => { ensureRunning().then(attempt); document.removeEventListener('click', once, true); };
+        document.addEventListener('click', once, true);
+        return;
+      }
+      // Context exists — resume if needed then play
+      ensureRunning().then(attempt);
     },
 
     setSfxMuted(v) {
       sfxMuted = !!v;
       localStorage.setItem('sfx_muted', sfxMuted ? '1' : '0');
-      if (master) master.gain.value = sfxMuted ? 0 : 0.6;
+      if (master) master.gain.value = sfxMuted ? 0 : 0.75;
       updateToggles();
     },
     isSfxMuted: () => sfxMuted,
-    toggleSfx() {
-      this.setSfxMuted(!sfxMuted);
-      if (!sfxMuted) this.play('click');
-    },
+    toggleSfx() { this.setSfxMuted(!sfxMuted); if (!sfxMuted) this.play('click'); },
 
     initBg(url, vol) {
       if (!url || bgEl) return;
       bgVol = vol || 0.28;
       bgEl = new Audio(url);
-      bgEl.loop   = true;
+      bgEl.loop = true;
       bgEl.volume = bgMuted ? 0 : bgVol;
       document.body.appendChild(bgEl);
-      const go = () => {
-        bgEl.play().catch(() => {});
-        document.removeEventListener('pointerdown', go, true);
-      };
+      const go = () => { bgEl.play().catch(() => {}); document.removeEventListener('pointerdown', go, true); };
       document.addEventListener('pointerdown', go, true);
     },
     setBgMuted(v) {
       bgMuted = !!v;
       localStorage.setItem('bg_muted', bgMuted ? '1' : '0');
-      if (bgEl) {
-        bgEl.volume = bgMuted ? 0 : bgVol;
-        if (!bgMuted && bgEl.paused) bgEl.play().catch(() => {});
-      }
+      if (bgEl) { bgEl.volume = bgMuted ? 0 : bgVol; if (!bgMuted && bgEl.paused) bgEl.play().catch(() => {}); }
       updateToggles();
     },
     isBgMuted: () => bgMuted,
@@ -290,11 +281,8 @@ window.SFX = (function () {
     updateToggles,
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateToggles);
-  } else {
-    updateToggles();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateToggles);
+  else updateToggles();
 
   return api;
 })();
