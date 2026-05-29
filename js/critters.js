@@ -128,8 +128,7 @@
       font-family: monospace; font-size: 13px; user-select: none;
       color: #8be9fd;
       text-shadow: 0 0 8px #8be9fd, 0 0 18px rgba(139,233,253,0.55);
-      transform: translate(14px, -18px);
-      will-change: left, top;
+      will-change: transform;
       transition: opacity 0.4s, color 0.3s, text-shadow 0.3s;
     }
     .navi-cursor.navi-flash {
@@ -302,6 +301,14 @@
         ` \\/ \\/ \n(■-■-■)\n  /•\\  \n   ♦   `,
       ],
       color: '#f1fa8c',
+      w: 70, h: 44,
+    },
+    frog: {
+      frames: [
+        ` /°°\\ \n( O  O)\n \\__/ \n  ||  `,
+        ` /°°\\ \n( O  O)\n  \\/ \n /  \\ `,
+      ],
+      color: '#50fa7b',
       w: 70, h: 44,
     },
   };
@@ -549,6 +556,35 @@
       }, 16);
       c.cleanup = () => clearInterval(iv);
     },
+    // Hops along the ground — sunny side only
+    hopper: (c) => {
+      let x = Math.random() * (window.innerWidth - 120) + 60;
+      const ground = window.innerHeight - 82;
+      let posY = ground, vy = 0, hopping = false;
+      c.el.style.top  = ground + 'px';
+      c.el.style.left = x + 'px';
+
+      const iv = setInterval(() => {
+        if (!document.body.contains(c.el)) { clearInterval(iv); return; }
+        if (!hopping && Math.random() < 0.025) {
+          hopping = true; vy = -9;
+          x += (Math.random() * 40 - 10);
+          c.sprite.el.textContent = c.sprite.frames[1];
+        }
+        if (hopping) {
+          vy += 0.7; posY += vy;
+          if (posY >= ground) {
+            posY = ground; vy = 0; hopping = false;
+            c.sprite.el.textContent = c.sprite.frames[0];
+          }
+        }
+        c.el.style.left = x + 'px';
+        c.el.style.top  = posY + 'px';
+      }, 16);
+
+      const t = setTimeout(() => c.destroy(), 9000 + Math.random() * 6000);
+      c.cleanup = () => { clearInterval(iv); clearTimeout(t); };
+    },
   };
 
   const BEHAVIOR_NAMES = Object.keys(BEHAVIORS);
@@ -564,9 +600,11 @@
 
   // Sunny (day sky) — cheerful, outdoor, Hyrule-field vibes
   const SUNNY_SPRITES = [
-    'cat', 'mushroom', 'sword', 'link', 'cucco', 'heart_container', 'octorok', 'bee',
+    'cat', 'mushroom', 'sword', 'link', 'cucco', 'heart_container', 'octorok', 'bee', 'frog',
   ];
   const SUNNY_BEHAVIORS = ['walker', 'bouncer', 'peeker', 'sprinter', 'typer', 'chaser'];
+  // Frog always hops on the ground — never gets a random behavior
+  const FORCED_BEHAVIOR = { frog: 'hopper' };
 
   // Reads current theme from body classes set by themes.js
   function getCurrentZone() {
@@ -592,7 +630,7 @@
     const behaviorPool= zone === 'sunny' ? SUNNY_BEHAVIORS : SPACE_BEHAVIORS;
     const linePool    = zone === 'sunny' ? SUNNY_LINES     : SPACE_LINES;
     const spriteKey   = opts.sprite   || rand(spritePool);
-    const behaviorKey = opts.behavior || rand(behaviorPool);
+    const behaviorKey = opts.behavior || FORCED_BEHAVIOR[spriteKey] || rand(behaviorPool);
     const sprite = SPRITES[spriteKey];
 
     const el = document.createElement('div');
@@ -671,7 +709,7 @@
   }
 
   function spawnRandom() {
-    if (active >= MAX_CRITTERS) return;
+    if (active >= MAX_CRITTERS || _zoneLocked) return;
     active++;
     const c = createCritter();
     activePool.push(c);
@@ -688,9 +726,15 @@
   // Flush all active critters the moment the zone flips so stale-zone
   // sprites don't linger over the wrong background.
   let _lastZone = getCurrentZone();
+  let _zoneLocked = false; // brief spawn cooldown after zone flip
   new MutationObserver(() => {
     const z = getCurrentZone();
-    if (z !== _lastZone) { _lastZone = z; clearActivePool(); }
+    if (z !== _lastZone) {
+      _lastZone = z;
+      clearActivePool();
+      _zoneLocked = true;
+      setTimeout(() => { _zoneLocked = false; }, 1200); // wait for classes to settle
+    }
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   // ── Click sparkle burst ──────────────────────────
@@ -773,7 +817,7 @@
     el.className = 'navi-cursor';
     el.setAttribute('aria-hidden', 'true');
     el.textContent = '✦';
-    el.style.opacity = '0';
+    el.style.cssText = 'opacity:0; left:0; top:0;'; // anchor at origin, move via transform
     document.body.appendChild(el);
 
     const FRAMES = ['✦', '·'];
@@ -790,8 +834,9 @@
     (function loop() {
       cx += (tx - cx) * 0.13;
       cy += (ty - cy) * 0.13;
-      el.style.left = cx + 'px';
-      el.style.top  = (cy + Math.sin(tick * 0.07) * 4) + 'px';
+      // transform runs on the compositor thread — no layout cost
+      el.style.transform = `translate(${(cx + 14).toFixed(1)}px,${(cy + Math.sin(tick * 0.07) * 4 - 18).toFixed(1)}px)`;
+      // update glyph every ~28 frames, not every frame
       if (++tick % 28 === 0) { frame ^= 1; el.textContent = FRAMES[frame]; }
       requestAnimationFrame(loop);
     })();

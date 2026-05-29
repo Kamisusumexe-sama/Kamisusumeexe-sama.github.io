@@ -11,7 +11,6 @@ window.SFX = (function () {
   let bgVol = 0.28;
 
   // ── AudioContext ─────────────────────────────────────────────────────
-  // Only creates the context; call ensureRunning() before scheduling sound.
   function ac() {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -20,12 +19,6 @@ window.SFX = (function () {
       master.connect(ctx.destination);
     }
     return ctx;
-  }
-
-  // Resume and return a Promise that resolves when the context is running.
-  function ensureRunning() {
-    const c = ac();
-    return c.state === 'running' ? Promise.resolve(c) : c.resume().then(() => c);
   }
 
   // ── Primitives ───────────────────────────────────────────────────────
@@ -99,6 +92,7 @@ window.SFX = (function () {
     cucco()           { arp([700, 840, 660], 0.05, 'sine', 0.40); },
     heart_container() { arp([523, 659, 784, 1047], 0.058, 'sine', 0.40); },
     octorok()         { glide(300, 75, 0.10, 'square',    0.48); },
+    frog()            { tone(190,0.08,'square',0.50); tone(150,0.09,'square',0.46,0.11); },
   };
 
   // ── Toggle button UI ─────────────────────────────────────────────────
@@ -123,26 +117,11 @@ window.SFX = (function () {
       try { S[name]?.(); } catch (e) { console.warn('[SFX] play error:', name, e); }
     },
 
-    // Critter sounds — only plays when AudioContext is already running
-    // (i.e. after the user has clicked at least once). Queues if suspended.
+    // Critter ambient sounds — synchronous, only plays if AudioContext is
+    // already running (no Promises, no resume calls from a timer context).
     critter(spriteName) {
-      if (sfxMuted) return;
-      const attempt = () => {
-        try {
-          const fn = C[spriteName];
-          if (fn) fn();
-          else console.warn('[SFX] no critter sound for:', spriteName);
-        } catch (e) { console.warn('[SFX] critter error:', spriteName, e); }
-      };
-
-      if (!ctx) {
-        // AudioContext not created yet — queue for next user click
-        const once = () => { ensureRunning().then(attempt); document.removeEventListener('click', once, true); };
-        document.addEventListener('click', once, true);
-        return;
-      }
-      // Context exists — resume if needed then play
-      ensureRunning().then(attempt);
+      if (sfxMuted || !ctx || ctx.state !== 'running') return;
+      try { C[spriteName]?.(); } catch (e) { console.warn('[SFX] critter:', spriteName, e); }
     },
 
     setSfxMuted(v) {
