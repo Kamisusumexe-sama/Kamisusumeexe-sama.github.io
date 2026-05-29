@@ -138,29 +138,36 @@
     .proj-description-text p { margin-bottom: 1.1rem; break-inside: avoid; }
 
     /* ---- MEDIA COLLAGE ---- */
-    .collage-section { margin-bottom: 0; }
-    .collage-header {
-      max-width: 900px; margin: 0 auto;
-      padding: 0 2.5rem 1.5rem;
+    #section-media {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 2.5rem 2rem 2.5rem;
     }
-
+    .collage-header {
+      max-width: 1100px; margin: 0 auto 1.5rem;
+      padding: 0;
+    }
     .media-collage {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      grid-auto-rows: clamp(150px, 16vw, 230px);
-      gap: 5px;
-      padding: 0 5px 5px;
+      grid-auto-rows: clamp(160px, 16vw, 220px);
+      gap: 10px;
+      max-width: 1100px;
+      margin: 0 auto;
     }
     .media-item {
       position: relative; overflow: hidden;
-      background: var(--bg3); border-radius: 6px;
+      background: var(--bg3);
+      border-radius: 10px;
+      border: 1px solid var(--border);
     }
-    /* mosaic size pattern */
+    /* mosaic size pattern — images */
     .media-item:nth-child(7n+1) { grid-column: span 2; grid-row: span 2; }
     .media-item:nth-child(7n+4) { grid-column: span 2; }
     .media-item:nth-child(7n+7) { grid-column: span 2; }
-    /* videos always get 2 cols */
-    .media-item.is-video       { grid-column: span 2; }
+    /* videos: 2 cols × 2 rows so 16:9 fits */
+    .media-item.is-video { grid-column: span 2; grid-row: span 2; }
 
     .media-item img {
       width: 100%; height: 100%; object-fit: cover;
@@ -233,13 +240,15 @@
     @media (max-width: 768px) {
       .media-collage { grid-template-columns: repeat(2, 1fr); }
       .media-item:nth-child(7n+1) { grid-column: span 2; grid-row: span 1; }
-      .media-item.is-video { grid-column: span 2; }
+      .media-item.is-video { grid-column: span 2; grid-row: span 2; }
     }
     @media (max-width: 640px) {
       .proj-hero-content { padding: 0 1.25rem 3rem; }
       .proj-main { padding: 2.5rem 1.25rem 4rem; }
       .proj-nav { padding: 0 1.25rem; }
-      .collage-header { padding: 0 1.25rem 1.25rem; }
+      #section-media { padding: 1.5rem 1rem; }
+      .media-collage { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+      .media-item.is-video { grid-column: span 2; grid-row: span 2; }
       .proj-description-text { column-count: 1; }
     }
   </style>
@@ -283,7 +292,8 @@
   <section class="proj-section" id="section-google" style="display:none;">
     <div class="proj-section-label">// DOCUMENT</div>
     <div class="proj-google-wrap">
-      <iframe id="proj-google-frame" src="" allowfullscreen loading="lazy"></iframe>
+      <iframe id="proj-google-frame" src="" allowfullscreen
+        allow="autoplay" referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
     <p class="proj-google-label" id="proj-google-label"></p>
   </section>
@@ -415,8 +425,9 @@
         if (item.type === "video") {
           const embedSrc = toEmbedUrl(item.url);
           return `<div class="media-item is-video">
-            <iframe src="${embedSrc}" allowfullscreen loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            <iframe src="${embedSrc}" allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"></iframe>
             ${item.caption ? `<div class="media-caption">${item.caption}</div>` : ""}
           </div>`;
         }
