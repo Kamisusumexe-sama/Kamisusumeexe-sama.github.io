@@ -590,12 +590,15 @@
 
     document.body.appendChild(el);
 
+    let _soundTimer = null;
+
     const c = {
       el,
       bubble,
       sprite: { el: artEl, frames: sprite.frames },
       cleanup: null,
       destroy() {
+        if (_soundTimer) { clearTimeout(_soundTimer); _soundTimer = null; }
         if (this.cleanup) this.cleanup();
         if (document.body.contains(this.el)) {
           this.el.style.transition = 'opacity 0.5s';
@@ -605,10 +608,16 @@
       },
     };
 
-    // Spawn sound — unique per sprite
-    setTimeout(() => {
-      if (window.SFX && document.body.contains(c.el)) SFX.critter(spriteKey);
-    }, 150);
+    // Random ambient sounds while the critter is alive
+    function scheduleSound(initialDelay) {
+      _soundTimer = setTimeout(() => {
+        if (!document.body.contains(c.el)) return;
+        if (window.SFX) SFX.critter(spriteKey);
+        scheduleSound(3000 + Math.random() * 5000); // repeat every 3-8 s
+      }, initialDelay);
+    }
+    // First sound: 600ms after spawn, then recurring
+    scheduleSound(600 + Math.random() * 1500);
 
     // Occasional random speech bubble — zone-appropriate text + a soft chirp
     if (Math.random() < 0.55) {
