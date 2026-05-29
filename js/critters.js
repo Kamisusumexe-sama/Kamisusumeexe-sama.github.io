@@ -123,6 +123,19 @@
       0%   { transform: translateY(0) scale(1); opacity: 1; }
       100% { transform: translateY(-70px) scale(0.2); opacity: 0; }
     }
+    .navi-cursor {
+      position: fixed; pointer-events: none; z-index: 9998;
+      font-family: monospace; font-size: 13px; user-select: none;
+      color: #8be9fd;
+      text-shadow: 0 0 8px #8be9fd, 0 0 18px rgba(139,233,253,0.55);
+      transform: translate(14px, -18px);
+      will-change: left, top;
+      transition: opacity 0.4s, color 0.3s, text-shadow 0.3s;
+    }
+    .navi-cursor.navi-flash {
+      color: #fff;
+      text-shadow: 0 0 22px #8be9fd, 0 0 44px #8be9fd;
+    }
   `;
 
   // ── Pixel art sprites (text art, 10px font) ─
@@ -281,6 +294,14 @@
         ` /v v\\ \n( -  - )\n  \\__/  \n        `,
       ],
       color: '#6272a4',
+      w: 70, h: 44,
+    },
+    bee: {
+      frames: [
+        ` /\\ /\\ \n(■-■-■)\n  \\•/  \n   ♦   `,
+        ` \\/ \\/ \n(■-■-■)\n  /•\\  \n   ♦   `,
+      ],
+      color: '#f1fa8c',
       w: 70, h: 44,
     },
   };
@@ -543,7 +564,7 @@
 
   // Sunny (day sky) — cheerful, outdoor, Hyrule-field vibes
   const SUNNY_SPRITES = [
-    'cat', 'mushroom', 'sword', 'link', 'cucco', 'heart_container', 'octorok',
+    'cat', 'mushroom', 'sword', 'link', 'cucco', 'heart_container', 'octorok', 'bee',
   ];
   const SUNNY_BEHAVIORS = ['walker', 'bouncer', 'peeker', 'sprinter', 'typer', 'chaser'];
 
@@ -745,6 +766,48 @@
       }
     }
   });
+
+  // ── Navi cursor companion ─────────────────────
+  function initNaviCursor() {
+    const el = document.createElement('div');
+    el.className = 'navi-cursor';
+    el.setAttribute('aria-hidden', 'true');
+    el.textContent = '✦';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+
+    const FRAMES = ['✦', '·'];
+    let frame = 0, tick = 0;
+    let tx = -300, ty = -300;
+    let cx = tx, cy = ty;
+
+    document.addEventListener('mousemove', e => {
+      tx = e.clientX; ty = e.clientY;
+      el.style.opacity = '1';
+    }, { passive: true });
+    document.addEventListener('mouseleave', () => { el.style.opacity = '0'; }, { passive: true });
+
+    (function loop() {
+      cx += (tx - cx) * 0.13;
+      cy += (ty - cy) * 0.13;
+      el.style.left = cx + 'px';
+      el.style.top  = (cy + Math.sin(tick * 0.07) * 4) + 'px';
+      if (++tick % 28 === 0) { frame ^= 1; el.textContent = FRAMES[frame]; }
+      requestAnimationFrame(loop);
+    })();
+
+    // Occasional glow flash + chime — first fires after 12-22s, then repeats
+    function flair() {
+      el.classList.add('navi-flash');
+      if (window.SFX) SFX.critter('navi');
+      setTimeout(() => el.classList.remove('navi-flash'), 500);
+      setTimeout(flair, 9000 + Math.random() * 12000);
+    }
+    setTimeout(flair, 12000 + Math.random() * 10000);
+  }
+
+  // Initialise Navi — delayed so it doesn't block page startup
+  setTimeout(initNaviCursor, 1000);
 
   // ── Start spawning ───────────────────────────
   // One critter on load, then rare periodic visits
