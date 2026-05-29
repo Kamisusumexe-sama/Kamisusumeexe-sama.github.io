@@ -314,6 +314,7 @@
   </section>
 </main>
 
+<script src="js/sounds.js"></script>
 <script src="js/main.js"></script>
 <script>
 (function() {
@@ -511,6 +512,7 @@
 
   // Back navigation with ripple
   window.goBack = function() {
+    if (window.SFX) SFX.play("projectBack");
     const ripple = document.getElementById("page-ripple");
     ripple.style.setProperty("--rx", "50%");
     ripple.style.setProperty("--ry", "50%");

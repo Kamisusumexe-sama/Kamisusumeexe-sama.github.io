@@ -18,6 +18,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const p = data.profile || {};
   const l = data.links   || {};
 
+  // Background music (URL stored in content.json links.bgMusic)
+  if (window.SFX) SFX.initBg(l.bgMusic);
+
   // ---- PAGE TITLE ----
   document.title = `${p.name || "Portfolio"} — Game Developer`;
 
@@ -189,6 +192,7 @@ function renderProjects(projects) {
 }
 
 function navigateWithRipple(url, x, y) {
+  if (window.SFX) SFX.play("projectEnter");
   sessionStorage.setItem("ripple_origin", JSON.stringify({ x, y }));
   const ripple = document.getElementById("page-ripple");
   if (!ripple) { location.href = url; return; }
@@ -216,6 +220,28 @@ window.addEventListener("pageshow", e => {
     ripple.style.clipPath = "circle(0px at 50% 50%)";
   }));
 });
+
+// ── Sound event delegation ──────────────────────────────────────────────
+// Click: buttons, nav links, book controls, gallery nav
+document.addEventListener("click", e => {
+  if (!window.SFX) return;
+  if (e.target.closest(
+    ".btn, .social-btn, .book-btn, .gallery-lb-close, .gallery-lb-nav," +
+    ".nav-links a, .download-btn, .nook-links-grid a, .shelf-list button"
+  )) SFX.play("click");
+}, { passive: true });
+
+// Hover: subtle tick on interactive cards and nav
+let _lastHoverTarget = null;
+document.addEventListener("mouseover", e => {
+  if (!window.SFX) return;
+  const t = e.target.closest(".project-card, .game-card, .nav-links a, .btn, .social-btn");
+  if (t && t !== _lastHoverTarget) { SFX.play("hover"); _lastHoverTarget = t; }
+}, { passive: true });
+document.addEventListener("mouseout", e => {
+  if (e.target.closest(".project-card, .game-card, .nav-links a, .btn, .social-btn"))
+    _lastHoverTarget = null;
+}, { passive: true });
 
 // ---- Web Games ----
 function renderGames(games) {

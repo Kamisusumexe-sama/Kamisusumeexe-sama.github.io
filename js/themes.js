@@ -612,7 +612,10 @@
     body.classList.remove('theme-gallery', 'theme-booknook', 'theme-sunny-world');
 
     if (theme === 'gallery') {
-      if (previousTheme === 'booknook' || previousTheme === 'default') triggerSunrise();
+      if (previousTheme === 'booknook' || previousTheme === 'default') {
+        triggerSunrise();
+        if (window.SFX) SFX.play('themeGallery');
+      }
       // Give the sunrise animation space to breathe before the sky colour changes
       setTimeout(() => body.classList.add('theme-gallery'), 500);
       setTimeout(() => body.classList.add('theme-sunny-world'), 800);
@@ -623,6 +626,7 @@
         spawnSunnySideCritters();
       }, 900);
     } else if (theme === 'default') {
+      if (window.SFX) SFX.play('themeDefault');
       // Leaving sunny world — strip theme classes and clean up gallery decorations
       const gallery = document.getElementById('art-gallery');
       if (gallery) {

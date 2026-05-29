@@ -35,6 +35,10 @@
     <li><a href="#contact">Contact</a></li>
     <li><a href="admin/index.html" class="nav-admin">⚙</a></li>
   </ul>
+  <div class="nav-sound-btns">
+    <button id="sfx-toggle" class="nav-sound-btn" onclick="SFX.toggleSfx()" title="Mute SFX">🔊</button>
+    <button id="bg-toggle"  class="nav-sound-btn" onclick="SFX.toggleBg()"  title="Pause music">🎶</button>
+  </div>
   <button class="nav-toggle" onclick="toggleMenu()">☰</button>
 </nav>
 
@@ -365,6 +369,7 @@
   <p class="footer-copy">© <span id="year"></span> <span id="footer-name"></span>. All rights reserved.</p>
 </footer>
 
+<script src="js/sounds.js"></script>
 <script src="js/main.js"></script>
 <script src="js/critters.js"></script>
 <script src="js/themes.js"></script>

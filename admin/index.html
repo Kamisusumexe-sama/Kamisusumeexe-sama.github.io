@@ -445,6 +445,13 @@
         <div class="field"><label>itch.io</label><input id="l-itchio" placeholder="https://vanessa.itch.io"/></div>
         <div class="field"><label>GitHub</label><input id="l-github" placeholder="https://github.com/Kamisusumeexe-sama"/></div>
         <div class="field"><label>LinkedIn</label><input id="l-linkedin" placeholder="https://linkedin.com/in/..."/></div>
+        <div class="field" style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+          <label>Background Music URL</label>
+          <input id="l-bgmusic" placeholder="https://example.com/ambient.mp3  or  assets/audio/theme.mp3"/>
+          <p style="color:var(--muted);font-size:0.75rem;margin-top:0.4rem;line-height:1.6;">
+            MP3 or OGG hosted anywhere (GitHub, Drive, Dropbox direct link). Loops automatically. Plays after first click.
+          </p>
+        </div>
         <button class="btn-save" onclick="saveLinks()">[ SAVE LINKS ]</button>
       </div>
 
@@ -785,6 +792,7 @@ function loadAllFields() {
   set("l-itchio",   l.itchio);
   set("l-github",   l.github);
   set("l-linkedin", l.linkedin);
+  set("l-bgmusic",  l.bgMusic);
 
   renderList("proj",  contentData.projects, i => `${i.title} — ${(i.tags||[]).join(", ")}`);
   renderList("game",  contentData.webGames, i => `${i.title} — ${i.embedUrl||""}`);
@@ -837,6 +845,7 @@ async function saveLinks() {
     itchio:   val("l-itchio"),
     github:   val("l-github"),
     linkedin: val("l-linkedin"),
+    bgMusic:  val("l-bgmusic") || undefined,
   };
   await pushContent("Updated links");
 }

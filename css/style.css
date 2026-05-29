@@ -362,6 +362,13 @@ body {
 .nav-links a.is-active::after { width: 100%; }
 .nav-admin { font-size: 1.1rem !important; opacity: 0.75; transition: opacity 0.2s !important; }
 .nav-admin:hover { opacity: 1 !important; }
+.nav-sound-btns { display: flex; align-items: center; gap: 0.1rem; margin-left: 0.4rem; }
+.nav-sound-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 1rem; opacity: 0.55; transition: opacity 0.2s;
+  padding: 0.3rem 0.35rem; line-height: 1;
+}
+.nav-sound-btn:hover { opacity: 1; }
 .nav-toggle { display: none; background: none; border: none; color: var(--text); font-size: 1.4rem; cursor: pointer; }
 
 /* =============================================
@@ -2238,8 +2245,6 @@ body.theme-sunny-world .footer-grass {
   .gallery-piece:nth-child(5n + 4) { grid-column: span 2; grid-row: span 1; }
 }
 
-}
-
 /* =============================================
    CONTACT SECTION — updated section numbers
    ============================================= */
@@ -2962,7 +2967,6 @@ body.gallery-world {
 .page-year, .page-sep { color: #8a5a28 !important; }
 .page-number { color: #8a5a28 !important; }
 
-   ============================================= */
 .book-nook {
   padding: 6rem 0 5rem;
   background: var(--bg2);
