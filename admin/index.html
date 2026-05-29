@@ -625,7 +625,7 @@ async function doGitHubLogin() {
 async function enterAdmin(isLocal) {
   if (isLocal) {
     try {
-      const res = await fetch("../content.json");
+      const res = await fetch("../content.json", { cache: "no-cache" });
       if (!res.ok) throw new Error("not found");
       contentData = await res.json();
     } catch {

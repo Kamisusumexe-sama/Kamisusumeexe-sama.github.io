@@ -298,7 +298,7 @@
   const params = new URLSearchParams(location.search);
   const projId = params.get("id");
 
-  fetch("content.json")
+  fetch("content.json", { cache: "no-cache" })
     .then(r => r.json())
     .then(data => {
       const proj = (data.projects || []).find(p => p.id === projId);
