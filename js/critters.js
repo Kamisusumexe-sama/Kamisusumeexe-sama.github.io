@@ -595,12 +595,19 @@
       },
     };
 
-    // Occasional random speech bubble — zone-appropriate text
+    // Spawn sound — unique per sprite
+    setTimeout(() => {
+      if (window.SFX && document.body.contains(c.el)) SFX.critter(spriteKey);
+    }, 150);
+
+    // Occasional random speech bubble — zone-appropriate text + a soft chirp
     if (Math.random() < 0.55) {
       const delay = 1000 + Math.random() * 3000;
       setTimeout(() => {
         if (document.body.contains(c.el)) {
           showBubble(c, rand(linePool), 2500);
+          // Brief soft blip when they "speak"
+          if (window.SFX) SFX.play('hover');
         }
       }, delay);
     }
@@ -662,6 +669,11 @@
     artEl.textContent = sprite.frames[0];
     el.appendChild(artEl);
     document.body.appendChild(el);
+    // Play a tiny version of the critter's sound on click-spawn
+    if (window.SFX) {
+      const randSprite = rand(pool);
+      setTimeout(() => SFX.critter(randSprite), 50);
+    }
     setTimeout(() => el.remove(), 1200);
   });
 
