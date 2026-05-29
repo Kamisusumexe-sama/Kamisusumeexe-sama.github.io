@@ -110,15 +110,18 @@
     @keyframes crit-patrol {
       0%,100% { transform: scaleX(1); }
     }
+    .click-sparkle {
+      position: fixed; pointer-events: none; z-index: 9997;
+      font-family: monospace; user-select: none;
+      animation: sparkle-burst 0.7s ease-out forwards;
+    }
     @keyframes sparkle-burst {
-      0%   { transform: translate(0,0) scale(1.3) rotate(0deg); opacity: 1; }
-      60%  { opacity: 0.7; }
+      0%   { transform: translate(0,0) scale(1.2) rotate(0deg); opacity: 1; }
       100% { transform: translate(var(--dx),var(--dy)) scale(0) rotate(var(--rot)); opacity: 0; }
     }
     @keyframes fairy-float {
-      0%   { transform: translateY(0) scale(1);    opacity: 1; }
-      70%  { opacity: 0.9; }
-      100% { transform: translateY(-75px) scale(0.25); opacity: 0; }
+      0%   { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-70px) scale(0.2); opacity: 0; }
     }
   `;
 
@@ -670,49 +673,37 @@
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   // ── Click sparkle burst ──────────────────────────
-  const SPACE_SPARKS = {
-    syms:   ['✦','✧','★','·','◆','✦','✦','*'],
-    colors: ['#bd93f9','#8be9fd','#f0eeff','#ff79c6','#ffffff'],
-  };
-  const SUNNY_SPARKS = {
-    syms:   ['★','✦','♡','✿','☆','✨','♪','✦'],
-    colors: ['#f1fa8c','#ff79c6','#50fa7b','#ffb86c','#ffffff'],
-  };
+  const SPACE_SPARKS = { syms: ['✦','✧','★','·','◆','*'],  colors: ['#bd93f9','#8be9fd','#ff79c6'] };
+  const SUNNY_SPARKS = { syms: ['★','✦','♡','✿','☆','♪'], colors: ['#f1fa8c','#ff79c6','#50fa7b'] };
 
   function spawnSparkles(x, y) {
-    const zone  = getCurrentZone();
-    const pool  = zone === 'sunny' ? SUNNY_SPARKS : SPACE_SPARKS;
-    const count = 8 + Math.floor(Math.random() * 4);
+    const zone = getCurrentZone();
+    const pool = zone === 'sunny' ? SUNNY_SPARKS : SPACE_SPARKS;
+    const frag = document.createDocumentFragment();
+    const nodes = [];
 
-    for (let i = 0; i < count; i++) {
-      const el     = document.createElement('span');
-      const angle  = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
-      const dist   = 28 + Math.random() * 52;
-      const size   = 9 + Math.random() * 10;
-      const color  = pool.colors[Math.floor(Math.random() * pool.colors.length)];
-      const sym    = pool.syms[Math.floor(Math.random() * pool.syms.length)];
-      const rot    = (Math.random() * 360 - 180).toFixed(0) + 'deg';
-      const dur    = (0.55 + Math.random() * 0.4).toFixed(2);
-      const delay  = (i * 0.018).toFixed(3);
-
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2 + (Math.random() - 0.5);
+      const dist  = 25 + Math.random() * 40;
+      const color = pool.colors[i % pool.colors.length];
+      const sym   = pool.syms[Math.floor(Math.random() * pool.syms.length)];
+      const el    = document.createElement('span');
       el.setAttribute('aria-hidden', 'true');
-      el.style.cssText = `
-        position:fixed; pointer-events:none; z-index:9997;
-        left:${x}px; top:${y}px;
-        font-size:${size}px; font-family:monospace; user-select:none;
-        color:${color}; text-shadow:0 0 10px ${color};
-        --dx:${(Math.cos(angle)*dist).toFixed(1)}px;
-        --dy:${(Math.sin(angle)*dist).toFixed(1)}px;
-        --rot:${rot};
-        animation: sparkle-burst ${dur}s ${delay}s ease-out forwards;
-        will-change:transform,opacity;
-      `;
+      el.className = 'click-sparkle';
+      el.style.cssText =
+        `left:${x}px;top:${y}px;color:${color};font-size:${10 + i * 2}px;` +
+        `--dx:${(Math.cos(angle)*dist).toFixed(0)}px;` +
+        `--dy:${(Math.sin(angle)*dist).toFixed(0)}px;` +
+        `--rot:${Math.round(Math.random()*240-120)}deg;` +
+        `animation-duration:${(0.55 + i * 0.06).toFixed(2)}s`;
       el.textContent = sym;
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), (parseFloat(dur) + parseFloat(delay)) * 1000 + 50);
+      frag.appendChild(el);
+      nodes.push(el);
     }
 
-    // 1-in-5 chance: a tiny fairy floats up from the click point
+    document.body.appendChild(frag);
+    setTimeout(() => nodes.forEach(n => n.remove()), 900);
+
     if (Math.random() < 0.2) spawnFairy(x, y, zone);
   }
 

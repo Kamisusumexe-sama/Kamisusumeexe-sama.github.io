@@ -62,42 +62,6 @@ window.SFX = (function () {
     notes.forEach(f => { tone(f, step, type, vol, t); t += step * 0.82; });
   }
 
-  // Vibrato tone — LFO modulates frequency
-  function vibTone(freq, mod, lfoHz, dur, type, vol) {
-    const c   = ac();
-    const osc = c.createOscillator();
-    const lfo = c.createOscillator();
-    const lg  = c.createGain();
-    const env = c.createGain();
-    lfo.frequency.value = lfoHz; lg.gain.value = mod;
-    lfo.connect(lg); lg.connect(osc.frequency);
-    osc.type = type || 'sine';
-    osc.frequency.value = freq;
-    osc.connect(env); env.connect(master);
-    const t = c.currentTime;
-    env.gain.setValueAtTime(0, t);
-    env.gain.linearRampToValueAtTime(vol || 0.3, t + 0.02);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    lfo.start(t); osc.start(t);
-    lfo.stop(t + dur + 0.02); osc.stop(t + dur + 0.02);
-  }
-
-  // White noise burst
-  function noise(dur, vol, delay) {
-    const c      = ac();
-    const bufLen = Math.ceil(c.sampleRate * Math.max(dur, 0.01));
-    const buf    = c.createBuffer(1, bufLen, c.sampleRate);
-    const data   = buf.getChannelData(0);
-    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
-    const src = c.createBufferSource(); src.buffer = buf;
-    const env = c.createGain();
-    src.connect(env); env.connect(master);
-    const t = c.currentTime + (delay || 0);
-    env.gain.setValueAtTime(vol || 0.3, t);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.start(t); src.stop(t + dur + 0.02);
-  }
-
   // ── UI sounds ────────────────────────────────────────────────────────
   const S = {
     click()        { tone(523, 0.065, 'square', 0.35); },
@@ -112,98 +76,28 @@ window.SFX = (function () {
   };
 
   // ── Critter sounds ───────────────────────────────────────────────────
-  // Each function uses only tone() / glide() / arp() / vibTone() / noise()
-  // Volumes set high (0.45-0.6) so they cut through clearly.
+  // Deliberately kept to 1-2 oscillators each — no noise buffers,
+  // no LFO routing — so sound creation never blocks the main thread.
   const C = {
-
-    // ── SPACE ──────────────────────────────────────────
-    ghost() {
-      // Eerie wavering wail — sine with slow vibrato
-      vibTone(260, 80, 4, 0.8, 'sine', 0.45);
-    },
-    robot() {
-      // Classic beep-boop
-      tone(523, 0.1, 'square', 0.5);
-      tone(330, 0.1, 'square', 0.45, 0.14);
-    },
-    ufo() {
-      // Sci-fi descending whirr
-      glide(600, 120, 0.55, 'sine', 0.45);
-      vibTone(400, 60, 10, 0.55, 'sine', 0.2);
-    },
-    alien() {
-      // Alien warble — rapid vibrato chirp
-      vibTone(880, 300, 18, 0.32, 'sine', 0.45);
-    },
-    pixel_knight() {
-      // HYAAA! sword slash — descending square + thud
-      glide(500, 100, 0.13, 'square', 0.55);
-      tone(200, 0.09, 'sine', 0.45, 0.1);
-    },
-    slime() {
-      // Wet bloop — triangle glide down
-      glide(400, 65, 0.25, 'triangle', 0.5);
-    },
-    keese() {
-      // Bat sonar — two high pings
-      tone(1800, 0.05, 'sine', 0.45);
-      tone(1500, 0.05, 'sine', 0.38, 0.07);
-    },
-    navi() {
-      // HEY! — bright fairy chime arpeggio
-      arp([1047, 1319, 1568], 0.065, 'sine', 0.42);
-    },
-    sheik() {
-      // Ninja whoosh + shuriken ping
-      glide(900, 180, 0.14, 'sine', 0.38);
-      tone(1600, 0.05, 'sine', 0.3, 0.08);
-    },
-    triforce() {
-      // Mystical three-note chime
-      arp([659, 784, 1047], 0.11, 'triangle', 0.45);
-    },
-    wizard() {
-      // Magic sparkle — ascending sweep
-      glide(160, 1400, 0.4, 'sine', 0.4);
-    },
-    dragon() {
-      // HYAAA! big roar — low sawtooth growl
-      glide(300, 60, 0.3, 'sawtooth', 0.55);
-      tone(140, 0.1, 'square', 0.5, 0.05);
-    },
-
-    // ── SUNNY ──────────────────────────────────────────
-    cat() {
-      // Meow — sine slide up then down
-      glide(300, 540, 0.13, 'sine', 0.48);
-      glide(540, 270, 0.2,  'sine', 0.42, 0.13);
-    },
-    mushroom() {
-      // Boing — quick spring up
-      glide(95, 540, 0.22, 'sine', 0.5);
-    },
-    sword() {
-      // Sword slash — descending square burst
-      glide(480, 120, 0.13, 'square', 0.52);
-    },
-    link() {
-      // HYAAA! Link's attack cry + slash
-      tone(400, 0.03, 'square', 0.55);
-      glide(520, 150, 0.15, 'square', 0.5, 0.02);
-      tone(230, 0.08, 'sine',   0.38, 0.12);
-    },
-    cucco() {
-      // Cucco cluck cluck!
-      arp([700, 840, 660, 780], 0.05, 'sine', 0.42);
-    },
-    heart_container() {
-      // Health pickup — warm ascending pentatonic
-      arp([523, 659, 784, 1047, 1319], 0.058, 'sine', 0.42);
-    },
-    octorok() {
-      // Pop / spit
-      glide(300, 80, 0.1, 'square', 0.5);
-    },
+    ghost()           { glide(260, 180, 0.65, 'sine',     0.45); },
+    robot()           { tone(523, 0.09, 'square', 0.48); tone(330, 0.09, 'square', 0.42, 0.13); },
+    ufo()             { glide(580, 110, 0.55, 'sine',     0.44); },
+    alien()           { glide(880, 1300, 0.14, 'sine', 0.42); glide(1300, 700, 0.18, 'sine', 0.38, 0.14); },
+    pixel_knight()    { glide(500, 90,  0.13, 'square',   0.52); },
+    slime()           { glide(390, 60,  0.24, 'triangle', 0.48); },
+    keese()           { tone(1850, 0.05, 'sine', 0.42); },
+    navi()            { arp([1047, 1319, 1568], 0.065, 'sine', 0.40); },
+    sheik()           { glide(880, 170, 0.13, 'sine',     0.38); },
+    triforce()        { arp([659, 784, 1047], 0.11, 'triangle', 0.42); },
+    wizard()          { glide(150, 1400, 0.4, 'sine',    0.40); },
+    dragon()          { glide(280, 50,  0.30, 'sawtooth', 0.50); },
+    cat()             { glide(300, 540, 0.13, 'sine', 0.46); glide(540, 260, 0.2, 'sine', 0.40, 0.13); },
+    mushroom()        { glide(90,  540, 0.22, 'sine',     0.48); },
+    sword()           { glide(480, 115, 0.13, 'square',   0.50); },
+    link()            { tone(400, 0.03, 'square', 0.52); glide(520, 145, 0.15, 'square', 0.48, 0.03); },
+    cucco()           { arp([700, 840, 660], 0.05, 'sine', 0.40); },
+    heart_container() { arp([523, 659, 784, 1047], 0.058, 'sine', 0.40); },
+    octorok()         { glide(300, 75, 0.10, 'square',    0.48); },
   };
 
   // ── Toggle button UI ─────────────────────────────────────────────────
