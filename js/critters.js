@@ -854,10 +854,9 @@
   // Initialise Navi — delayed so it doesn't block page startup
   setTimeout(initNaviCursor, 1000);
 
-  // ── Start spawning ───────────────────────────
-  // One critter on load, then rare periodic visits
-  setTimeout(() => spawnRandom(), 2500);
-  setInterval(() => spawnRandom(), 16000 + Math.random() * 10000);
+  // Auto-spawning removed — critters now appear only via:
+  //   • Section scroll triggers (below)
+  //   • ZELDA easter egg (type "ZELDA" anywhere)
 
   // Inject CSS
   const style = document.createElement('style');
