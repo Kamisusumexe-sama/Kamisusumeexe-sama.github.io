@@ -366,45 +366,118 @@ function closeEmbed() {
 // ---- Showreel (video background hero) ----
 let _srPlaying = true;
 
+let _srList = [];
+let _srIndex = 0;
+
 function renderVideos(videos, showreelSub) {
-  const main = videos.find(v => v.isShowreel) || videos[0];
   const placeholder = document.getElementById("showreel-placeholder");
+  const monitor = document.getElementById("sr-monitor");
+
+  // Showreel first, then every other video that has a source
+  const main = videos.find(v => v.isShowreel && v.src);
+  _srList = [main, ...videos.filter(v => v !== main && v.src)].filter(Boolean);
+
+  if (!_srList.length) {
+    if (placeholder) placeholder.classList.add("visible");
+    return;
+  }
+  if (placeholder) placeholder.classList.remove("visible");
+  if (monitor) monitor.classList.toggle("sr-single", _srList.length < 2);
+
+  // Dots
+  const dotsWrap = document.getElementById("sr-dots");
+  if (dotsWrap) {
+    dotsWrap.innerHTML = "";
+    _srList.forEach((v, i) => {
+      const d = document.createElement("button");
+      d.type = "button";
+      d.className = "sr-dot";
+      d.setAttribute("aria-label", "Play video " + (i + 1));
+      d.addEventListener("click", () => srGoTo(i));
+      dotsWrap.appendChild(d);
+    });
+  }
+
+  const prev = document.getElementById("sr-prev");
+  const next = document.getElementById("sr-next");
+  if (prev) prev.onclick = () => srGoTo(_srIndex - 1);
+  if (next) next.onclick = () => srGoTo(_srIndex + 1);
+
+  // Swipe / drag on the screen (the iframe itself ignores pointer events)
+  const bezel = document.querySelector(".sr-screen-bezel");
+  if (bezel && !bezel._srBound) {
+    bezel._srBound = true;
+    let sx = 0, sy = 0, active = false;
+    bezel.addEventListener("pointerdown", e => {
+      if (_srList.length < 2 || (e.pointerType === "mouse" && e.button !== 0)) return;
+      active = true; sx = e.clientX; sy = e.clientY;
+      if (e.pointerType === "mouse") bezel.classList.add("sr-dragging");
+    });
+    const finish = e => {
+      if (!active) return;
+      active = false;
+      bezel.classList.remove("sr-dragging");
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) srGoTo(_srIndex + (dx < 0 ? 1 : -1));
+    };
+    window.addEventListener("pointerup", finish);
+    window.addEventListener("pointercancel", () => { active = false; bezel.classList.remove("sr-dragging"); });
+    // Keyboard arrows while the section is on screen
+    document.addEventListener("keydown", e => {
+      if (_srList.length < 2 || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+      if (/input|textarea|select/i.test((e.target.tagName || ""))) return;
+      const r = document.getElementById("showreel").getBoundingClientRect();
+      const visible = r.top < window.innerHeight * 0.6 && r.bottom > window.innerHeight * 0.4;
+      if (visible) srGoTo(_srIndex + (e.key === "ArrowRight" ? 1 : -1));
+    });
+  }
+
+  srGoTo(0, true);
+  spawnShowreelParticles();
+}
+
+function srGoTo(i, initial) {
+  if (!_srList.length) return;
+  _srIndex = (i + _srList.length) % _srList.length;     // wraps around
+  const v = _srList[_srIndex];
   const wrap = document.getElementById("showreel-iframe-wrap");
   const screen = document.getElementById("sr-screen");
   const bezel = document.querySelector(".sr-screen-bezel");
   const monitor = document.getElementById("sr-monitor");
 
-  if (!main || !main.src) {
-    if (placeholder) placeholder.classList.add("visible");
-    return;
-  }
-  if (placeholder) placeholder.classList.remove("visible");
+  // Aspect ratio per video (16:9 default, 4:3 and 9:16 supported)
+  const isVertical = v.src.includes("shorts") || v.aspectRatio === "9:16";
+  const isClassic  = v.aspectRatio === "4:3";
+  if (bezel)   bezel.style.aspectRatio = isVertical ? "9 / 16" : isClassic ? "4 / 3" : "16 / 9";
+  if (screen)  screen.style.aspectRatio = "";
+  if (monitor) monitor.style.maxWidth = isVertical ? "380px" : isClassic ? "900px" : "";
 
-  // Detect aspect ratio from URL hint (default 16:9, support 4:3 and 9:16 vertical)
-  const isVertical = main.src.includes("shorts") || (main.aspectRatio === "9:16");
-  const isClassic  = main.aspectRatio === "4:3";
-  if (bezel) {
-    bezel.style.aspectRatio = isVertical ? "9 / 16" : isClassic ? "4 / 3" : "16 / 9";
-  }
-  if (screen) {
-    screen.style.aspectRatio = "";
-  }
-  if (monitor) {
-    monitor.style.maxWidth = isVertical ? "380px" : isClassic ? "900px" : "";
-  }
-
-  const src = buildShowreelSrc(main.src);
+  // Swap the player (only one video is ever loaded at a time)
+  const src = buildShowreelSrc(v.src);
   if (wrap && src) {
+    wrap.innerHTML = "";
     const iframe = document.createElement("iframe");
     iframe.src = src;
+    iframe.title = v.title || "Showreel video";
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframe.allowFullscreen = true;
     iframe.setAttribute("tabindex", "-1");
     wrap.appendChild(iframe);
     setTimeout(() => iframe.classList.add("sr-loaded"), 800);
+    if (!initial) {
+      wrap.classList.remove("sr-switching");
+      void wrap.offsetWidth;
+      wrap.classList.add("sr-switching");
+      if (window.SFX && SFX.play) { try { SFX.play("projectEnter"); } catch (e) {} }
+    }
   }
 
-  spawnShowreelParticles();
+  // Title, counter, dots
+  const t = document.getElementById("sr-reel-title");
+  const c = document.getElementById("sr-reel-count");
+  if (t) t.textContent = v.title || "";
+  if (c) c.textContent = (_srIndex + 1) + " / " + _srList.length;
+  document.querySelectorAll("#sr-dots .sr-dot").forEach((d, n) => d.classList.toggle("active", n === _srIndex));
 }
 
 function buildShowreelSrc(raw) {

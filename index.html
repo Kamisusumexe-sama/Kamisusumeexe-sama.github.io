@@ -89,15 +89,22 @@
               </div>
             </div>
           </div>
+          <div class="sr-dots" id="sr-dots" aria-hidden="true"></div>
           <div class="sr-controls-bar">
+            <button class="sr-nav-btn" id="sr-prev" type="button" aria-label="Previous video">&#9664;</button>
             <div class="sr-control-knobs">
               <div class="sr-knob" title="Brightness"></div>
               <div class="sr-knob sr-knob-small" title="Contrast"></div>
+            </div>
+            <div class="sr-reel-info" id="sr-reel-info">
+              <span class="sr-reel-title" id="sr-reel-title"></span>
+              <span class="sr-reel-count" id="sr-reel-count"></span>
             </div>
             <div class="sr-power-area">
               <div class="sr-power-led" id="sr-power-led"></div>
               <div class="sr-power-btn" onclick="srTogglePlay()" title="Toggle video"></div>
             </div>
+            <button class="sr-nav-btn" id="sr-next" type="button" aria-label="Next video">&#9654;</button>
           </div>
         </div>
         <div class="sr-neck"></div>
@@ -375,9 +382,9 @@
   <p class="footer-copy">© <span id="year"></span> <span id="footer-name"></span>. All rights reserved.</p>
 </footer>
 
-<script src="js/sounds.js?v=10"></script>
-<script src="js/main.js?v=10"></script>
-<script src="js/critters.js?v=10"></script>
-<script src="js/themes.js?v=10"></script>
+<script src="js/sounds.js?v=11"></script>
+<script src="js/main.js?v=11"></script>
+<script src="js/critters.js?v=11"></script>
+<script src="js/themes.js?v=11"></script>
 </body>
 </html>
