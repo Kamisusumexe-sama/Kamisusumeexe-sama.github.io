@@ -189,6 +189,90 @@ function renderProjects(projects) {
     grid.appendChild(card);
   });
   observeReveal(".project-card");
+  initProjectsCarousel(grid);
+}
+
+// ---- Projects carousel: arrows, dots, mouse-drag (touch uses native swipe) ----
+function initProjectsCarousel(grid) {
+  const prev = document.getElementById("proj-prev");
+  const next = document.getElementById("proj-next");
+  const dotsWrap = document.getElementById("proj-dots");
+  const hint = document.getElementById("proj-swipe-hint");
+  const cards = Array.from(grid.querySelectorAll(".project-card"));
+  if (!cards.length) return;
+
+  const step = () => {
+    const c = cards[0];
+    return c.getBoundingClientRect().width + (parseFloat(getComputedStyle(grid).columnGap) || 24);
+  };
+
+  // Dots
+  dotsWrap.innerHTML = "";
+  cards.forEach((_, i) => {
+    const d = document.createElement("button");
+    d.type = "button";
+    d.className = "proj-dot";
+    d.setAttribute("aria-label", "Go to project " + (i + 1));
+    d.addEventListener("click", () => grid.scrollTo({ left: i * step(), behavior: "smooth" }));
+    dotsWrap.appendChild(d);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  const update = () => {
+    const max = grid.scrollWidth - grid.clientWidth;
+    const x = grid.scrollLeft;
+    if (prev) prev.disabled = x <= 4;
+    if (next) next.disabled = x >= max - 4;
+    const idx = x >= max - 4 ? cards.length - 1 : Math.round(x / step());
+    dots.forEach((d, i) => d.classList.toggle("active", i === idx));
+    const fits = max <= 4;               // everything visible → hide controls
+    dotsWrap.style.display = fits ? "none" : "";
+    if (hint) hint.style.display = fits ? "none" : "";
+  };
+
+  if (prev) prev.onclick = () => grid.scrollBy({ left: -step(), behavior: "smooth" });
+  if (next) next.onclick = () => grid.scrollBy({ left:  step(), behavior: "smooth" });
+  grid.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
+  window.addEventListener("resize", update);
+
+  // Keyboard: ← / → when the row is focused
+  grid.tabIndex = 0;
+  grid.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { e.preventDefault(); grid.scrollBy({ left:  step(), behavior: "smooth" }); }
+    if (e.key === "ArrowLeft")  { e.preventDefault(); grid.scrollBy({ left: -step(), behavior: "smooth" }); }
+  });
+
+  // Mouse drag (touch & trackpads already scroll natively)
+  let down = false, moved = false, startX = 0, startScroll = 0;
+  grid.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    down = true; moved = false;
+    startX = e.clientX; startScroll = grid.scrollLeft;
+  });
+  window.addEventListener("pointermove", e => {
+    if (!down) return;
+    const dx = e.clientX - startX;
+    if (!moved && Math.abs(dx) > 6) { moved = true; grid.classList.add("dragging"); }
+    if (moved) grid.scrollLeft = startScroll - dx;
+  });
+  const endDrag = () => {
+    if (!down) return;
+    down = false;
+    if (moved) {
+      grid.classList.remove("dragging");
+      // snap to nearest card
+      grid.scrollTo({ left: Math.round(grid.scrollLeft / step()) * step(), behavior: "smooth" });
+    }
+  };
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
+  // Don't treat the end of a drag as a click on a card
+  grid.addEventListener("click", e => {
+    if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; }
+  }, true);
+  grid.addEventListener("dragstart", e => e.preventDefault());
+
+  update();
 }
 
 function navigateWithRipple(url, x, y) {
